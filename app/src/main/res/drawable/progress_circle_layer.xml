@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@android:id/background">
+        <shape android:shape="ring"
+            android:thicknessRatio="10"
+            android:innerRadiusRatio="3"
+            android:useLevel="false">
+            <solid android:color="#333333" /> <!-- اللون الرمادي الغامق -->
+        </shape>
+    </item>
+    <item android:id="@android:id/secondaryProgress">
+        <shape android:shape="ring"
+            android:thicknessRatio="10"
+            android:innerRadiusRatio="3"
+            android:useLevel="false">
+            <solid android:color="#FFFFFF" /> <!-- اللون الأبيض للجزء اللي بيلف -->
+        </shape>
+    </item>
+</layer-list>

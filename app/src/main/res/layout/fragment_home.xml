@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".CleanArchitecture.ui.views.HomeFragment">
+
+
+    <TextView
+        android:id="@+id/txt_discover"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/_26sdp"
+        android:layout_marginTop="@dimen/_15sdp"
+        android:fontFamily="sans-serif-medium"
+        android:text="Discover"
+        android:textColor="#1A1A1A"
+        android:textSize="@dimen/_22sdp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/img_notification"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/_26sdp"
+        android:layout_marginTop="@dimen/_24sdp"
+        android:src="@drawable/ic_notification"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/search"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/_70sdp"
+        android:layout_marginStart="@dimen/_26sdp"
+        android:backgroundTintMode="add"
+        android:textColorHint="?attr/colorOnSurface"
+        app:boxBackgroundMode="outline"
+        app:boxCornerRadiusBottomEnd="0dp"
+        app:boxCornerRadiusBottomStart="0dp"
+        app:boxCornerRadiusTopEnd="0dp"
+        app:boxCornerRadiusTopStart="0dp"
+
+        app:boxStrokeColor="?attr/colorPrimary"
+        app:boxStrokeWidth="1.5sp"
+        app:endIconMode="none"
+        app:hintEnabled="false"
+        android:layout_marginTop="@dimen/_12sdp"
+
+        app:hintTextColor="?attr/colorPrimary"
+
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/txt_discover">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/textSearch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/edittext_background"
+            android:drawableStart="@drawable/ic_search"
+            android:drawableEnd="@drawable/ic_mic"
+            android:drawablePadding="@dimen/_6sdp"
+            android:hint="Search for clothes"
+            android:inputType="text"
+            android:singleLine="true"
+            android:textColorHint="?attr/colorOnSurface" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_filter"
+        app:layout_constraintTop_toTopOf="@id/search"
+        android:layout_marginStart="@dimen/_8sdp"
+        android:layout_marginTop="@dimen/_2sdp"
+        app:layout_constraintStart_toEndOf="@+id/search" />
+
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerProducts"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/recyclerTypes"
+        app:spanCount="2"
+        android:layout_marginTop="@dimen/_10sdp"
+        tools:listitem="@layout/item_home" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerTypes"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/_8sdp"
+        android:orientation="horizontal"
+        tools:listitem="@layout/item_types"
+        android:layout_marginStart="@dimen/_28sdp"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        android:layout_marginHorizontal="@dimen/_8sdp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/search" />
+
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

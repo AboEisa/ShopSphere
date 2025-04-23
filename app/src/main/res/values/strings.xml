@@ -2,4 +2,7 @@
     <string name="app_name">ShopSphere</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="details">Details</string>
+    <string name="search_for_clothes">Search for clothes</string>
+    <string name="discover">Discover</string>
 </resources>

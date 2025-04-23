@@ -2,6 +2,8 @@ package com.example.shopsphere.CleanArchitecture.data
 
 import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
 import com.example.shopsphere.CleanArchitecture.data.network.IRemoteDataSource
+import com.example.shopsphere.CleanArchitecture.domain.DomainAddToCartRequest
+import com.example.shopsphere.CleanArchitecture.domain.DomainCartProduct
 import com.example.shopsphere.CleanArchitecture.domain.DomainProductResult
 import com.example.shopsphere.CleanArchitecture.domain.IRepository
 import javax.inject.Inject
@@ -55,6 +57,26 @@ class Repository @Inject constructor(private val remoteDataSource: IRemoteDataSo
 
     override suspend fun getFavoriteIds(): List<Int> {
         return sharedPreferencesHelper.getFavoriteProducts()
+    }
+
+//    override suspend fun addToCart(cart: DomainAddToCartRequest): Result<List<DomainCartProduct>> {
+//        return try {
+//            val remoteData = remoteDataSource.addToCart(cart.mapToData())
+//            Result.success(remoteData.getOrNull()?.map { it.mapToDomain() } ?: emptyList())
+//        } catch (e: Exception) {
+//            Result.failure(e)
+//        }
+//    }
+
+    override suspend fun getCartProducts(ids: List<Int>): Result<List<DomainProductResult>> {
+        return try {
+            val cartIds = sharedPreferencesHelper.getCartProducts()
+            val allProducts = remoteDataSource.getProducts().getOrThrow()
+            val cartProducts = allProducts.filter { cartIds.contains(it.id) }
+            Result.success(cartProducts.map { it.mapToDomain() })
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
 

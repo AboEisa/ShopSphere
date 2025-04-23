@@ -7,6 +7,7 @@ import com.example.shopsphere.CleanArchitecture.data.network.ApiServices
 import com.example.shopsphere.CleanArchitecture.data.network.IRemoteDataSource
 import com.example.shopsphere.CleanArchitecture.data.network.RemoteDataSource
 import com.example.shopsphere.CleanArchitecture.domain.IRepository
+import com.example.shopsphere.CleanArchitecture.utils.Constant.Companion.BASE_URL
 import com.google.firebase.BuildConfig
 import dagger.Module
 import dagger.Provides
@@ -41,7 +42,7 @@ object Module {
         return Retrofit.Builder()
             .addConverterFactory(GsonConverterFactory.create())
             .client(client)
-            .baseUrl("https://fakestoreapi.com/")
+            .baseUrl(BASE_URL)
             .build()
     }
 

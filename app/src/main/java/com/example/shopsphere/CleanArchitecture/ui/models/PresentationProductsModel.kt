@@ -12,7 +12,8 @@ data class PresentationProductResult(
     val image: String,
     val price: Double,
     val rating: PresentationRating,
-    val title: String
+    val title: String,
+    val quantity: Int
 )
 
 data class PresentationRating(

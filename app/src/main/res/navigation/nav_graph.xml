@@ -11,10 +11,18 @@
         tools:layout="@layout/fragment_home" >
         <action
             android:id="@+id/action_homeFragment_to_searchFragment"
-            app:destination="@id/searchFragment" />
+            app:destination="@id/searchFragment"
+            app:enterAnim="@anim/animation"
+            app:exitAnim="@anim/animation2"
+            app:popEnterAnim="@anim/animation3"
+            app:popExitAnim="@anim/animation4" />
         <action
             android:id="@+id/action_homeFragment_to_detailsFragment"
-            app:destination="@id/detailsFragment" />
+            app:destination="@id/detailsFragment"
+            app:enterAnim="@anim/animation"
+            app:exitAnim="@anim/animation2"
+            app:popEnterAnim="@anim/animation3"
+            app:popExitAnim="@anim/animation4" />
     </fragment>
     <fragment
         android:id="@+id/searchFragment"
@@ -23,7 +31,11 @@
         tools:layout="@layout/fragment_search" >
         <action
             android:id="@+id/action_searchFragment_to_savedFragment"
-            app:destination="@id/savedFragment" />
+            app:destination="@id/savedFragment"
+            app:enterAnim="@anim/animation"
+            app:exitAnim="@anim/animation2"
+            app:popEnterAnim="@anim/animation3"
+            app:popExitAnim="@anim/animation4" />
     </fragment>
     <fragment
         android:id="@+id/savedFragment"
@@ -32,10 +44,18 @@
         tools:layout="@layout/fragment_saved" >
         <action
             android:id="@+id/action_savedFragment_to_cartFragment"
-            app:destination="@id/cartFragment" />
+            app:destination="@id/cartFragment"
+            app:enterAnim="@anim/animation"
+            app:exitAnim="@anim/animation2"
+            app:popEnterAnim="@anim/animation3"
+            app:popExitAnim="@anim/animation4" />
         <action
             android:id="@+id/action_savedFragment_to_detailsFragment2"
-            app:destination="@id/detailsFragment" />
+            app:destination="@id/detailsFragment"
+            app:enterAnim="@anim/animation"
+            app:exitAnim="@anim/animation2"
+            app:popEnterAnim="@anim/animation3"
+            app:popExitAnim="@anim/animation4" />
     </fragment>
     <fragment
         android:id="@+id/cartFragment"
@@ -44,7 +64,14 @@
         tools:layout="@layout/fragment_cart" >
         <action
             android:id="@+id/action_cartFragment_to_accountFragment"
-            app:destination="@id/accountFragment" />
+            app:destination="@id/accountFragment"
+            app:enterAnim="@anim/animation"
+            app:exitAnim="@anim/animation2"
+            app:popEnterAnim="@anim/animation3"
+            app:popExitAnim="@anim/animation4" />
+        <action
+            android:id="@+id/action_cartFragment_to_detailsFragment"
+            app:destination="@id/detailsFragment" />
     </fragment>
     <fragment
         android:id="@+id/accountFragment"
@@ -61,6 +88,10 @@
             app:argType="integer" />
         <action
             android:id="@+id/action_detailsFragment_to_savedFragment"
-            app:destination="@id/savedFragment" />
+            app:destination="@id/savedFragment"
+            app:enterAnim="@anim/animation"
+            app:exitAnim="@anim/animation2"
+            app:popEnterAnim="@anim/animation3"
+            app:popExitAnim="@anim/animation4" />
     </fragment>
 </navigation>

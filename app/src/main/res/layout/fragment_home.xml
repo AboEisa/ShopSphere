@@ -11,10 +11,10 @@
         android:id="@+id/txt_discover"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/_26sdp"
+        android:layout_marginStart="@dimen/_20sdp"
         android:layout_marginTop="@dimen/_15sdp"
         android:fontFamily="sans-serif-medium"
-        android:text="Discover"
+        android:text="@string/discover"
         android:textColor="#1A1A1A"
         android:textSize="@dimen/_22sdp"
         app:layout_constraintStart_toStartOf="parent"
@@ -35,7 +35,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginEnd="@dimen/_70sdp"
-        android:layout_marginStart="@dimen/_26sdp"
+        android:layout_marginStart="@dimen/_20sdp"
         android:backgroundTintMode="add"
         android:textColorHint="?attr/colorOnSurface"
         app:boxBackgroundMode="outline"
@@ -63,7 +63,7 @@
             android:drawableStart="@drawable/ic_search"
             android:drawableEnd="@drawable/ic_mic"
             android:drawablePadding="@dimen/_6sdp"
-            android:hint="Search for clothes"
+            android:hint="@string/search_for_clothes"
             android:inputType="text"
             android:singleLine="true"
             android:textColorHint="?attr/colorOnSurface" />
@@ -75,8 +75,8 @@
         android:layout_height="wrap_content"
         android:src="@drawable/ic_filter"
         app:layout_constraintTop_toTopOf="@id/search"
-        android:layout_marginStart="@dimen/_8sdp"
-        android:layout_marginTop="@dimen/_2sdp"
+        android:layout_marginStart="@dimen/_10sdp"
+        android:layout_marginTop="@dimen/_3sdp"
         app:layout_constraintStart_toEndOf="@+id/search" />
 
 
@@ -98,9 +98,9 @@
         android:layout_marginTop="@dimen/_8sdp"
         android:orientation="horizontal"
         tools:listitem="@layout/item_types"
-        android:layout_marginStart="@dimen/_28sdp"
+        android:layout_marginStart="@dimen/_20sdp"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        android:layout_marginHorizontal="@dimen/_8sdp"
+
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/search" />
 

@@ -10,7 +10,7 @@ import com.example.shopsphere.CleanArchitecture.ui.models.PresentationProductRes
 import com.example.shopsphere.R
 import com.example.shopsphere.databinding.ItemHomeBinding
 
-class HomeProductsAdapter(private val onFavoriteClick: (Int) -> Unit, private val isFavorite: (Int) -> Boolean) : RecyclerView.Adapter<HomeProductsAdapter.Holder>() {
+class HomeProductsAdapter(private val onFavoriteClick: (Int) -> Unit, private val isFavorite: (Int) -> Boolean, private val onItemClick: (Int) -> Unit) : RecyclerView.Adapter<HomeProductsAdapter.Holder>() {
 
     var products: MutableList<PresentationProductResult> = mutableListOf()
 
@@ -44,6 +44,9 @@ class HomeProductsAdapter(private val onFavoriteClick: (Int) -> Unit, private va
                 favoriteButton.setOnClickListener {
                     onFavoriteClick(product.id)
                     updateFavoriteIcon(product.id)
+                }
+                root.setOnClickListener {
+                    onItemClick(product.id)
                 }
             }
         }

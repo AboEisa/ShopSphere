@@ -1,0 +1,109 @@
+package com.example.shopsphere.CleanArchitecture.ui.adapters
+
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.example.shopsphere.CleanArchitecture.ui.models.PresentationProductResult
+import com.example.shopsphere.databinding.ItemCartBinding
+import java.text.NumberFormat
+import java.util.Locale
+
+class CartAdapter(
+    private val onItemClick: (Int) -> Unit,
+    private val onRemoveClick: (Int) -> Unit,
+    private val onQuantityChanged: (Int, Int) -> Unit
+) : RecyclerView.Adapter<CartAdapter.Holder>() {
+
+    private var products: MutableList<PresentationProductResult> = mutableListOf()
+    private val currencyFormat = NumberFormat.getCurrencyInstance(Locale.US).apply {
+        maximumFractionDigits = 2
+    }
+
+
+    private val productQuantities = mutableMapOf<Int, Int>()
+
+    fun submitList(product: List<PresentationProductResult>) {
+        products.clear()
+        products.addAll(product)
+
+
+        product.forEach {
+            if (!productQuantities.containsKey(it.id)) {
+                productQuantities[it.id] = 1
+            }
+        }
+
+        notifyDataSetChanged()
+    }
+
+    fun getTotalPrice(): Double {
+        return products.sumOf { product ->
+            val quantity = productQuantities[product.id] ?: 1
+            product.price * quantity
+        }
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
+        val binding = ItemCartBinding.inflate(
+            LayoutInflater.from(parent.context),
+            parent,
+            false
+        )
+        return Holder(binding)
+    }
+
+    override fun onBindViewHolder(holder: Holder, position: Int) {
+        val product = products[position]
+        val quantity = productQuantities[product.id] ?: 1
+        holder.bind(product, quantity)
+    }
+
+    override fun getItemCount(): Int = products.size
+
+    inner class Holder(private val binding: ItemCartBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
+        fun bind(product: PresentationProductResult, quantity: Int) {
+            binding.apply {
+                // Basic product info
+                productTitle.text = product.title
+                productSize.text = product.category
+
+
+                val unitPrice = product.price
+                val totalPrice = unitPrice * quantity
+
+                productPrice.text = currencyFormat.format(unitPrice)
+                productQuantity.text = quantity.toString()
+                productTotalPrice.text = currencyFormat.format(totalPrice)
+                Glide.with(root)
+                    .load(product.image)
+                    .into(productImage)
+
+
+                root.setOnClickListener { onItemClick(product.id) }
+                removeButton.setOnClickListener { onRemoveClick(product.id) }
+
+
+                btnIncrease.setOnClickListener {
+                    val newQuantity = quantity + 1
+                    productQuantities[product.id] = newQuantity
+                    productQuantity.text = newQuantity.toString()
+                    productTotalPrice.text = currencyFormat.format(unitPrice * newQuantity)
+                    onQuantityChanged(product.id, newQuantity)
+                }
+
+                btnDecrease.setOnClickListener {
+                    if (quantity > 1) {
+                        val newQuantity = quantity - 1
+                        productQuantities[product.id] = newQuantity
+                        productQuantity.text = newQuantity.toString()
+                        productTotalPrice.text = currencyFormat.format(unitPrice * newQuantity)
+                        onQuantityChanged(product.id, newQuantity)
+                    }
+                }
+            }
+        }
+    }
+}

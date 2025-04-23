@@ -1,11 +1,14 @@
 package com.example.shopsphere.CleanArchitecture.data.network
 
 
+import com.example.shopsphere.CleanArchitecture.data.models.AddToCartRequest
+import com.example.shopsphere.CleanArchitecture.data.models.CartProduct
 import com.example.shopsphere.CleanArchitecture.data.models.ProductResult
-import com.example.shopsphere.CleanArchitecture.data.models.ProductsModel
+import com.example.shopsphere.CleanArchitecture.domain.DomainAddToCartRequest
+import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.POST
 import retrofit2.http.Path
-import retrofit2.http.Query
 
 interface ApiServices {
 
@@ -18,6 +21,9 @@ interface ApiServices {
         suspend fun getProductsByCategory(
                 @Path("category") category: String
         ): List<ProductResult>
+
+
+
 
 
 }

@@ -1,14 +1,17 @@
 package com.example.shopsphere.CleanArchitecture.data.network
 
 
+import com.example.shopsphere.CleanArchitecture.data.models.AddToCartRequest
+import com.example.shopsphere.CleanArchitecture.data.models.CartProduct
 import com.example.shopsphere.CleanArchitecture.data.models.ProductResult
-import com.example.shopsphere.CleanArchitecture.data.models.ProductsModel
+import com.example.shopsphere.CleanArchitecture.domain.DomainAddToCartRequest
 
 
 interface IRemoteDataSource {
 
     suspend fun getProducts(): Result<List<ProductResult>>
     suspend fun getProductsByCategory(category: String): Result<List<ProductResult>>
+//    suspend fun addToCart(cart: AddToCartRequest): Result<List<CartProduct>>
 
 
 }

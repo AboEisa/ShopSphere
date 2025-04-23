@@ -1,4 +1,4 @@
-package com.example.shopsphere
+package com.example.shopsphere.CleanArchitecture.utils
 
 class Constant {
 

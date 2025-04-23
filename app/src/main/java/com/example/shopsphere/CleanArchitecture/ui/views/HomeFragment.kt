@@ -48,6 +48,10 @@ class HomeFragment : Fragment() {
             },
             isFavorite = { productId ->
                 runBlocking { favoriteViewModel.isFavorite(productId) }
+            },
+            onItemClick = { productId ->
+                val action = HomeFragmentDirections.actionHomeFragmentToDetailsFragment(productId)
+                findNavController().navigate(action)
             }
         )
     }

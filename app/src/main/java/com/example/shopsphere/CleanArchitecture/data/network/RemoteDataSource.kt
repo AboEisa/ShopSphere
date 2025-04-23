@@ -2,8 +2,10 @@ package com.example.shopsphere.CleanArchitecture.data.network
 
 
 
+import com.example.shopsphere.CleanArchitecture.data.models.AddToCartRequest
+import com.example.shopsphere.CleanArchitecture.data.models.CartProduct
 import com.example.shopsphere.CleanArchitecture.data.models.ProductResult
-import com.example.shopsphere.CleanArchitecture.data.models.ProductsModel
+import com.example.shopsphere.CleanArchitecture.domain.DomainAddToCartRequest
 import javax.inject.Inject
 
 class RemoteDataSource @Inject constructor(private val apiService: ApiServices) : IRemoteDataSource {
@@ -26,6 +28,15 @@ class RemoteDataSource @Inject constructor(private val apiService: ApiServices) 
             Result.failure(e)
         }
     }
+
+//    override suspend fun addToCart(cart: AddToCartRequest): Result<List<CartProduct>> {
+//        return try {
+//            val data = apiService.addToCart(cart)
+//            Result.success(data)
+//        } catch (e: Exception) {
+//            Result.failure(e)
+//        }
+//    }
 
 
 }

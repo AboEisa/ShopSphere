@@ -19,8 +19,9 @@ class SharedPreference @Inject constructor(
     }
 
     private val gson = Gson()
-    private val _changes = MutableSharedFlow<Unit>()
+    private val _changes = MutableSharedFlow<Unit>(replay = 1)
     val changes = _changes.asSharedFlow()
+
 
     fun saveFavoriteProducts(products: List<Int>) {
         val json = gson.toJson(products)
@@ -56,5 +57,56 @@ class SharedPreference @Inject constructor(
 
     fun isFavorite(productId: Int): Boolean {
         return getFavoriteProducts().contains(productId)
+    }
+
+
+    fun saveCartProducts(products: Map<Int, Int>) {
+        val json = gson.toJson(products)
+        sharedPref.edit().putString("cart_products", json).apply()// Use commit() for immediate write
+        _changes.tryEmit(Unit)
+    }
+
+
+    fun getCartProducts(): Map<Int, Int> {
+        val json = sharedPref.getString("cart_products", null)
+        return if (json != null) {
+            try {
+                val type = object : TypeToken<Map<Int, Int>>() {}.type
+                gson.fromJson(json, type) ?: emptyMap()
+            } catch (e: Exception) {
+                emptyMap()
+            }
+        } else {
+            emptyMap()
+        }
+    }
+
+
+    fun addCartProduct(productId: Int) {
+        val currentCart = getCartProducts().toMutableMap()
+        if (currentCart.containsKey(productId)) {
+            currentCart[productId] = currentCart[productId]!! + 1 // زيادة الكمية إذا كان المنتج موجود
+        } else {
+            currentCart[productId] = 1 // إذا المنتج غير موجود نضيفه بكمية 1
+        }
+        saveCartProducts(currentCart)
+    }
+
+
+    fun removeCartProduct(productId: Int) {
+        val currentCart = getCartProducts().toMutableMap()
+        if (currentCart.containsKey(productId)) {
+            currentCart.remove(productId)
+            saveCartProducts(currentCart)
+        }
+    }
+
+
+    fun updateQuantity(productId: Int, newQuantity: Int) {
+        val currentCart = getCartProducts().toMutableMap()
+        if (currentCart.containsKey(productId)) {
+            currentCart[productId] = newQuantity
+            saveCartProducts(currentCart)
+        }
     }
 }

@@ -6,4 +6,12 @@
     </style>
 
     <style name="Theme.ShopSphere" parent="Base.Theme.ShopSphere" />
+
+
+    <style name="Widget.App.SeekBar" parent="Widget.MaterialComponents.Slider">
+        <item name="trackColorInactive">@color/seekbar_inactive</item>
+        <item name="trackColorActive">@color/seekbar_active</item>
+        <item name="thumbColor">@color/seekbar_thumb</item>
+        <item name="haloColor">@color/seekbar_halo</item>
+    </style>
 </resources>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Background track (full length) -->
+    <item android:id="@android:id/background">
+        <shape>
+            <size android:height="4dp"/> <!-- Reduced height -->
+            <solid android:color="#222222"/>
+            <corners android:radius="2dp"/>
+        </shape>
+    </item>
+    <!-- Progress track (foreground, same color) -->
+    <item android:id="@android:id/progress">
+        <clip>
+            <shape>
+                <size android:height="4dp"/> <!-- Reduced height -->
+                <solid android:color="#222222"/>
+                <corners android:radius="2dp"/>
+            </shape>
+        </clip>
+    </item>
+</layer-list>

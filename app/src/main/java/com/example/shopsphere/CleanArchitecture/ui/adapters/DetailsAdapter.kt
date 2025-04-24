@@ -86,53 +86,31 @@ class DetailsAdapter(
             }
         }
 
-        private var isFirstInteraction = false // بدل isFirstTime
 
-        private fun updateCartButton(productId: Int) {
+
+        fun updateCartButton(productId: Int) {
             val button = binding.addToCartButton
-            val context = binding.root.context
 
-            val progressBar = binding.buttonProgressBar
-            progressBar.visibility = View.VISIBLE
-            progressBar.isIndeterminate = true
-
-            val inCart = isInCart(productId)
-
+            // Animate fade out
             button.animate()
-                .scaleX(0.9f)
-                .scaleY(0.9f)
-                .alpha(0.6f)
-                .setDuration(200)
+                .alpha(0f)
+                .setDuration(150)
                 .withEndAction {
-                    button.text = if (inCart) "Remove from Cart" else "Add to Cart"
+                    // Change text and background after fade out
+                    if (isInCart(productId)) {
+                        button.text = "Remove from Cart"
+                        button.setBackgroundColor(ContextCompat.getColor(button.context, R.color.red))
+                    } else {
+                        button.text = "Add to Cart"
+                        button.setBackgroundColor(ContextCompat.getColor(button.context, R.color.black))
+                    }
+                    // Animate fade in
                     button.animate()
-                        .scaleX(1f)
-                        .scaleY(1f)
                         .alpha(1f)
-                        .setDuration(200)
-                        .withEndAction {
-                            progressBar.visibility = View.GONE
-                        }
+                        .setDuration(150)
                         .start()
                 }
                 .start()
-
-            // هنا الاختلاف
-            val fromColor = if (inCart) ContextCompat.getColor(context, R.color.black) else ContextCompat.getColor(context, R.color.red)
-            val toColor = if (inCart) ContextCompat.getColor(context, R.color.red) else ContextCompat.getColor(context, R.color.black)
-
-            val colorAnim = ValueAnimator.ofArgb(fromColor, toColor)
-            colorAnim.duration = 300
-            colorAnim.addUpdateListener { animator ->
-                button.setBackgroundColor(animator.animatedValue as Int)
-            }
-
-            if (isFirstInteraction) {
-                colorAnim.start() // لو خلاص حصل أول تفاعل، ابدأ الأنيميشن عادي
-            } else {
-                button.setBackgroundColor(ContextCompat.getColor(context, R.color.black)) // أول ظهور ثابت
-                isFirstInteraction = true // بعدها خلاص نسمح بالأنيميشن
-            }
         }
 
 

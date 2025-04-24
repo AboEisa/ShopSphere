@@ -20,15 +20,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <ImageView
-        android:id="@+id/img_notification"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="@dimen/_26sdp"
-        android:layout_marginTop="@dimen/_24sdp"
-        android:src="@drawable/ic_notification"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/search"
@@ -43,15 +35,12 @@
         app:boxCornerRadiusBottomStart="0dp"
         app:boxCornerRadiusTopEnd="0dp"
         app:boxCornerRadiusTopStart="0dp"
-
         app:boxStrokeColor="?attr/colorPrimary"
         app:boxStrokeWidth="1.5sp"
         app:endIconMode="none"
         app:hintEnabled="false"
         android:layout_marginTop="@dimen/_12sdp"
-
         app:hintTextColor="?attr/colorPrimary"
-
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/txt_discover">
 
@@ -60,17 +49,22 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/edittext_background"
-            android:drawableStart="@drawable/ic_search"
-            android:drawableEnd="@drawable/ic_mic"
+            android:drawableStart="@drawable/ic_text_search"
+
             android:drawablePadding="@dimen/_6sdp"
             android:hint="@string/search_for_clothes"
-            android:inputType="text"
-            android:singleLine="true"
-            android:textColorHint="?attr/colorOnSurface" />
+            android:inputType="none"
+            android:focusable="false"
+            android:cursorVisible="false"
+            android:clickable="true"
+            android:textColorHint="?attr/colorOnSurface"
+            android:importantForAccessibility="no"
+            android:longClickable="false" />
     </com.google.android.material.textfield.TextInputLayout>
 
 
     <ImageView
+        android:id="@+id/filter"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:src="@drawable/ic_filter"
@@ -100,10 +94,20 @@
         tools:listitem="@layout/item_types"
         android:layout_marginStart="@dimen/_20sdp"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/search" />
 
+    <TextView
+        android:id="@+id/noResult"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="No Result Found"
+        android:textColor="@color/gray"
+        android:textSize="@dimen/_14sdp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

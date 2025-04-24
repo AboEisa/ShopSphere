@@ -24,22 +24,14 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/_15sdp"
         android:fontFamily="sans-serif-medium"
-        android:text="Saved Items"
+        android:text="@string/saved_items"
         android:textColor="#1A1A1A"
         android:textSize="@dimen/_22sdp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <ImageView
-        android:id="@+id/img_notification"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="@dimen/_26sdp"
-        android:layout_marginTop="@dimen/_24sdp"
-        android:src="@drawable/ic_notification"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+
 
     <ImageView
         android:id="@+id/imageView"
@@ -56,8 +48,7 @@
         android:id="@+id/textView2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-
-        android:text="No Saved Items!"
+        android:text="@string/no_saved_items"
         android:textSize="@dimen/_18sdp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -72,7 +63,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/_30sdp"
-        android:text="You don't have any saved items."
+        android:text="@string/you_don_t_have_any_saved_items"
         android:textSize="@dimen/_14sdp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -87,7 +78,7 @@
         android:layout_height="wrap_content"
         android:breakStrategy="simple"
         android:maxLines="2"
-        android:text="Go to home and add some."
+        android:text="@string/go_to_home_and_add_some"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView3"

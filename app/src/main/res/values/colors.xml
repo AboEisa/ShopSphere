@@ -7,4 +7,18 @@
     <color name="shimmer_highlight">#FAFAFA</color>
     <color name="red">#FF0000</color>
 
+
+    <color name="seekbar_active">#FF000000</color> <!-- Black for active track -->
+    <color name="seekbar_inactive">#66000000</color> <!-- Semi-transparent black for inactive -->
+    <color name="seekbar_thumb">#FFFFFFFF</color> <!-- White for thumb -->
+    <color name="seekbar_halo">#33000000</color> <!-- Faint black for halo -->
+
+
+
+
+    <color name="primary">#FFB6BCC6</color>
+    <color name="light_gray">#FFF6F6F6</color>
+    <color name="divider">#FFE0E0E0</color>
+    <color name="address_default_bg">#FFEBEBEB</color>
+    <color name="address_selected_border">#FF000000</color>
 </resources>

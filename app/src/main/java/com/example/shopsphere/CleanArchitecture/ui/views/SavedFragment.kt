@@ -8,11 +8,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.shopsphere.CleanArchitecture.ui.adapters.SavedAdapter
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.SavedViewModel
-import com.example.shopsphere.R
-import com.example.shopsphere.databinding.FragmentHomeBinding
 import com.example.shopsphere.databinding.FragmentSavedBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.runBlocking
@@ -35,32 +32,34 @@ class SavedFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        if (_binding == null) return
         setupRecyclerView()
         observeViewModel()
         onClicks()
     }
 
-    fun onClicks(){
-       binding.btnBack.setOnClickListener {
-           findNavController().navigateUp()
-       }
+    fun onClicks() {
+        if (_binding == null) return
+        binding.btnBack.setOnClickListener {
+            if (!isAdded || _binding == null) return@setOnClickListener
+            findNavController().navigateUp()
+        }
     }
 
-    fun setupRecyclerView(){
-
+    fun setupRecyclerView() {
+        if (_binding == null) return
         adapter = SavedAdapter(
             onItemClick = { productId ->
-                val action = SavedFragmentDirections.actionSavedFragmentToDetailsFragment2(
-                    productId
-                )
+                if (!isAdded || _binding == null) return@SavedAdapter
+                val action = SavedFragmentDirections.actionSavedFragmentToDetailsFragment2(productId)
                 findNavController().navigate(action)
-
-            }
-            ,
+            },
             onFavoriteClick = { product ->
+                if (!isAdded || _binding == null) return@SavedAdapter
                 viewModel.toggleFavorite(product.id)
             },
             isFavorite = { productId ->
+                if (!isAdded || _binding == null) return@SavedAdapter false
                 runBlocking { viewModel.isFavorite(productId) }
             }
         )
@@ -69,10 +68,9 @@ class SavedFragment : Fragment() {
         viewModel.loadFavoriteProducts()
     }
 
-
-
     private fun observeViewModel() {
         viewModel.favoriteProducts.observe(viewLifecycleOwner) { products ->
+            if (!isAdded || _binding == null) return@observe
             adapter.submitList(products)
             if (products.isEmpty()) {
                 showEmptyState()
@@ -81,6 +79,7 @@ class SavedFragment : Fragment() {
             }
         }
         viewModel.loading.observe(viewLifecycleOwner) { isLoading ->
+            if (!isAdded || _binding == null) return@observe
             if (isLoading) {
                 binding.progressBar.visibility = View.VISIBLE
             } else {
@@ -90,7 +89,7 @@ class SavedFragment : Fragment() {
     }
 
     private fun showEmptyState() {
-
+        if (_binding == null) return
         binding.imageView.visibility = View.VISIBLE
         binding.textView2.visibility = View.VISIBLE
         binding.textView3.visibility = View.VISIBLE
@@ -98,7 +97,7 @@ class SavedFragment : Fragment() {
     }
 
     private fun hideEmptyState() {
-
+        if (_binding == null) return
         binding.imageView.visibility = View.GONE
         binding.textView2.visibility = View.GONE
         binding.textView3.visibility = View.GONE

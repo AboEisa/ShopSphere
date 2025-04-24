@@ -20,22 +20,19 @@ class CartAdapter(
         maximumFractionDigits = 2
     }
 
-
     private val productQuantities = mutableMapOf<Int, Int>()
 
     fun submitList(product: List<PresentationProductResult>) {
         products.clear()
         products.addAll(product)
-
-
+        // Always sync quantities from the product list
         product.forEach {
-            if (!productQuantities.containsKey(it.id)) {
-                productQuantities[it.id] = 1
-            }
+            productQuantities[it.id] = it.quantity ?: 1
         }
-
         notifyDataSetChanged()
     }
+
+    fun getItems(): List<PresentationProductResult> = products.toList()
 
     fun getTotalPrice(): Double {
         return products.sumOf { product ->
@@ -66,10 +63,8 @@ class CartAdapter(
 
         fun bind(product: PresentationProductResult, quantity: Int) {
             binding.apply {
-                // Basic product info
                 productTitle.text = product.title
                 productSize.text = product.category
-
 
                 val unitPrice = product.price
                 val totalPrice = unitPrice * quantity
@@ -81,10 +76,8 @@ class CartAdapter(
                     .load(product.image)
                     .into(productImage)
 
-
                 root.setOnClickListener { onItemClick(product.id) }
                 removeButton.setOnClickListener { onRemoveClick(product.id) }
-
 
                 btnIncrease.setOnClickListener {
                     val newQuantity = quantity + 1

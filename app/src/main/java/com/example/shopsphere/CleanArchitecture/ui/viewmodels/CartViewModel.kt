@@ -101,7 +101,7 @@ class CartViewModel @Inject constructor(
     fun updateQuantity(productId: Int, newQuantity: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             sharedPreference.updateQuantity(productId, newQuantity)
-            loadCartProducts() // Re-load the products to update total price
+            loadCartProducts() // Reload the products to update total price
         }
     }
 

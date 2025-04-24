@@ -5,6 +5,7 @@ plugins {
     id("com.google.gms.google-services")
     id ("dagger.hilt.android.plugin")
     id ("androidx.navigation.safeargs.kotlin")
+    alias(libs.plugins.google.android.libraries.mapsplatform.secrets.gradle.plugin)
 
 }
 
@@ -41,6 +42,9 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
+    }
+    buildFeatures {
+        viewBinding = true
     }
 }
 
@@ -127,6 +131,12 @@ dependencies {
 
     // Shimmer
     implementation ("com.facebook.shimmer:shimmer:0.5.0")
+
+    // Map
+    implementation ("com.google.android.gms:play-services-maps:18.2.0")
+
+    // Map location
+    implementation ("com.google.android.gms:play-services-location:21.0.1")
 
 
 

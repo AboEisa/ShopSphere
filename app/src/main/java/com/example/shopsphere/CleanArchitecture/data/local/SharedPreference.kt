@@ -59,13 +59,11 @@ class SharedPreference @Inject constructor(
         return getFavoriteProducts().contains(productId)
     }
 
-
     fun saveCartProducts(products: Map<Int, Int>) {
         val json = gson.toJson(products)
-        sharedPref.edit().putString("cart_products", json).apply()// Use commit() for immediate write
+        sharedPref.edit().putString("cart_products", json).apply()
         _changes.tryEmit(Unit)
     }
-
 
     fun getCartProducts(): Map<Int, Int> {
         val json = sharedPref.getString("cart_products", null)
@@ -81,17 +79,15 @@ class SharedPreference @Inject constructor(
         }
     }
 
-
     fun addCartProduct(productId: Int) {
         val currentCart = getCartProducts().toMutableMap()
         if (currentCart.containsKey(productId)) {
-            currentCart[productId] = currentCart[productId]!! + 1 // زيادة الكمية إذا كان المنتج موجود
+            currentCart[productId] = currentCart[productId]!! + 1
         } else {
-            currentCart[productId] = 1 // إذا المنتج غير موجود نضيفه بكمية 1
+            currentCart[productId] = 1
         }
         saveCartProducts(currentCart)
     }
-
 
     fun removeCartProduct(productId: Int) {
         val currentCart = getCartProducts().toMutableMap()
@@ -100,7 +96,6 @@ class SharedPreference @Inject constructor(
             saveCartProducts(currentCart)
         }
     }
-
 
     fun updateQuantity(productId: Int, newQuantity: Int) {
         val currentCart = getCartProducts().toMutableMap()

@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context=".CleanArchitecture.ui.views.AddCardFragment"
+    android:background="@android:color/white">
+
+    <!-- Back Button -->
+    <ImageView
+        android:id="@+id/btn_back"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_back"
+        android:layout_marginTop="@dimen/_24sdp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="@dimen/_26sdp"
+        />
+
+    <!-- Title -->
+    <TextView
+        android:id="@+id/txt_discover"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/_15sdp"
+        android:fontFamily="sans-serif-medium"
+        android:text="@string/new_card"
+        android:textColor="#1A1A1A"
+        android:textSize="@dimen/_22sdp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
+
+
+
+
+    <!-- Add Debit or Credit Card Label -->
+    <TextView
+        android:id="@+id/txt_add_card_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/_24sdp"
+        android:text="@string/add_debit_or_credit_card"
+        android:textColor="#1A1A1A"
+        android:textSize="@dimen/_14sdp"
+        android:layout_marginTop="@dimen/_25sdp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/txt_discover" />
+
+    <!-- Card Number Label -->
+    <TextView
+        android:id="@+id/txt_card_number_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Card number"
+        android:textColor="#1A1A1A"
+        android:textSize="@dimen/_13sdp"
+        android:layout_marginTop="@dimen/_18sdp"
+        app:layout_constraintTop_toBottomOf="@id/txt_add_card_label"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="@dimen/_24sdp"/>
+
+    <!-- Card Number EditText -->
+    <EditText
+        android:id="@+id/editCardNumber"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:hint="@string/enter_your_card_number"
+        android:background="@drawable/edittext_checkout_background"
+        android:textColor="#1A1A1A"
+        android:textSize="@dimen/_14sdp"
+        android:inputType="number"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:layout_marginTop="@dimen/_8sdp"
+        app:layout_constraintTop_toBottomOf="@id/txt_card_number_label"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginStart="@dimen/_24sdp"
+        android:layout_marginEnd="@dimen/_24sdp"/>
+
+    <!-- Expiry & CVC Row -->
+    <LinearLayout
+        android:id="@+id/layout_expiry_cvc"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="@dimen/_18sdp"
+        app:layout_constraintTop_toBottomOf="@id/editCardNumber"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginStart="@dimen/_24sdp"
+        android:layout_marginEnd="@dimen/_24sdp">
+
+        <!-- Expiry Date Column -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_weight="1">
+
+            <TextView
+                android:id="@+id/txt_expiry_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/expiry_date"
+                android:textColor="#1A1A1A"
+                android:textSize="@dimen/_13sdp"/>
+
+            <EditText
+                android:id="@+id/editExpiryDate"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:hint="@string/mm_yy"
+                android:background="@drawable/edittext_checkout_background"
+                android:textColor="#1A1A1A"
+                android:textSize="@dimen/_14sdp"
+                android:inputType="text"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:layout_marginTop="@dimen/_6sdp"/>
+        </LinearLayout>
+
+        <!-- Security Code Column -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_weight="1"
+            android:layout_marginStart="@dimen/_10sdp">
+
+            <TextView
+                android:id="@+id/txt_cvc_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/security_code"
+                android:textColor="#1A1A1A"
+                android:textSize="@dimen/_13sdp"/>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="@dimen/_6sdp">
+
+                <EditText
+                    android:id="@+id/editCvv"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:hint="@string/cvc"
+                    android:background="@drawable/edittext_checkout_background"
+                    android:textColor="#1A1A1A"
+                    android:textSize="@dimen/_14sdp"
+                    android:inputType="numberPassword"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="40dp"/>
+
+                <ImageView
+                    android:id="@+id/img_cvc_info"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_info"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:layout_marginEnd="8dp"/>
+            </RelativeLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Add Card Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnAddCart"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/background_button"
+        android:text="Add Card"
+        android:layout_marginHorizontal="@dimen/_12sdp"
+        app:backgroundTint="@color/black"
+        android:layout_marginBottom="@dimen/_15sdp"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

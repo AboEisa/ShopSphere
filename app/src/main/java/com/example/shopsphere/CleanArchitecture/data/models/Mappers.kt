@@ -1,10 +1,5 @@
-package com.example.shopsphere.CleanArchitecture.data
+package com.example.shopsphere.CleanArchitecture.data.models
 
-import com.example.shopsphere.CleanArchitecture.data.models.AddToCartRequest
-import com.example.shopsphere.CleanArchitecture.data.models.CartProduct
-import com.example.shopsphere.CleanArchitecture.data.models.ProductResult
-import com.example.shopsphere.CleanArchitecture.data.models.ProductsModel
-import com.example.shopsphere.CleanArchitecture.data.models.Rating
 import com.example.shopsphere.CleanArchitecture.domain.DomainAddToCartRequest
 import com.example.shopsphere.CleanArchitecture.domain.DomainCartProduct
 import com.example.shopsphere.CleanArchitecture.domain.DomainProductResult

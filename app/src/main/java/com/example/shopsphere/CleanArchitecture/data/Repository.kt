@@ -1,9 +1,8 @@
 package com.example.shopsphere.CleanArchitecture.data
 
 import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
+import com.example.shopsphere.CleanArchitecture.data.models.mapToDomain
 import com.example.shopsphere.CleanArchitecture.data.network.IRemoteDataSource
-import com.example.shopsphere.CleanArchitecture.domain.DomainAddToCartRequest
-import com.example.shopsphere.CleanArchitecture.domain.DomainCartProduct
 import com.example.shopsphere.CleanArchitecture.domain.DomainProductResult
 import com.example.shopsphere.CleanArchitecture.domain.IRepository
 import javax.inject.Inject

@@ -63,49 +63,49 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
-    // Room Database
-    implementation("androidx.room:room-runtime:2.6.1")
-    implementation("androidx.room:room-ktx:2.6.1")
-    ksp("androidx.room:room-compiler:2.6.1")
+        // Room Database
+        implementation("androidx.room:room-runtime:2.6.1")
+        implementation("androidx.room:room-ktx:2.6.1")
+        ksp("androidx.room:room-compiler:2.6.1")
 
-    // Intuit SDP
-    implementation("com.intuit.sdp:sdp-android:1.1.1")
+        // Intuit SDP
+        implementation("com.intuit.sdp:sdp-android:1.1.1")
 
-    // Lifecycle
-    val lifecycle_version = "2.8.6"
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version")
-    implementation("androidx.lifecycle:lifecycle-livedata-ktx:$lifecycle_version")
+        // Lifecycle
+        val lifecycle_version = "2.8.6"
+        implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version")
+        implementation("androidx.lifecycle:lifecycle-livedata-ktx:$lifecycle_version")
 
-    // Kotlin Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+        // Kotlin Coroutines
+        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
-    // Retrofit & Gson Converter
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
-    implementation("com.jakewharton.retrofit:retrofit2-kotlin-coroutines-adapter:0.9.2")
+        // Retrofit & Gson Converter
+        implementation("com.squareup.retrofit2:retrofit:2.9.0")
+        implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+        implementation("com.jakewharton.retrofit:retrofit2-kotlin-coroutines-adapter:0.9.2")
 
-    // OkHttp Logging Interceptor
-    implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.11")
+        // OkHttp Logging Interceptor
+        implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.11")
 
 
-    // Dagger Hilt (KSP)
-    implementation("com.google.dagger:hilt-android:2.51.1")
-    ksp("com.google.dagger:hilt-android-compiler:2.51.1")
+        // Dagger Hilt (KSP)
+        implementation("com.google.dagger:hilt-android:2.51.1")
+        ksp("com.google.dagger:hilt-android-compiler:2.51.1")
 
-    // Navigation Component
-    val nav_version = "2.8.3"
-    implementation("androidx.navigation:navigation-fragment-ktx:$nav_version")
-    implementation("androidx.navigation:navigation-ui-ktx:$nav_version")
+        // Navigation Component
+        val nav_version = "2.8.3"
+        implementation("androidx.navigation:navigation-fragment-ktx:$nav_version")
+        implementation("androidx.navigation:navigation-ui-ktx:$nav_version")
 
-    // CircleImageView
-    implementation("de.hdodenhof:circleimageview:3.1.0")
+        // CircleImageView
+        implementation("de.hdodenhof:circleimageview:3.1.0")
 
-    // Glide
-    implementation("com.github.bumptech.glide:glide:4.16.0")
+        // Glide
+        implementation("com.github.bumptech.glide:glide:4.16.0")
 
-    // Paging
-    implementation("androidx.paging:paging-runtime:3.3.0")
+        // Paging
+        implementation("androidx.paging:paging-runtime:3.3.0")
 
     // shared preference ----> DataStore
     implementation("androidx.datastore:datastore-preferences:1.1.0")
@@ -138,6 +138,7 @@ dependencies {
     // Map location
     implementation ("com.google.android.gms:play-services-location:21.0.1")
 
+    implementation ("com.stripe:stripe-android:20.40.0")
 
 
 }

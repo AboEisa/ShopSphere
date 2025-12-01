@@ -30,11 +30,11 @@ class OnBoardFragment : Fragment() {
     }
 
     private fun onClicks(){
-//        binding.onboard.setOnClickListener {
-//            findNavController(). navigate(
-//                OnBoardFragmentDirections.actionOnBoardFragmentToLoginFragment()
-//            )
-//        }
+        binding.getStartedBtn.setOnClickListener {
+            findNavController(). navigate(
+                OnBoardFragmentDirections.actionOnBoardFragmentToLoginFragment()
+            )
+        }
     }
 
     override fun onDestroyView() {

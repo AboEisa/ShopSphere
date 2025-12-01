@@ -37,6 +37,11 @@ class LoginFragment : Fragment() {
                 LoginFragmentDirections.actionLoginFragmentToSignupFragment()
             )
         }
+        binding.btnLogin.setOnClickListener {
+            findNavController().navigate(
+                LoginFragmentDirections.actionLoginFragmentToHomeFragment()
+            )
+        }
     }
 
     override fun onDestroyView() {

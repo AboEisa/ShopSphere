@@ -13,7 +13,6 @@ import com.example.shopsphere.CleanArchitecture.ui.adapters.HomeProductsAdapter
 import com.example.shopsphere.CleanArchitecture.ui.adapters.ShimmerHomeAdapter
 import com.example.shopsphere.CleanArchitecture.ui.adapters.TypesAdapter
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.SavedViewModel
-import com.example.shopsphere.CleanArchitecture.utils.Constant
 import com.example.shopsphere.CleanArchitecture.utils.Constant.Companion.TYPES_LIST
 import com.example.shopsphere.databinding.FragmentHomeBinding
 import com.example.yourpackage.viewmodels.HomeViewModel

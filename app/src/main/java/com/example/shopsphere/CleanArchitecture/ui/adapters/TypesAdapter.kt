@@ -2,40 +2,42 @@ package com.example.shopsphere.CleanArchitecture.ui.adapters
 
 import android.animation.ArgbEvaluator
 import android.animation.ValueAnimator
-import android.annotation.SuppressLint
+import android.annotation. SuppressLint
 import android.graphics.Color
-import android.view.LayoutInflater
-import android.view.ViewGroup
-import androidx.core.content.ContextCompat
+import android.graphics.drawable.GradientDrawable
+import android.view. LayoutInflater
+import android.view. ViewGroup
+import androidx.core.content. ContextCompat
 import androidx.recyclerview.widget.RecyclerView
-import com.example.shopsphere.databinding.ItemTypesBinding
-import com. example.shopsphere.R
-class TypesAdapter : RecyclerView.Adapter<TypesAdapter.Holder>() {
+import com.example.shopsphere.databinding. ItemTypesBinding
+import com.example. shopsphere.R
+
+class TypesAdapter : RecyclerView. Adapter<TypesAdapter.Holder>() {
 
     var list: ArrayList<String>? = null
     var onTypeClick: ((String) -> Unit)? = null
     private var selectedPosition: Int = 0
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
-        val binding = ItemTypesBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        val binding = ItemTypesBinding.inflate(LayoutInflater. from(parent.context), parent, false)
         return Holder(binding)
     }
 
     override fun onBindViewHolder(holder: Holder, @SuppressLint("RecyclerView") position: Int) {
         val type = list?.get(position)
-        holder.textType.text = type
+        holder.textType. text = type
 
         val isSelected = selectedPosition == position
 
         // Apply initial state without animation
-        holder.bind(isSelected)
+        holder. bind(isSelected)
 
         holder.itemView.setOnClickListener {
             val previousPosition = selectedPosition
             selectedPosition = position
             notifyItemChanged(previousPosition)
             notifyItemChanged(selectedPosition)
-            type?.let { onTypeClick?.invoke(it) }
+            type?. let { onTypeClick?.invoke(it) }
         }
     }
 
@@ -45,16 +47,28 @@ class TypesAdapter : RecyclerView.Adapter<TypesAdapter.Holder>() {
         val textType = binding.textType
 
         fun bind(isSelected: Boolean) {
-            val startColor = if (isSelected) ContextCompat.getColor(itemView.context, android.R.color.white)
-            else ContextCompat.getColor(itemView.context, android.R.color.black)
+            val context = itemView.context
+            val greenColor = ContextCompat.getColor(context, R.color.bright_green)
+            val whiteColor = ContextCompat.getColor(context, android.R.color. white)
+            val grayBorderColor = Color.parseColor("#BDBDBD")
+            val borderWidth = (1.5f * context.resources.displayMetrics.density).toInt()
 
-            val endColor = if (isSelected) ContextCompat.getColor(itemView.context, R.color.bright_green )
-            else ContextCompat.getColor(itemView.context, android.R.color.white)
+            val startColor = if (isSelected) whiteColor else greenColor
+            val endColor = if (isSelected) greenColor else whiteColor
 
             val colorAnimation = ValueAnimator.ofObject(ArgbEvaluator(), startColor, endColor)
-            colorAnimation.duration = 250 // Milliseconds
+            colorAnimation.duration = 250
             colorAnimation.addUpdateListener { animator ->
-                textType.background.setTint(animator.animatedValue as Int)
+                val animatedColor = animator.animatedValue as Int
+                val drawable = textType. background as?  GradientDrawable
+                drawable?.setColor(animatedColor)
+
+                // Set border: gray when not selected, green when selected
+                if (isSelected) {
+                    drawable?.setStroke(borderWidth, greenColor)
+                } else {
+                    drawable?. setStroke(borderWidth, grayBorderColor)
+                }
             }
             colorAnimation.start()
 
@@ -62,6 +76,5 @@ class TypesAdapter : RecyclerView.Adapter<TypesAdapter.Holder>() {
                 if (isSelected) Color.WHITE else Color.BLACK
             )
         }
-
     }
 }

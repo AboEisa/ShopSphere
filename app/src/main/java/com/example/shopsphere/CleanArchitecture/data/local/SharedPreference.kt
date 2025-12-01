@@ -14,17 +14,6 @@ import javax.inject.Singleton
 class SharedPreference @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    fun saveUid(uid: String) {
-        sharedPref.edit().putString("uid", uid).apply()
-    }
-
-    fun getUid(): String {
-        return sharedPref.getString("uid", "") ?: ""
-    }
-
-    fun clear() {
-        sharedPref.edit().clear().apply()
-    }
     private val sharedPref: SharedPreferences by lazy {
         context.getSharedPreferences("FAVORITE_PRODUCTS_PREF", Context.MODE_PRIVATE)
     }
@@ -33,7 +22,43 @@ class SharedPreference @Inject constructor(
     private val _changes = MutableSharedFlow<Unit>(replay = 1)
     val changes = _changes.asSharedFlow()
 
+    // ----------------------------------------------------------
+    // AUTH / UID MANAGEMENT
+    // ----------------------------------------------------------
+    fun saveUid(uid: String) {
+        sharedPref.edit().putString("uid", uid).apply()
+    }
 
+    fun getUid(): String {
+        return sharedPref.getString("uid", "") ?: ""
+    }
+
+    fun clearUid() {
+        sharedPref.edit().remove("uid").apply()
+    }
+
+    // ----------------------------------------------------------
+    // LOGIN STATE (CRITICAL FIX)
+    // ----------------------------------------------------------
+    fun saveIsLoggedIn(isLoggedIn: Boolean) {
+        sharedPref.edit().putBoolean("is_logged_in", isLoggedIn).apply()
+    }
+
+    fun isLoggedIn(): Boolean {
+        return sharedPref.getBoolean("is_logged_in", false)
+    }
+
+    // ----------------------------------------------------------
+    // CLEAR ALL DATA (for logout)
+    // ----------------------------------------------------------
+    fun clear() {
+        sharedPref.edit().clear().apply()
+        _changes.tryEmit(Unit)
+    }
+
+    // ----------------------------------------------------------
+    // FAVORITE PRODUCTS
+    // ----------------------------------------------------------
     fun saveFavoriteProducts(products: List<Int>) {
         val json = gson.toJson(products)
         sharedPref.edit().putString("favorite_products", json).apply()
@@ -70,6 +95,9 @@ class SharedPreference @Inject constructor(
         return getFavoriteProducts().contains(productId)
     }
 
+    // ----------------------------------------------------------
+    // CART PRODUCTS
+    // ----------------------------------------------------------
     fun saveCartProducts(products: Map<Int, Int>) {
         val json = gson.toJson(products)
         sharedPref.edit().putString("cart_products", json).apply()

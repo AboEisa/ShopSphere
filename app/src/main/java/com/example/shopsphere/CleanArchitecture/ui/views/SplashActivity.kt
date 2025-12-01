@@ -5,14 +5,21 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.view.animation.OvershootInterpolator
-import android.widget.ImageView
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.example.shopsphere.R
+import com.example.shopsphere.CleanArchitecture.ui.viewmodels.SplashViewModel
 import com.google.firebase.auth.FirebaseAuth
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
+
 @SuppressLint("CustomSplashScreen")
+@AndroidEntryPoint
 class SplashActivity : AppCompatActivity() {
+
+    private val viewModel: SplashViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,17 +40,32 @@ class SplashActivity : AppCompatActivity() {
 
                 currentUser.getIdToken(true).addOnCompleteListener { task ->
                     if (task.isSuccessful) {
+                        // ✅ FIXED: Sync Firebase auth with SharedPreferences
+                        viewModel.syncAuthState(currentUser.uid, isLoggedIn = true)
                         openMain(home = true)
                     } else {
                         // If token fails — clear the session + send to login
                         auth.signOut()
+                        // ✅ FIXED: Clear SharedPreferences too
+                        viewModel.syncAuthState("", isLoggedIn = false)
                         openMain(home = false)
                     }
                 }
 
             } else {
-                // CASE 2 — No Firebase user found → Send to login
-                openMain(home = false)
+                // CASE 2 — No Firebase user, check SharedPreferences as fallback
+                lifecycleScope.launch {
+                    viewModel.isLoggedIn.collect { isLoggedIn ->
+                        if (isLoggedIn) {
+                            // User has valid session in SharedPreferences
+                            openMain(home = true)
+                        } else {
+                            // No valid session anywhere
+                            openMain(home = false)
+                        }
+                        return@collect // Collect once
+                    }
+                }
             }
 
         }, 1500)

@@ -16,7 +16,27 @@ class SplashViewModel @Inject constructor(
     val isLoggedIn: StateFlow<Boolean> = _isLoggedIn
 
     init {
+        checkLoginState()
+    }
+
+    // ✅ FIXED: Check BOTH UID and login flag
+    private fun checkLoginState() {
         val uid = prefs.getUid()
-        _isLoggedIn.value = uid.isNotEmpty()
+        val isLoggedIn = prefs.isLoggedIn()
+
+        // User is logged in if BOTH conditions are true
+        _isLoggedIn.value = uid.isNotEmpty() && isLoggedIn
+    }
+
+    // ✅ NEW: Sync Firebase auth state with SharedPreferences
+    fun syncAuthState(uid: String, isLoggedIn: Boolean) {
+        if (isLoggedIn && uid.isNotEmpty()) {
+            prefs.saveUid(uid)
+            prefs.saveIsLoggedIn(true)
+        } else {
+            prefs.clearUid()
+            prefs.saveIsLoggedIn(false)
+        }
+        _isLoggedIn.value = isLoggedIn
     }
 }

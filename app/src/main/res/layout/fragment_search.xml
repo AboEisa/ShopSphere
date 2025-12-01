@@ -24,7 +24,7 @@
         android:layout_marginTop="@dimen/_15sdp"
         android:fontFamily="sans-serif-medium"
         android:text="@string/search"
-        android:textColor="#1A1A1A"
+        android:textColor="@color/_1a1a1a"
         android:textSize="@dimen/_22sdp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -120,7 +120,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/imageView"
         android:visibility="gone"
-        android:textColor="#808080"
+        android:textColor="@color/_808080"
         />
 
     <TextView
@@ -134,7 +134,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView3"
         android:visibility="gone"
-        android:textColor="#808080"
+        android:textColor="@color/_808080"
         />
 
 

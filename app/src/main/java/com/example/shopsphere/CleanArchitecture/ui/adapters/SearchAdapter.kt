@@ -52,7 +52,6 @@ class SearchAdapter(
         fun bind(product: PresentationProductResult, quantity: Int) {
             binding.apply {
                 productTitle.text = product.title
-                productPrice.text = currencyFormat.format(product.price)
                 Glide.with(root)
                     .load(product.image)
                     .into(productImage)

@@ -50,4 +50,12 @@
     <string name="no_results_found">No Results Found!</string>
     <string name="try_a_similar_word_or_something">Try a similar word or something</string>
     <string name="more_general">more general.</string>
+    <string name="change">Change</string>
+    <string name="address">Address</string>
+    <string name="enter_your_full_address">Enter your full address...</string>
+    <string name="regular_fit_slogan">Regular Fit Slogan</string>
+    <string name="the_name_says_it_all_the_right_size_slightly_snugs_the_body_leaving_enough_room_for_comfort_in_the_sleeves_and_waist">The name says it all, the right size slightly snugs the body leaving enough room for comfort in the sleeves and waist.</string>
+    <string name="_1_190">$1,190</string>
+    <string name="add_to_cart">Add to Cart</string>
+    <string name="regular_fit_polo">Regular Fit Polo</string>
 </resources>

@@ -14,14 +14,14 @@
         android:layout_marginTop="@dimen/_10sdp"
         app:cardCornerRadius="20dp"
         app:cardElevation="1dp"
-        app:cardBackgroundColor="#808080">
+        app:cardBackgroundColor="@color/_808080">
 
         <ImageView
             android:id="@+id/productImage"
             android:layout_width="match_parent"
             android:layout_height="220dp"
             android:scaleType="fitXY"
-            android:background="#808080"
+            android:background="@color/_808080"
             tools:src="@drawable/ic_launcher_background" />
 
         <androidx.cardview.widget.CardView
@@ -30,7 +30,7 @@
             android:layout_gravity="top|end"
             android:layout_marginTop="8dp"
             android:layout_marginEnd="8dp"
-            app:cardBackgroundColor="#FFFFFF"
+            app:cardBackgroundColor="@color/ffffff"
             app:cardCornerRadius="16dp"
             app:cardElevation="4dp">
 
@@ -50,7 +50,7 @@
         android:layout_marginTop="12dp"
         android:ellipsize="end"
         android:maxLines="2"
-        android:textColor="#212121"
+        android:textColor="@color/_212121"
         android:textSize="16sp"
         android:layout_marginStart="@dimen/_10sdp"
         tools:text="Regular Fit Slogan" />
@@ -66,18 +66,18 @@
             android:id="@+id/originalPrice"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#808080"
+            android:textColor="#23a36e"
             android:textSize="14sp"
             android:textStyle="bold"
             android:layout_marginStart="@dimen/_10sdp"
-            tools:text="$1,190" />
+            tools:text="@string/_1_190" />
 
         <TextView
             android:id="@+id/discountPercentage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:textColor="#FF0000"
+            android:textColor="@color/ff0000"
             android:textSize="14sp"
             android:textStyle="bold"
             android:visibility="visible"

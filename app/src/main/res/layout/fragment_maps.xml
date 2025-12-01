@@ -35,7 +35,7 @@
         android:layout_height="wrap_content"
         android:text="Address"
         android:textSize="@dimen/_22sdp"
-        android:textColor="#1A1A1A"
+        android:textColor="#111827"
         android:fontFamily="sans-serif-medium"
         android:layout_marginTop="@dimen/_15sdp"
         android:background="@android:color/transparent"
@@ -78,10 +78,10 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Address"
+                    android:text="@string/address"
                     android:textSize="18sp"
                     android:textStyle="bold"
-                    android:textColor="@color/black"/>
+                    android:textColor="#111827"/>
 
             </LinearLayout>
 
@@ -90,7 +90,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/address_nickname"
-                android:textColor="@color/black"
+                android:textColor="#111827"
                 android:textStyle="bold"
                 android:textSize="14sp"/>
             <EditText
@@ -109,14 +109,14 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/full_address"
-                android:textColor="@color/black"
+                android:textColor="#111827"
                 android:textStyle="bold"
                 android:textSize="14sp"/>
             <EditText
                 android:id="@+id/edit_address"
                 android:layout_width="match_parent"
                 android:layout_height="44dp"
-                android:hint="Enter your full address..."
+                android:hint="@string/enter_your_full_address"
                 android:background="@drawable/edittext_checkout_background"
                 android:paddingHorizontal="12dp"
                 android:textColor="@color/black"
@@ -129,7 +129,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/make_this_as_a_default_address"
-                android:textColor="@color/black"
+                android:textColor="#111827"
                 android:textSize="13sp"
                 android:layout_marginBottom="12dp"/>
 
@@ -141,7 +141,7 @@
                 android:background="@drawable/background_button"
                 android:text="@string/apply"
                 android:layout_marginHorizontal="@dimen/_12sdp"
-                app:backgroundTint="@color/black"
+                app:backgroundTint="@color/bright_green"
                 android:layout_marginBottom="@dimen/_15sdp"
                 app:layout_constraintBottom_toBottomOf="parent" />
         </LinearLayout>

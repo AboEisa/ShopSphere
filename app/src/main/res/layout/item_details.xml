@@ -58,8 +58,8 @@
         android:layout_marginTop="16dp"
         android:layout_marginStart="@dimen/_20sdp"
         android:layout_marginEnd="16dp"
-        android:text="Regular Fit Slogan"
-        android:textColor="#000000"
+        android:text="@string/regular_fit_slogan"
+        android:textColor="@color/_000000"
         android:textSize="20sp"
         android:textStyle="bold"
         app:layout_constraintTop_toBottomOf="@id/productImageCard"
@@ -91,7 +91,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="4dp"
             android:text="4.0/5"
-            android:textColor="#000000"
+            android:textColor="@color/_000000"
             android:textSize="14sp" />
 
         <TextView
@@ -100,7 +100,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="4dp"
             android:text="(45 reviews)"
-            android:textColor="#808080"
+            android:textColor="@color/_808080"
             android:textSize="14sp" />
     </LinearLayout>
 
@@ -112,7 +112,7 @@
         android:layout_marginTop="12dp"
         android:layout_marginStart="@dimen/_20sdp"
         android:layout_marginEnd="16dp"
-        android:text="The name says it all, the right size slightly snugs the body leaving enough room for comfort in the sleeves and waist."
+        android:text="@string/the_name_says_it_all_the_right_size_slightly_snugs_the_body_leaving_enough_room_for_comfort_in_the_sleeves_and_waist"
         android:textColor="#808080"
         android:textSize="14sp"
         android:maxLines="6"
@@ -120,7 +120,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- السعر والزرار تحت الشاشة -->
+
     <LinearLayout
         android:id="@+id/priceAndButtonLayout"
         android:layout_width="0dp"
@@ -135,7 +135,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- السعر مع كلمة Price -->
+
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -147,21 +147,21 @@
                 android:layout_height="wrap_content"
                 android:text="Price"
                 android:layout_marginStart="@dimen/_5sdp"
-                android:textColor="#808080"
+                android:textColor="@color/_808080"
                 android:textSize="14sp" />
 
             <TextView
                 android:id="@+id/productPrice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="$1,190"
-                android:textColor="#000000"
+                android:text="@string/_1_190"
+                android:textColor="#23a36e"
                 android:textSize="24sp"
                 android:layout_marginStart="@dimen/_5sdp"
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- زرار Add to Cart with ProgressBar -->
+
         <FrameLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -172,14 +172,14 @@
                 android:id="@+id/addToCartButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Add to Cart"
+                android:text="@string/add_to_cart"
                 android:textColor="@android:color/white"
-                app:backgroundTint="@color/black"
+                app:backgroundTint="@color/bright_green"
                 app:cornerRadius="10dp"
                 app:iconPadding="8dp"
                 app:strokeWidth="0dp" />
 
-            <!-- ProgressBar centered inside the button -->
+
             <ProgressBar
                 android:id="@+id/buttonProgressBar"
                 android:layout_width="24dp"

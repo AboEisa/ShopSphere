@@ -64,14 +64,11 @@ class CartAdapter(
         fun bind(product: PresentationProductResult, quantity: Int) {
             binding.apply {
                 productTitle.text = product.title
-                productSize.text = product.category
-
                 val unitPrice = product.price
                 val totalPrice = unitPrice * quantity
 
                 productPrice.text = currencyFormat.format(unitPrice)
                 productQuantity.text = quantity.toString()
-                productTotalPrice.text = currencyFormat.format(totalPrice)
                 Glide.with(root)
                     .load(product.image)
                     .into(productImage)
@@ -83,7 +80,6 @@ class CartAdapter(
                     val newQuantity = quantity + 1
                     productQuantities[product.id] = newQuantity
                     productQuantity.text = newQuantity.toString()
-                    productTotalPrice.text = currencyFormat.format(unitPrice * newQuantity)
                     onQuantityChanged(product.id, newQuantity)
                 }
 
@@ -92,7 +88,6 @@ class CartAdapter(
                         val newQuantity = quantity - 1
                         productQuantities[product.id] = newQuantity
                         productQuantity.text = newQuantity.toString()
-                        productTotalPrice.text = currencyFormat.format(unitPrice * newQuantity)
                         onQuantityChanged(product.id, newQuantity)
                     }
                 }

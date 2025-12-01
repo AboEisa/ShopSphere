@@ -25,7 +25,7 @@
         android:layout_marginTop="@dimen/_15sdp"
         android:fontFamily="sans-serif-medium"
         android:text="@string/account"
-        android:textColor="#1A1A1A"
+        android:textColor="#111827"
         android:textSize="@dimen/_22sdp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -73,7 +73,7 @@
                     android:layout_weight="1"
                     android:layout_marginStart="16dp"
                     android:text="My Orders"
-                    android:textColor="#222"
+                    android:textColor="#111827"
                     android:textSize="16sp"/>
                 <ImageView
                     android:layout_width="24dp"
@@ -84,7 +84,7 @@
             <View android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:layout_marginHorizontal="@dimen/_50sdp"
-                android:background="#F1F1F1"/>
+                android:background="@color/f1f1f1"/>
 
 
             <LinearLayout
@@ -107,7 +107,7 @@
                     android:layout_weight="1"
                     android:layout_marginStart="16dp"
                     android:text="My Details"
-                    android:textColor="#222"
+                    android:textColor="#111827"
                     android:textSize="16sp"/>
                 <ImageView
                     android:layout_width="24dp"
@@ -141,7 +141,7 @@
                     android:layout_weight="1"
                     android:layout_marginStart="16dp"
                     android:text="Address Book"
-                    android:textColor="#222"
+                    android:textColor="#111827"
                     android:textSize="16sp"/>
                 <ImageView
                     android:layout_width="24dp"
@@ -152,7 +152,7 @@
             <View android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:layout_marginHorizontal="@dimen/_50sdp"
-                android:background="#F1F1F1"/>
+                android:background="@color/f1f1f1"/>
 
 
             <LinearLayout
@@ -176,7 +176,7 @@
                     android:layout_weight="1"
                     android:layout_marginStart="16dp"
                     android:text="Payment Methods"
-                    android:textColor="#222"
+                    android:textColor="#111827"
                     android:textSize="16sp"/>
                 <ImageView
                     android:layout_width="24dp"
@@ -194,7 +194,7 @@
             <View android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:layout_marginHorizontal="@dimen/_50sdp"
-                android:background="#F1F1F1"/>
+                android:background="@color/f1f1f1"/>
 
 
             <LinearLayout
@@ -217,7 +217,7 @@
                     android:layout_weight="1"
                     android:layout_marginStart="16dp"
                     android:text="FAQs"
-                    android:textColor="#222"
+                    android:textColor="#111827"
                     android:textSize="16sp"/>
                 <ImageView
                     android:layout_width="24dp"
@@ -228,7 +228,7 @@
             <View android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:layout_marginHorizontal="@dimen/_50sdp"
-                android:background="#F1F1F1"/>
+                android:background="@color/f1f1f1"/>
 
 
             <LinearLayout
@@ -251,7 +251,7 @@
                     android:layout_weight="1"
                     android:layout_marginStart="16dp"
                     android:text="Help Center"
-                    android:textColor="#222"
+                    android:textColor="#111827"
                     android:textSize="16sp"/>
                 <ImageView
                     android:layout_width="24dp"
@@ -262,7 +262,7 @@
             <View android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:layout_marginHorizontal="@dimen/_50sdp"
-                android:background="#F1F1F1"/>
+                android:background="@color/f1f1f1"/>
 
 
             <LinearLayout
@@ -284,7 +284,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
                     android:text="Logout"
-                    android:textColor="#FF3434"
+                    android:textColor="@color/ff3434"
                     android:textSize="16sp"
                     android:textStyle="bold"/>
             </LinearLayout>
@@ -293,7 +293,7 @@
             <View android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:layout_marginHorizontal="@dimen/_50sdp"
-                android:background="#F1F1F1"/>
+                android:background="@color/f1f1f1"/>
         </LinearLayout>
     </ScrollView>
 

@@ -25,7 +25,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="New Card"
-        android:textColor="#1A1A1A"
+        android:textColor="#111827"
         android:textSize="22sp"
         android:textStyle="bold"
         app:layout_constraintTop_toTopOf="parent"
@@ -40,7 +40,7 @@
         android:layout_marginStart="24dp"
         android:layout_marginTop="16dp"
         android:text="Add Debit or Credit Card"
-        android:textColor="#1A1A1A"
+        android:textColor="#111827"
         android:textSize="14sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/txt_discover" />
@@ -67,6 +67,6 @@
         android:layout_marginEnd="24dp"
         android:layout_marginBottom="24dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:backgroundTint="@color/black"
+        app:backgroundTint="@color/bright_green"
         android:textColor="@android:color/white"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

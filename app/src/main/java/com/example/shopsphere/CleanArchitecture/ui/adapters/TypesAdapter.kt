@@ -9,7 +9,7 @@ import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.example.shopsphere.databinding.ItemTypesBinding
-
+import com. example.shopsphere.R
 class TypesAdapter : RecyclerView.Adapter<TypesAdapter.Holder>() {
 
     var list: ArrayList<String>? = null
@@ -48,7 +48,7 @@ class TypesAdapter : RecyclerView.Adapter<TypesAdapter.Holder>() {
             val startColor = if (isSelected) ContextCompat.getColor(itemView.context, android.R.color.white)
             else ContextCompat.getColor(itemView.context, android.R.color.black)
 
-            val endColor = if (isSelected) ContextCompat.getColor(itemView.context, android.R.color.black)
+            val endColor = if (isSelected) ContextCompat.getColor(itemView.context, R.color.bright_green )
             else ContextCompat.getColor(itemView.context, android.R.color.white)
 
             val colorAnimation = ValueAnimator.ofObject(ArgbEvaluator(), startColor, endColor)

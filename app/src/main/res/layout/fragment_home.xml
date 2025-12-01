@@ -15,7 +15,7 @@
         android:layout_marginTop="@dimen/_15sdp"
         android:fontFamily="sans-serif-medium"
         android:text="@string/discover"
-        android:textColor="#1A1A1A"
+        android:textColor="#111827"
         android:textSize="@dimen/_22sdp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -71,6 +71,7 @@
         app:layout_constraintTop_toTopOf="@id/search"
         android:layout_marginStart="@dimen/_10sdp"
         android:layout_marginTop="@dimen/_3sdp"
+
         app:layout_constraintStart_toEndOf="@+id/search" />
 
 

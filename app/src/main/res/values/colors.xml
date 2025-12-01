@@ -21,4 +21,35 @@
     <color name="divider">#FFE0E0E0</color>
     <color name="address_default_bg">#FFEBEBEB</color>
     <color name="address_selected_border">#FF000000</color>
+    <color name="_999999">#999999</color>
+    <color name="_1a1a1a">#1A1A1A</color>
+    <color name="_222">#222</color>
+    <color name="f1f1f1">#F1F1F1</color>
+    <color name="ff3434">#FF3434</color>
+    <color name="_808080">#808080</color>
+    <color name="_007aff">#007AFF</color>
+    <color name="e5e5e5">#E5E5E5</color>
+    <color name="_222222">#222222</color>
+    <color name="_212121">#212121</color>
+    <color name="_000000">#000000</color>
+    <color name="ffffff">#FFFFFF</color>
+    <color name="ff0000">#FF0000</color>
+    <color name="bright_green">#23a36e</color>
+
+    <!-- Primary Colors -->
+    <color name="colorPrimary">#199E79</color>
+    <color name="colorPrimaryVariant">#0F7A5C</color>
+    <color name="colorSecondary">#00A86B</color>
+
+    <!-- Background & Surface -->
+    <color name="colorBackground">#FFFFFF</color>
+    <color name="colorSurface">#FAFAFA</color>
+
+    <!-- Text Colors -->
+    <color name="textPrimary">#212121</color>
+    <color name="textSecondary">#666666</color>
+
+
+
+
 </resources>

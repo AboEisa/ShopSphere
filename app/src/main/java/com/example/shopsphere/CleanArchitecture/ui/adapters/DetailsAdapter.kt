@@ -102,7 +102,7 @@ class DetailsAdapter(
                         button.setBackgroundColor(ContextCompat.getColor(button.context, R.color.red))
                     } else {
                         button.text = "Add to Cart"
-                        button.setBackgroundColor(ContextCompat.getColor(button.context, R.color.black))
+                        button.setBackgroundColor(ContextCompat.getColor(button.context, R.color.bright_green))
                     }
                     // Animate fade in
                     button.animate()

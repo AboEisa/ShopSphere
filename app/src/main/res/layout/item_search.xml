@@ -32,19 +32,19 @@
                 android:id="@+id/productTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="#212121"
+                android:textColor="@color/_212121"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                tools:text="Regular Fit Polo" />
+                tools:text="@string/regular_fit_polo" />
 
             <TextView
                 android:id="@+id/productPrice"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:textColor="#808080"
+                android:textColor="#23a36e"
                 android:textSize="14sp"
-                tools:text="$1,900" />
+                tools:text="@string/_1_190" />
 
 
         </LinearLayout>

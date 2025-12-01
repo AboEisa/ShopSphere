@@ -1,6 +1,7 @@
 package com.example.shopsphere.CleanArchitecture.ui.views
 
 import android.os.Bundle
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
@@ -32,9 +33,27 @@ class MainActivity : AppCompatActivity() {
 
         // Set up the BottomNavigationView with the NavController
         binding.bottomNav.setupWithNavController(navController)
+
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            when (destination.id) {
+
+                R.id.onBoardFragment,
+                R.id.loginFragment,
+                R.id.signupFragment -> {
+                    binding.bottomNav.visibility = View.GONE
+                }
+
+                else -> binding.bottomNav.visibility = View.VISIBLE
+            }
+        }
     }
 
     override fun onSupportNavigateUp(): Boolean {
         return navController.navigateUp() || super.onSupportNavigateUp()
     }
+
+
+
+
+
 }

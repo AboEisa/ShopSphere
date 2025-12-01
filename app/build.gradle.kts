@@ -141,4 +141,6 @@ dependencies {
     implementation ("com.stripe:stripe-android:20.40.0")
 
 
+    implementation("com.airbnb.android:lottie:6.1.0")
+
 }

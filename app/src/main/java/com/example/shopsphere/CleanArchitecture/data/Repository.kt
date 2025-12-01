@@ -5,10 +5,18 @@ import com.example.shopsphere.CleanArchitecture.data.models.mapToDomain
 import com.example.shopsphere.CleanArchitecture.data.network.IRemoteDataSource
 import com.example.shopsphere.CleanArchitecture.domain.DomainProductResult
 import com.example.shopsphere.CleanArchitecture.domain.IRepository
+import com.google.firebase.auth.FacebookAuthProvider
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.GoogleAuthProvider
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
-class Repository @Inject constructor(private val remoteDataSource: IRemoteDataSource, private val sharedPreferencesHelper: SharedPreference) : IRepository {
-
+class Repository @Inject constructor(
+    private val remoteDataSource: IRemoteDataSource,
+    private val sharedPreferencesHelper: SharedPreference,
+    private val firebaseAuth: FirebaseAuth
+) : IRepository {
 
 
     override suspend fun getProducts(): Result<List<DomainProductResult>> {
@@ -25,7 +33,7 @@ class Repository @Inject constructor(private val remoteDataSource: IRemoteDataSo
         return try {
             val remoteData = remoteDataSource.getProductsByCategory(category)
             Result.success(remoteData.getOrNull()?.map { it.mapToDomain() } ?: emptyList())
-            } catch (e: Exception) {
+        } catch (e: Exception) {
             Result.failure(e)
         }
     }
@@ -78,5 +86,48 @@ class Repository @Inject constructor(private val remoteDataSource: IRemoteDataSo
         }
     }
 
+
+
+    override suspend fun registerEmail(
+        name: String, email: String,
+        password: String
+    ): Result<Boolean> {
+        return try {
+            val res = firebaseAuth.createUserWithEmailAndPassword(
+                email,
+                password
+            ).await()
+            // Optionally update profile with displayName
+            // val user = firebaseAuth.currentUser
+            // user?.updateProfile(com.google.firebase.auth.UserProfileChangeRequest.Builder().setDisplayName?.await()
+            Result.success(true)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    override suspend fun loginEmail(email: String, pass: String): FirebaseUser {
+        val result = firebaseAuth.signInWithEmailAndPassword(email, pass).await()
+        return result.user!!
+    }
+
+    override suspend fun googleSignIn(idToken: String): FirebaseUser {
+        val credential = GoogleAuthProvider.getCredential(idToken, null)
+        val result = firebaseAuth.signInWithCredential(credential).await()
+        return result.user!!
+    }
+
+    override suspend fun facebookSignIn(accessToken: String): Result<FirebaseUser> {
+        return try {
+            val credential = FacebookAuthProvider.getCredential(accessToken)
+            val result = firebaseAuth.signInWithCredential(credential).await()
+            Result.success(result.user!!)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override fun logout() = firebaseAuth.signOut()
+
+    override fun currentUserId(): String? = firebaseAuth.currentUser?.uid
 
 }

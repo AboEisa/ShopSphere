@@ -14,6 +14,17 @@ import javax.inject.Singleton
 class SharedPreference @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
+    fun saveUid(uid: String) {
+        sharedPref.edit().putString("uid", uid).apply()
+    }
+
+    fun getUid(): String {
+        return sharedPref.getString("uid", "") ?: ""
+    }
+
+    fun clear() {
+        sharedPref.edit().clear().apply()
+    }
     private val sharedPref: SharedPreferences by lazy {
         context.getSharedPreferences("FAVORITE_PRODUCTS_PREF", Context.MODE_PRIVATE)
     }

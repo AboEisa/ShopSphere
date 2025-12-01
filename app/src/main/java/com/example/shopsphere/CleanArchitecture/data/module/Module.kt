@@ -7,8 +7,13 @@ import com.example.shopsphere.CleanArchitecture.data.network.ApiServices
 import com.example.shopsphere.CleanArchitecture.data.network.IRemoteDataSource
 import com.example.shopsphere.CleanArchitecture.data.network.RemoteDataSource
 import com.example.shopsphere.CleanArchitecture.domain.IRepository
+import com.example.shopsphere.CleanArchitecture.domain.auth.FacebookLoginUseCase
+import com.example.shopsphere.CleanArchitecture.domain.auth.GoogleLoginUseCase
+import com.example.shopsphere.CleanArchitecture.domain.auth.LoginUseCase
+import com.example.shopsphere.CleanArchitecture.domain.auth.RegisterUseCase
 import com.example.shopsphere.CleanArchitecture.utils.Constant.Companion.BASE_URL
 import com.google.firebase.BuildConfig
+import com.google.firebase.auth.FirebaseAuth
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -62,7 +67,18 @@ object Module {
 
     @Singleton
     @Provides
-    fun getRepository(remoteDataSource: IRemoteDataSource,sharedPreferencesHelper: SharedPreference): IRepository {
-        return Repository(remoteDataSource,sharedPreferencesHelper)
+    fun getRepository(remoteDataSource: IRemoteDataSource,sharedPreferencesHelper: SharedPreference, firebaseAuth: FirebaseAuth): IRepository {
+        return Repository(remoteDataSource,sharedPreferencesHelper,firebaseAuth)
     }
+
+    @Provides
+    @Singleton
+    fun provideFirebaseAuth(): FirebaseAuth = FirebaseAuth.getInstance()
+
+    @Provides fun provideLoginUseCase(repo: IRepository) = LoginUseCase(repo)
+    @Provides fun provideRegisterUseCase(repo: IRepository) = RegisterUseCase(repo)
+    @Provides fun provideGoogleLoginUseCase(repo: IRepository) = GoogleLoginUseCase(repo)
+    @Provides fun provideFacebookLoginUseCase(repo: IRepository) = FacebookLoginUseCase(repo)
+
+
 }

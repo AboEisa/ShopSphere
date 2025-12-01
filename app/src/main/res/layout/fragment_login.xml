@@ -302,7 +302,11 @@
                 android:textColor="#1A1A1A"
                 android:textSize="14sp"
                 android:textStyle="bold" />
-
+<ProgressBar
+    android:id="@+id/progressBar"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    />
         </LinearLayout>
 
     </LinearLayout>

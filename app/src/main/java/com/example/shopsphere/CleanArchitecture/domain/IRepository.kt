@@ -12,7 +12,7 @@ interface IRepository {
     suspend fun getFavoriteIds(): List<Int>
 //    suspend fun addToCart(cart: DomainAddToCartRequest): Result<List<DomainCartProduct>>
     suspend fun getCartProducts(ids: List<Int>): Result<List<DomainProductResult>>
-
+    suspend fun getCartItemCount(): Int
 
     suspend fun registerEmail(name: String, email: String, password:
     String): Result<Boolean>

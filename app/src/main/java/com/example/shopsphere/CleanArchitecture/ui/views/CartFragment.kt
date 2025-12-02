@@ -51,6 +51,7 @@ class CartFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         cartViewModel.loadCartProducts()
+        cartViewModel.refreshCartCount()
     }
 
     fun onClicks() {

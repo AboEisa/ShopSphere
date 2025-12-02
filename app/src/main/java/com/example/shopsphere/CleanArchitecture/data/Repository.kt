@@ -139,6 +139,9 @@ class Repository @Inject constructor(
         }
     }
 
+    override suspend fun getCartItemCount(): Int {
+        return sharedPreferencesHelper.getCartItemCount()
+    }
 
     override fun logout() = firebaseAuth.signOut()
 

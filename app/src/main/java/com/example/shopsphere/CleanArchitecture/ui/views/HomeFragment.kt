@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -12,6 +13,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import com.example.shopsphere.CleanArchitecture.ui.adapters.HomeProductsAdapter
 import com.example.shopsphere.CleanArchitecture.ui.adapters.ShimmerHomeAdapter
 import com.example.shopsphere.CleanArchitecture.ui.adapters.TypesAdapter
+import com.example.shopsphere.CleanArchitecture.ui.viewmodels.CartViewModel
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.SavedViewModel
 import com.example.shopsphere.CleanArchitecture.utils.Constant.Companion.TYPES_LIST
 import com.example.shopsphere.databinding.FragmentHomeBinding
@@ -34,6 +36,8 @@ class HomeFragment : Fragment() {
     private var selectedType: String = typesList.first()
     private val adapterTypes: TypesAdapter by lazy { TypesAdapter() }
 
+    private val cartViewModel: CartViewModel by activityViewModels()
+
     private val productsAdapter by lazy {
         HomeProductsAdapter(
             onFavoriteClick = { productId ->
@@ -55,13 +59,21 @@ class HomeFragment : Fragment() {
         )
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        // ❌ REMOVED enableDraggableFab()
+        setupFloatingCartButton()
+        observeCartItems()
         setupRecyclerView()
         setupTypeAdapter()
         setupSearchClick()
@@ -72,6 +84,9 @@ class HomeFragment : Fragment() {
         fetchProductsBasedOnType(selectedType)
     }
 
+    // ------------------------------------------------------
+    // 🔥 FAB is now static because this entire function is REMOVED
+    // ------------------------------------------------------
 
 
     private fun setupRecyclerView() {
@@ -101,7 +116,6 @@ class HomeFragment : Fragment() {
             val bottomSheet = FilterBottomSheetFragment()
             bottomSheet.show(childFragmentManager, "FilterBottomSheet")
         }
-
     }
 
     private fun fetchProductsBasedOnType(type: String) {
@@ -120,7 +134,7 @@ class HomeFragment : Fragment() {
         productsViewModel.productsLiveData.observe(viewLifecycleOwner) { products ->
             viewLifecycleOwner.lifecycleScope.launch {
                 delay(1000)
-                if (view != null && _binding != null) { // defensive check
+                if (view != null && _binding != null) {
                     if (products.isNotEmpty()) {
                         productsAdapter.products = products.toMutableList()
                         binding.noResult.visibility = View.GONE
@@ -140,7 +154,8 @@ class HomeFragment : Fragment() {
             if (filteredList != null) {
                 productsAdapter.products = filteredList.toMutableList()
                 productsAdapter.notifyDataSetChanged()
-                binding.noResult.visibility = if (filteredList.isEmpty()) View.VISIBLE else View.GONE
+                binding.noResult.visibility =
+                    if (filteredList.isEmpty()) View.VISIBLE else View.GONE
             }
         }
     }
@@ -161,6 +176,38 @@ class HomeFragment : Fragment() {
 
     private fun hideShimmerAndShowProducts() {
         binding.recyclerProducts.adapter = productsAdapter
+    }
+
+    private fun setupFloatingCartButton() {
+        binding.fabCart.setOnClickListener {
+            val action = HomeFragmentDirections.actionHomeFragmentToCartFragment()
+            findNavController().navigate(action)
+        }
+    }
+
+    private fun observeCartItems() {
+        lifecycleScope.launch {
+            cartViewModel.cartItemCount.collect { count ->
+                updateCartBadge(count)
+            }
+        }
+    }
+
+    private fun updateCartBadge(count: Int) {
+        if (count > 0) {
+            binding.tvCartBadge.visibility = View.VISIBLE
+            binding.tvCartBadge.text = when {
+                count > 99 -> "99+"
+                else -> count.toString()
+            }
+        } else {
+            binding.tvCartBadge.visibility = View.GONE
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        cartViewModel.refreshCartCount()
     }
 
     override fun onDestroyView() {

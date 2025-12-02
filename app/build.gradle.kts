@@ -146,9 +146,14 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:34.6.0"))
     // firebase auth
     implementation("com.google.firebase:firebase-auth")
-// Google Sign-In
-    implementation("com.google.android.gms:play-services-auth:21.0.0")
+    // Google Sign-In
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
 
     // Facebook Login
     implementation("com.facebook.android:facebook-login:latest.release")
+
+    // Add Credential Manager
+    implementation("androidx.credentials:credentials:1.2.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.2.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.0")
 }

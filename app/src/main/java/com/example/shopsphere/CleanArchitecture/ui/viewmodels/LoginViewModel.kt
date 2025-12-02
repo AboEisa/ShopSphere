@@ -77,9 +77,9 @@ class LoginViewModel @Inject constructor(
                 val result = facebookLoginUseCase(accessToken)
                 val firebaseUser = result.getOrThrow()
 
-                // FIXED: Save both UID and login state
+
                 prefs.saveUid(firebaseUser.uid)
-                prefs.saveIsLoggedIn(true)  // ← ADD THIS
+                prefs.saveIsLoggedIn(true)
 
                 _state.value = AuthUiState.Success("Facebook login success")
 

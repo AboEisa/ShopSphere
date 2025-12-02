@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -30,6 +31,9 @@ class DetailsFragment : Fragment() {
     private val cartViewModel: CartViewModel by viewModels()
     private val args: DetailsFragmentArgs by navArgs()
 
+    private val sharedCartViewModel: CartViewModel by activityViewModels()
+
+
     private val detailsAdapter by lazy {
         DetailsAdapter(
             onFavoriteClick = { productId ->
@@ -51,8 +55,13 @@ class DetailsFragment : Fragment() {
                 val product = detailsViewModel.productLiveData.value
                 product?.let {
                     cartViewModel.addProductToCart(productId)
+                    sharedCartViewModel.refreshCartCount()
                     if (isAdded && _binding != null) {
-                        Toast.makeText(requireContext(), "Product added to cart", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            requireContext(),
+                            "Product added to cart",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
             },
@@ -63,8 +72,13 @@ class DetailsFragment : Fragment() {
             removeFromCart = { productId ->
                 if (!isAdded || _binding == null) return@DetailsAdapter
                 cartViewModel.removeFromCart(productId)
+                sharedCartViewModel.refreshCartCount()
                 if (isAdded && _binding != null) {
-                    Toast.makeText(requireContext(), "Product removed from cart", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        requireContext(),
+                        "Product removed from cart",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         )

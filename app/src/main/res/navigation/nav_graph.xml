@@ -32,6 +32,9 @@
             app:exitAnim="@anim/animation2"
             app:popEnterAnim="@anim/animation3"
             app:popExitAnim="@anim/animation4" />
+        <action
+            android:id="@+id/action_homeFragment_to_cartFragment"
+            app:destination="@id/cartFragment" />
     </fragment>
     <fragment
         android:id="@+id/searchFragment"

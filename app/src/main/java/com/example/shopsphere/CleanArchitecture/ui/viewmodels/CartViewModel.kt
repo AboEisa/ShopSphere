@@ -9,20 +9,45 @@ import com.example.coroutines.CleanArchitecture.domain.GetFavoriteProductsUseCas
 import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
 import com.example.shopsphere.CleanArchitecture.domain.AddToCartUseCase
 import com.example.shopsphere.CleanArchitecture.domain.GetCardProductsUseCase
+import com.example.shopsphere.CleanArchitecture.domain.IRepository
 
 import com.example.shopsphere.CleanArchitecture.ui.models.PresentationProductResult
 import com.example.shopsphere.CleanArchitecture.ui.models.mapToPresentation
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
 class CartViewModel @Inject constructor(
+    private val repository: IRepository,
     private val getCardProductsUseCase: GetCardProductsUseCase,
     private val sharedPreference: SharedPreference
 ) : ViewModel() {
+    private val _cartItemCount = MutableStateFlow(0)
+    val cartItemCount: StateFlow<Int> = _cartItemCount
+
+    init {
+        loadCartItemCount()
+    }
+
+    private fun loadCartItemCount() {
+        viewModelScope.launch {
+            try {
+                val count = repository.getCartItemCount()
+                _cartItemCount.value = count
+            } catch (e: Exception) {
+                _cartItemCount.value = 0
+            }
+        }
+    }
+
+    fun refreshCartCount() {
+        loadCartItemCount()
+    }
 
     private val _cartProducts = MutableLiveData<List<PresentationProductResult>>()
     val cartProducts: LiveData<List<PresentationProductResult>> = _cartProducts

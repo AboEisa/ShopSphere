@@ -143,4 +143,9 @@ class SharedPreference @Inject constructor(
             saveCartProducts(currentCart)
         }
     }
+
+    fun getCartItemCount(): Int {
+        val cartProducts = getCartProducts()
+        return cartProducts.values.sum()
+    }
 }

@@ -9,7 +9,7 @@ class FacebookLoginUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(accessToken: String): Result<FirebaseUser> {
         return try {
-            repo.facebookSignIn(accessToken)   // return Result<FirebaseUser>
+            repo.facebookSignIn(accessToken)
         } catch (e: Exception) {
             Result.failure(e)
         }

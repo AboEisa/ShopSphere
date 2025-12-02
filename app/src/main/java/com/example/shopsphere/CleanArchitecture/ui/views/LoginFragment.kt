@@ -1,15 +1,16 @@
 package com.example.shopsphere.CleanArchitecture.ui.views
 
-import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialException
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.AuthUiState
@@ -21,9 +22,8 @@ import com.facebook.FacebookCallback
 import com.facebook.FacebookException
 import com.facebook.login.LoginManager
 import com.facebook.login.LoginResult
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.android.gms.common.api.ApiException
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -36,25 +36,8 @@ class LoginFragment : Fragment() {
     // Facebook callback manager
     private lateinit var callbackManager: CallbackManager
 
-    private val googleSignInLauncher =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-                try {
-                    val account = task.getResult(ApiException::class.java)
-                    val idToken = account?.idToken
-                    if (idToken != null) {
-                        viewModel.loginWithGoogle(idToken)
-                    }
-                } catch (e: ApiException) {
-                    Toast.makeText(
-                        requireContext(),
-                        "Google sign-in failed: ${e.message}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
-        }
+    // Credential Manager for Google Sign-In
+    private lateinit var credentialManager: CredentialManager
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -68,8 +51,9 @@ class LoginFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Initialize Facebook callback manager
+        // Initialize managers
         callbackManager = CallbackManager.Factory.create()
+        credentialManager = CredentialManager.create(requireContext())
 
         setupClickListeners()
         observeAuthState()
@@ -93,18 +77,41 @@ class LoginFragment : Fragment() {
             viewModel.login(email, pass)
         }
 
-        // Google Sign-In
+        // Google Sign-In with Credential Manager
         binding.btnLoginGoogle.setOnClickListener {
-            val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(getString(R.string.default_web_client_id))
-                .requestEmail()
-                .build()
+            lifecycleScope.launch {
+                try {
+                    val googleIdOption = GetGoogleIdOption.Builder()
+                        .setFilterByAuthorizedAccounts(false)
+                        .setServerClientId(getString(R.string.default_web_client_id))
+                        .build()
 
-            val client = GoogleSignIn.getClient(requireActivity(), gso)
-            googleSignInLauncher.launch(client.signInIntent)
+                    val request = GetCredentialRequest.Builder()
+                        .addCredentialOption(googleIdOption)
+                        .build()
+
+                    val result = credentialManager.getCredential(
+                        request = request,
+                        context = requireActivity()
+                    )
+
+                    val credential = result.credential
+                    if (credential is GoogleIdTokenCredential) {
+                        val idToken = credential.idToken
+                        // ✅ Same call as before!
+                        viewModel.loginWithGoogle(idToken)
+                    }
+                } catch (e: GetCredentialException) {
+                    Toast.makeText(
+                        requireContext(),
+                        "Google sign-in failed: ${e.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
         }
 
-        // Facebook Sign-In
+        // Facebook Sign-In (No changes)
         binding.btnLoginFacebook.setOnClickListener {
             LoginManager.getInstance().logInWithReadPermissions(
                 this,
@@ -158,7 +165,6 @@ class LoginFragment : Fragment() {
                             state.msg,
                             Toast.LENGTH_SHORT
                         ).show()
-                        // Navigate to home screen
                         findNavController().navigate(R.id.action_loginFragment_to_homeFragment)
                     }
                     is AuthUiState.Error -> {
@@ -185,7 +191,6 @@ class LoginFragment : Fragment() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        // Pass the activity result back to the Facebook SDK
         callbackManager.onActivityResult(requestCode, resultCode, data)
     }
 

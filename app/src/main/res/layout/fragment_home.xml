@@ -111,5 +111,47 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!-- ============================================ -->
+    <!-- FLOATING CART BUTTON WITH BADGE - FIXED -->
+    <!-- ============================================ -->
+    <FrameLayout
+        android:id="@+id/fabCartContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:layout_marginBottom="80dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabCart"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="Shopping Cart"
+            app:srcCompat="@drawable/ic_cart"
+            app:fabSize="normal"
+            app:tint="@android:color/white"
+            app:backgroundTint="#4CAF50"
+            app:elevation="6dp"
+            app:pressedTranslationZ="12dp" />
+
+        <TextView
+            android:id="@+id/tvCartBadge"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_gravity="top|end"
+            android:layout_marginTop="2dp"
+            android:layout_marginEnd="2dp"
+            android:background="@drawable/badge_background"
+            android:elevation="8dp"
+            android:gravity="center"
+            android:textColor="@android:color/white"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:visibility="gone"
+            tools:text="99"
+            tools:visibility="visible" />
+    </FrameLayout>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

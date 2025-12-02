@@ -88,23 +88,7 @@ class Repository @Inject constructor(
 
 
 
-    override suspend fun registerEmail(
-        name: String, email: String,
-        password: String
-    ): Result<Boolean> {
-        return try {
-            val res = firebaseAuth.createUserWithEmailAndPassword(
-                email,
-                password
-            ).await()
-            // Optionally update profile with displayName
-            // val user = firebaseAuth.currentUser
-            // user?.updateProfile(com.google.firebase.auth.UserProfileChangeRequest.Builder().setDisplayName?.await()
-            Result.success(true)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+
     override suspend fun loginEmail(email: String, pass: String): FirebaseUser {
         val result = firebaseAuth.signInWithEmailAndPassword(email, pass).await()
         return result.user!!
@@ -125,6 +109,36 @@ class Repository @Inject constructor(
             Result.failure(e)
         }
     }
+
+    override suspend fun registerEmail(
+        name: String,
+        email: String,
+        password: String
+    ): Result<Boolean> {
+        return try {
+            val authResult = firebaseAuth.createUserWithEmailAndPassword(
+                email,
+                password
+            ).await()
+
+            val user = authResult.user
+
+            if (user != null) {
+                val profileUpdates = com.google.firebase.auth.UserProfileChangeRequest.Builder()
+                    .setDisplayName(name)
+                    .build()
+
+                user.updateProfile(profileUpdates).await()
+                Result.success(true)
+            } else {
+                Result.failure(Exception("User creation failed"))
+            }
+
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
 
     override fun logout() = firebaseAuth.signOut()
 

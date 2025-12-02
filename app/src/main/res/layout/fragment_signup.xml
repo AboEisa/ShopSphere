@@ -5,8 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/white"
-    android:fillViewport="true"
-   >
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -149,7 +148,6 @@
                 android:layout_centerVertical="true"
                 android:layout_marginEnd="16dp"
                 android:src="@drawable/ic_check_circle"
-
                 android:visibility="gone" />
         </RelativeLayout>
 
@@ -301,85 +299,14 @@
             app:cornerRadius="12dp"
             app:elevation="0dp" />
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="20dp" />
-
-        <!-- Or Divider -->
-        <LinearLayout
-            android:layout_width="match_parent"
+        <!-- Loading Indicator -->
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal">
-
-            <View
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_weight="1"
-                android:background="#E0E0E0" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="16dp"
-                android:text="Or"
-                android:textColor="#9E9E9E"
-                android:textSize="14sp" />
-
-            <View
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_weight="1"
-                android:background="#E0E0E0" />
-        </LinearLayout>
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="20dp" />
-
-        <!-- Sign Up with Google -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnLoginGoogle"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:text="Sign up with Google"
-            android:textColor="#1A1A1A"
-            android:textSize="16sp"
-            android:textAllCaps="false"
-            android:textStyle="bold"
-            app:backgroundTint="@android:color/white"
-            app:cornerRadius="12dp"
-            app:elevation="0dp"
-            app:strokeColor="#E0E0E0"
-            app:strokeWidth="1.5dp"
-            app:icon="@drawable/ic_google"
-            app:iconTint="@null"
-            app:iconGravity="textStart"
-            app:iconPadding="12dp"
-            app:iconSize="20dp" />
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="12dp" />
-
-        <!-- Sign Up with Facebook -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnLoginFacebook"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:text="Sign up with Facebook"
-            android:textColor="@android:color/white"
-            android:textSize="16sp"
-            android:textAllCaps="false"
-            android:textStyle="bold"
-            app:backgroundTint="#1877F2"
-            app:cornerRadius="12dp"
-            app:elevation="0dp"
-            app:icon="@drawable/ic_facebook"
-            app:iconGravity="textStart"
-            app:iconPadding="12dp"
-            app:iconSize="20dp"
-            app:iconTint="@null" />
+            android:layout_gravity="center"
+            android:layout_marginTop="16dp"
+            android:visibility="gone" />
 
         <View
             android:layout_width="match_parent"

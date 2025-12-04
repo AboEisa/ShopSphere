@@ -89,16 +89,22 @@ class Repository @Inject constructor(
 
 
 
-    override suspend fun loginEmail(email: String, pass: String): FirebaseUser {
-        val result = firebaseAuth.signInWithEmailAndPassword(email, pass).await()
-        return result.user!!
-    }
+    override suspend fun login(email: String, password: String): Result<Unit> =
+        try {
+            firebaseAuth.signInWithEmailAndPassword(email, password).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
 
-    override suspend fun googleSignIn(idToken: String): FirebaseUser {
-        val credential = GoogleAuthProvider.getCredential(idToken, null)
-        val result = firebaseAuth.signInWithCredential(credential).await()
-        return result.user!!
-    }
+    override suspend fun loginWithGoogle(idToken: String): Result<Unit> =
+        try {
+            val credential = GoogleAuthProvider.getCredential(idToken, null)
+            firebaseAuth.signInWithCredential(credential).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
 
 
 

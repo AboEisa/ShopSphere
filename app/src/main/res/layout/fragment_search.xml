@@ -24,7 +24,7 @@
         android:layout_marginTop="@dimen/_15sdp"
         android:fontFamily="sans-serif-medium"
         android:text="@string/search"
-        android:textColor="@color/_1a1a1a"
+        android:textColor="@color/bright_green"
         android:textSize="@dimen/_22sdp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

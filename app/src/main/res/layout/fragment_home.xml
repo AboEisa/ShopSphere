@@ -15,7 +15,7 @@
         android:layout_marginTop="@dimen/_15sdp"
         android:fontFamily="sans-serif-medium"
         android:text="@string/discover"
-        android:textColor="#111827"
+        android:textColor="@color/bright_green"
         android:textSize="@dimen/_22sdp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -71,6 +71,7 @@
         app:layout_constraintTop_toTopOf="@id/search"
         android:layout_marginStart="@dimen/_10sdp"
         android:layout_marginTop="@dimen/_3sdp"
+
 
         app:layout_constraintStart_toEndOf="@+id/search" />
 
@@ -131,7 +132,7 @@
             app:srcCompat="@drawable/ic_cart"
             app:fabSize="normal"
             app:tint="@android:color/white"
-            app:backgroundTint="#4CAF50"
+            app:backgroundTint="@color/bright_green"
             app:elevation="6dp"
             app:pressedTranslationZ="12dp" />
 

@@ -49,6 +49,14 @@
     <color name="textPrimary">#212121</color>
     <color name="textSecondary">#666666</color>
 
+    <!-- Bottom Navigation Colors -->
+    <color name="bottom_nav_selected">#23a36e</color>
+    <color name="bottom_nav_unselected">#9E9E9E</color>
+    <color name="bottom_nav_background">#FFFFFF</color>
+
+
+    <color name="bright_green_ripple">#2023a36e</color> <!-- 12% opacity -->
+    <color name="bright_green_indicator">#1A23a36e</color> <!-- 10% opacity -->
 
 
 

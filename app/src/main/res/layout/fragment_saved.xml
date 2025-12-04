@@ -25,7 +25,7 @@
         android:layout_marginTop="@dimen/_15sdp"
         android:fontFamily="sans-serif-medium"
         android:text="@string/saved_items"
-        android:textColor="#111827"
+        android:textColor="@color/bright_green"
         android:textSize="@dimen/_22sdp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

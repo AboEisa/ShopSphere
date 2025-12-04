@@ -25,7 +25,7 @@
         android:layout_height="wrap_content"
         android:text="@string/checkout"
         android:textSize="@dimen/_22sdp"
-        android:textColor="#111827"
+        android:textColor="@color/bright_green"
         android:fontFamily="sans-serif-medium"
         android:layout_marginTop="@dimen/_15sdp"
         app:layout_constraintTop_toTopOf="parent"

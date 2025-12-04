@@ -16,8 +16,9 @@ interface IRepository {
 
     suspend fun registerEmail(name: String, email: String, password:
     String): Result<Boolean>
-    suspend fun login(email: String, password: String): Result<Unit>
-    suspend fun loginWithGoogle(idToken: String): Result<Unit>
+    suspend fun loginEmail(email: String, pass: String): FirebaseUser
+
+    suspend fun googleSignIn(idToken: String): FirebaseUser
 
     fun logout()
     fun currentUserId(): String?

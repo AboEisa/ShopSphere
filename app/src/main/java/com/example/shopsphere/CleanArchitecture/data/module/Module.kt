@@ -74,10 +74,9 @@ object Module {
     @Singleton
     fun provideFirebaseAuth(): FirebaseAuth = FirebaseAuth.getInstance()
 
-    @Provides
-    fun provideLoginUseCase(repo: IRepository) = LoginUseCase(repo)
+    @Provides fun provideLoginUseCase(repo: IRepository) = LoginUseCase(repo)
     @Provides fun provideRegisterUseCase(repo: IRepository) = RegisterUseCase(repo)
-    @Provides
-    fun provideGoogleLoginUseCase(repo: IRepository) = GoogleLoginUseCase(repo)
+    @Provides fun provideGoogleLoginUseCase(repo: IRepository) = GoogleLoginUseCase(repo)
+
 
 }

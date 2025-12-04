@@ -20,7 +20,6 @@ interface IRepository {
 
     suspend fun googleSignIn(idToken: String): FirebaseUser
 
-    suspend fun facebookSignIn(accessToken: String): Result<FirebaseUser>
     fun logout()
     fun currentUserId(): String?
 

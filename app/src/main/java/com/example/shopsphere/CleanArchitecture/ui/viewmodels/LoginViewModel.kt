@@ -3,7 +3,6 @@ package com.example.shopsphere.CleanArchitecture.ui.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
-import com.example.shopsphere.CleanArchitecture.domain.auth.FacebookLoginUseCase
 import com.example.shopsphere.CleanArchitecture.domain.auth.GoogleLoginUseCase
 import com.example.shopsphere.CleanArchitecture.domain.auth.LoginUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,7 +15,6 @@ import javax.inject.Inject
 class LoginViewModel @Inject constructor(
     private val loginUseCase: LoginUseCase,
     private val googleLoginUseCase: GoogleLoginUseCase,
-    private val facebookLoginUseCase: FacebookLoginUseCase,
     private val prefs: SharedPreference
 ) : ViewModel() {
 
@@ -66,28 +64,7 @@ class LoginViewModel @Inject constructor(
         }
     }
 
-    // ----------------------------------------------------------
-    // FACEBOOK LOGIN
-    // ----------------------------------------------------------
-    fun loginWithFacebook(accessToken: String) {
-        viewModelScope.launch {
-            _state.value = AuthUiState.Loading
 
-            try {
-                val result = facebookLoginUseCase(accessToken)
-                val firebaseUser = result.getOrThrow()
-
-
-                prefs.saveUid(firebaseUser.uid)
-                prefs.saveIsLoggedIn(true)
-
-                _state.value = AuthUiState.Success("Facebook login success")
-
-            } catch (e: Exception) {
-                _state.value = AuthUiState.Error(e.message)
-            }
-        }
-    }
 
     // ----------------------------------------------------------
     // CHECK IF LOGGED IN
@@ -104,7 +81,7 @@ class LoginViewModel @Inject constructor(
     }
 
     // ----------------------------------------------------------
-    // LOGOUT (Add this if not exists)
+    // LOGOUT
     // ----------------------------------------------------------
     fun logout() {
         prefs.clearUid()

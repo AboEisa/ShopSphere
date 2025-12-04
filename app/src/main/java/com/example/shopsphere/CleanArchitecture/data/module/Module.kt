@@ -7,7 +7,6 @@ import com.example.shopsphere.CleanArchitecture.data.network.ApiServices
 import com.example.shopsphere.CleanArchitecture.data.network.IRemoteDataSource
 import com.example.shopsphere.CleanArchitecture.data.network.RemoteDataSource
 import com.example.shopsphere.CleanArchitecture.domain.IRepository
-import com.example.shopsphere.CleanArchitecture.domain.auth.FacebookLoginUseCase
 import com.example.shopsphere.CleanArchitecture.domain.auth.GoogleLoginUseCase
 import com.example.shopsphere.CleanArchitecture.domain.auth.LoginUseCase
 import com.example.shopsphere.CleanArchitecture.domain.auth.RegisterUseCase
@@ -78,7 +77,6 @@ object Module {
     @Provides fun provideLoginUseCase(repo: IRepository) = LoginUseCase(repo)
     @Provides fun provideRegisterUseCase(repo: IRepository) = RegisterUseCase(repo)
     @Provides fun provideGoogleLoginUseCase(repo: IRepository) = GoogleLoginUseCase(repo)
-    @Provides fun provideFacebookLoginUseCase(repo: IRepository) = FacebookLoginUseCase(repo)
 
 
 }

@@ -100,15 +100,7 @@ class Repository @Inject constructor(
         return result.user!!
     }
 
-    override suspend fun facebookSignIn(accessToken: String): Result<FirebaseUser> {
-        return try {
-            val credential = FacebookAuthProvider.getCredential(accessToken)
-            val result = firebaseAuth.signInWithCredential(credential).await()
-            Result.success(result.user!!)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+
 
     override suspend fun registerEmail(
         name: String,

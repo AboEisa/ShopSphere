@@ -3,8 +3,7 @@ plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.ksp) apply false
-//    id("com.google.gms.google-services") version "4.4.2" apply false
-    id ("com.google.dagger.hilt.android") version "2.51" apply false
+    id("com.google.dagger.hilt.android") version "2.51" apply false
     alias(libs.plugins.google.android.libraries.mapsplatform.secrets.gradle.plugin) apply false
     id("com.google.gms.google-services") version "4.4.4" apply false
 
@@ -12,7 +11,7 @@ plugins {
 
 buildscript {
     dependencies {
-        classpath ("androidx.navigation:navigation-safe-args-gradle-plugin:2.7.2")
+        classpath("androidx.navigation:navigation-safe-args-gradle-plugin:2.7.2")
 
     }
 }

@@ -149,8 +149,7 @@ dependencies {
     // Google Sign-In
     implementation("com.google.android.gms:play-services-auth:20.7.0")
 
-    // Facebook Login
-    implementation("com.facebook.android:facebook-login:latest.release")
+ 
 
     // Add Credential Manager
     implementation("androidx.credentials:credentials:1.2.0")

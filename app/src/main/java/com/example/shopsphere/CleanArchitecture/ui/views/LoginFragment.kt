@@ -22,14 +22,14 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+
 @AndroidEntryPoint
 class LoginFragment : Fragment() {
-
-    private lateinit var credentialManager: CredentialManager
 
     private var _binding: FragmentLoginBinding? = null
     private val binding get() = _binding!!
 
+    private lateinit var credentialManager: CredentialManager
     private val viewModel: LoginViewModel by viewModels()
 
     override fun onCreateView(
@@ -41,7 +41,13 @@ class LoginFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
+        setupListeners()
+        observeState()
+    }
+
+    private fun setupListeners() {
         binding.etEmail.addTextChangedListener {
             viewModel.onEvent(LoginUiEvent.EmailChanged(it.toString()))
         }
@@ -58,7 +64,13 @@ class LoginFragment : Fragment() {
             signInWithGoogle()
         }
 
-        observeState()
+        binding.tvJoin.setOnClickListener {
+            findNavController().navigate(R.id.action_loginFragment_to_registerFragment)
+        }
+
+        binding.tvForgotPassword.setOnClickListener {
+            Toast.makeText(requireContext(), "Forgot password clicked", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun observeState() {
@@ -74,15 +86,15 @@ class LoginFragment : Fragment() {
                         setLoading(false)
                         Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
                     }
-                    else -> Unit
+                    else -> setLoading(false)
                 }
             }
         }
     }
 
-    private fun setLoading(b: Boolean) {
-        binding.btnLogin.isEnabled = !b
-        binding.btnLoginGoogle.isEnabled = !b
+    private fun setLoading(isLoading: Boolean) {
+        binding.btnLogin.isEnabled = !isLoading
+        binding.btnLoginGoogle.isEnabled = !isLoading
     }
 
     private fun signInWithGoogle() {
@@ -97,11 +109,7 @@ class LoginFragment : Fragment() {
                     .addCredentialOption(googleIdOption)
                     .build()
 
-                val result = credentialManager.getCredential(
-                    context = requireActivity(),
-                    request = request
-                )
-
+                val result = credentialManager.getCredential(requireActivity(), request)
                 val credential = result.credential
                 if (credential is GoogleIdTokenCredential) {
                     viewModel.onEvent(LoginUiEvent.GoogleToken(credential.idToken))
@@ -114,7 +122,6 @@ class LoginFragment : Fragment() {
             }
         }
     }
-
 
     override fun onDestroyView() {
         super.onDestroyView()

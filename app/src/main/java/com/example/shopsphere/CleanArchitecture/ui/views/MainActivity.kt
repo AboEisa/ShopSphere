@@ -60,7 +60,7 @@ class MainActivity : AppCompatActivity() {
             when (destination.id) {
                 R.id.onBoardFragment,
                 R.id.loginFragment,
-                R.id.signupFragment -> {
+                R.id.registerFragment -> {
                     binding.bottomNav.visibility = View.GONE
                 }
                 else -> binding.bottomNav.visibility = View.VISIBLE

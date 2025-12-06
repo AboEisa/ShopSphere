@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    android:background="@android:color/white">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -13,13 +12,13 @@
         android:orientation="vertical"
         android:padding="24dp">
 
-        <!-- Title Section -->
+        <!-- Header -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Create an account"
-            android:textColor="#1A1A1A"
             android:textSize="28sp"
+            android:textColor="#1A1A1A"
             android:textStyle="bold" />
 
         <TextView
@@ -27,9 +26,10 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:text="Let's get you started."
-            android:textColor="#808080"
-            android:textSize="15sp" />
+            android:textSize="15sp"
+            android:textColor="#808080" />
 
+        <!-- Full Name -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -39,7 +39,7 @@
             android:textSize="15sp"
             android:textStyle="bold" />
 
-        <RelativeLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp">
@@ -47,41 +47,45 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilFullName"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 app:boxCornerRadiusTopStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
                 app:boxCornerRadiusBottomStart="12dp"
                 app:boxCornerRadiusBottomEnd="12dp"
                 app:boxStrokeColor="#E0E0E0"
-                app:boxStrokeWidth="1dp"
-                app:hintEnabled="false">
+                app:hintEnabled="false"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etFullName"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Enter your full name"
-                    android:inputType="textPersonName"
                     android:imeOptions="actionNext"
-                    android:paddingHorizontal="16dp"
+                    android:inputType="textPersonName"
+                    android:textSize="15sp"
                     android:textColor="#1A1A1A"
                     android:textColorHint="#AAAAAA"
-                    android:textSize="15sp" />
+                    android:paddingHorizontal="16dp" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <ImageView
                 android:id="@+id/ivFullNameCheck"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:layout_marginEnd="20dp"
                 android:src="@drawable/ic_check_circle"
-                android:visibility="gone" />
-        </RelativeLayout>
+                android:visibility="gone"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintBottom_toBottomOf="@id/tilFullName"
+                android:layout_marginEnd="12dp"
+                android:layout_marginBottom="14dp" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
-
+        <!-- Email -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -91,7 +95,7 @@
             android:textSize="15sp"
             android:textStyle="bold" />
 
-        <RelativeLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp">
@@ -99,15 +103,17 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilEmail"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 app:boxCornerRadiusTopStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
                 app:boxCornerRadiusBottomStart="12dp"
                 app:boxCornerRadiusBottomEnd="12dp"
                 app:boxStrokeColor="#E0E0E0"
-                app:boxStrokeWidth="1dp"
-                app:hintEnabled="false">
+                app:hintEnabled="false"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etEmail"
@@ -116,24 +122,25 @@
                     android:hint="Enter your email address"
                     android:inputType="textEmailAddress"
                     android:imeOptions="actionNext"
-                    android:paddingHorizontal="16dp"
+                    android:textSize="15sp"
                     android:textColor="#1A1A1A"
                     android:textColorHint="#AAAAAA"
-                    android:textSize="15sp" />
+                    android:paddingHorizontal="16dp" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <ImageView
                 android:id="@+id/ivEmailCheck"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:layout_marginEnd="20dp"
                 android:src="@drawable/ic_check_circle"
-                android:visibility="gone" />
-        </RelativeLayout>
+                android:visibility="gone"
+                android:layout_marginEnd="12dp"
+                android:layout_marginBottom="14dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toBottomOf="@id/tilEmail" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
-
+        <!-- Password -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -143,7 +150,7 @@
             android:textSize="15sp"
             android:textStyle="bold" />
 
-        <RelativeLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp">
@@ -151,16 +158,19 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilPassword"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 app:passwordToggleEnabled="true"
                 app:passwordToggleTint="#1A1A1A"
-                app:hintEnabled="false"
                 app:boxStrokeColor="#E0E0E0"
+                app:hintEnabled="false"
                 app:boxCornerRadiusTopStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
                 app:boxCornerRadiusBottomStart="12dp"
-                app:boxCornerRadiusBottomEnd="12dp">
+                app:boxCornerRadiusBottomEnd="12dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etPassword"
@@ -169,24 +179,25 @@
                     android:hint="Enter your password"
                     android:inputType="textPassword"
                     android:imeOptions="actionNext"
-                    android:paddingHorizontal="16dp"
+                    android:textSize="15sp"
                     android:textColor="#1A1A1A"
                     android:textColorHint="#AAAAAA"
-                    android:textSize="15sp" />
+                    android:paddingHorizontal="16dp" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <ImageView
                 android:id="@+id/ivPasswordCheck"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:layout_marginEnd="56dp"
+                android:visibility="gone"
                 android:src="@drawable/ic_check_circle"
-                android:visibility="gone" />
-        </RelativeLayout>
+                android:layout_marginEnd="12dp"
+                android:layout_marginBottom="14dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toBottomOf="@id/tilPassword" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
-
+        <!-- Confirm Password -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -196,7 +207,7 @@
             android:textSize="15sp"
             android:textStyle="bold" />
 
-        <RelativeLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp">
@@ -204,16 +215,19 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilConfirmPassword"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                app:passwordToggleTint="#1A1A1A"
                 app:passwordToggleEnabled="true"
+                app:passwordToggleTint="#1A1A1A"
+                app:hintEnabled="false"
+                app:boxStrokeColor="#E0E0E0"
                 app:boxCornerRadiusTopStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
                 app:boxCornerRadiusBottomStart="12dp"
                 app:boxCornerRadiusBottomEnd="12dp"
-                app:boxStrokeColor="#E0E0E0"
-                app:hintEnabled="false">
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etConfirmPassword"
@@ -222,23 +236,23 @@
                     android:hint="Re-enter your password"
                     android:inputType="textPassword"
                     android:imeOptions="actionDone"
-                    android:paddingHorizontal="16dp"
+                    android:textSize="15sp"
                     android:textColor="#1A1A1A"
                     android:textColorHint="#AAAAAA"
-                    android:textSize="15sp" />
+                    android:paddingHorizontal="16dp" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <ImageView
                 android:id="@+id/ivConfirmPasswordCheck"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:layout_marginEnd="56dp"
+                android:visibility="gone"
                 android:src="@drawable/ic_check_circle"
-                android:visibility="gone" />
-        </RelativeLayout>
-
+                android:layout_marginEnd="12dp"
+                android:layout_marginBottom="14dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toBottomOf="@id/tilConfirmPassword" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <!-- Terms -->
         <TextView
@@ -250,7 +264,6 @@
             android:textSize="13sp"
             android:lineSpacingExtra="2dp" />
 
-
         <!-- Create Account Button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCreateAccount"
@@ -258,13 +271,12 @@
             android:layout_height="50dp"
             android:layout_marginTop="24dp"
             android:text="Create Account"
-            android:textAllCaps="false"
             android:textStyle="bold"
+            android:textAllCaps="false"
             android:textColor="@android:color/white"
             android:textSize="16sp"
-            app:cornerRadius="12dp"
-            app:elevation="0dp"
-            app:backgroundTint="#1A1A1A" />
+            app:backgroundTint="#1A1A1A"
+            app:cornerRadius="12dp" />
 
         <!-- Loading -->
         <ProgressBar
@@ -275,13 +287,13 @@
             android:layout_marginTop="16dp"
             android:visibility="gone" />
 
-        <!-- Bottom: login -->
+        <!-- Login alternative -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
+            android:orientation="horizontal"
             android:gravity="center"
-            android:orientation="horizontal">
+            android:layout_marginTop="32dp">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -300,7 +312,6 @@
                 android:textStyle="bold"
                 android:padding="4dp"
                 android:background="?attr/selectableItemBackground" />
-
         </LinearLayout>
 
     </LinearLayout>

@@ -60,11 +60,7 @@
     <string name="regular_fit_polo">Regular Fit Polo</string>
 
     <!-- Authentication - Google Sign-In -->
-    <string name="default_web_client_id">436349143820-9j5khoq0jvvn73o919f8iij0pbsqjjbd.apps.googleusercontent.com</string>
+    <string name="default_web_client_id">436349143820-ajq92i3vqsh79k8a1gur0ndfq43c7q7f.apps.googleusercontent.com</string>
 
-    <!-- Authentication - Facebook Login -->
-    <string name="facebook_app_id">1461130992381172</string>
-    <string name="facebook_client_token">bc9b36db2eaa300b01717f72e75b58c0</string>
-    <string name="fb_login_protocol_scheme">fb1461130992381172</string>
 
 </resources>

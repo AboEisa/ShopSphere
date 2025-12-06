@@ -10,46 +10,82 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val loginUseCase: LoginUseCase,
-    private val googleLoginUseCase: GoogleLoginUseCase
+    private val googleLoginUseCase: GoogleLoginUseCase,
+    private val prefs: SharedPreference
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Idle)
-    val uiState = _uiState
+    private val _state = MutableStateFlow<AuthUiState>(AuthUiState.Idle)
+    val state: StateFlow<AuthUiState> = _state
 
-    var email: String = ""
-    var password: String = ""
+    // ----------------------------------------------------------
+    // EMAIL LOGIN
+    // ----------------------------------------------------------
+    // In LoginViewModel - after successful Firebase login
+    fun login(email: String, password: String) {
+        viewModelScope.launch {
+            _state.value = AuthUiState.Loading
+            try {
+                val firebaseUser = loginUseCase(email, password)
 
-    fun onEvent(event: LoginUiEvent) {
-        when (event) {
+                // ✅ Firebase is already persisted, just sync SharedPreferences
+                prefs.saveUid(firebaseUser.uid)
+                prefs.saveIsLoggedIn(true)
 
-            is LoginUiEvent.EmailChanged -> email = event.email
-
-            is LoginUiEvent.PasswordChanged -> password = event.password
-
-            is LoginUiEvent.LoginClicked -> login()
-
-            is LoginUiEvent.GoogleToken -> loginWithGoogle(event.idToken)
+                _state.value = AuthUiState.Success("Login success")
+            } catch (e: Exception) {
+                _state.value = AuthUiState.Error(e.message)
+            }
         }
     }
 
-    private fun login() = viewModelScope.launch {
-        _uiState.value = LoginUiState.Loading
+    // ----------------------------------------------------------
+    // GOOGLE LOGIN
+    // ----------------------------------------------------------
+    fun loginWithGoogle(idToken: String) {
+        viewModelScope.launch {
+            _state.value = AuthUiState.Loading
 
-        val result = loginUseCase(email, password)
-        _uiState.value =
-            if (result.isSuccess) LoginUiState.Success
-            else LoginUiState.Error(result.exceptionOrNull()?.message ?: "Unknown error")
+            try {
+                val firebaseUser = googleLoginUseCase(idToken)
+
+                // FIXED: Save both UID and login state
+                prefs.saveUid(firebaseUser.uid)
+                prefs.saveIsLoggedIn(true)  // ← ADD THIS
+
+                _state.value = AuthUiState.Success("Google login success")
+
+            } catch (e: Exception) {
+                _state.value = AuthUiState.Error(e.message)
+            }
+        }
     }
 
-    private fun loginWithGoogle(idToken: String) = viewModelScope.launch {
-        _uiState.value = LoginUiState.Loading
 
-        val result = googleLoginUseCase(idToken)
-        _uiState.value =
-            if (result.isSuccess) LoginUiState.Success
-            else LoginUiState.Error(result.exceptionOrNull()?.message ?: "Unknown error")
+
+    // ----------------------------------------------------------
+    // CHECK IF LOGGED IN
+    // ----------------------------------------------------------
+    fun checkIfLoggedIn() {
+        // FIXED: Check explicit login state instead of just UID
+        val isLoggedIn = prefs.isLoggedIn()
+
+        if (isLoggedIn) {
+            _state.value = AuthUiState.Success("Already logged in")
+        } else {
+            _state.value = AuthUiState.Idle
+        }
+    }
+
+    // ----------------------------------------------------------
+    // LOGOUT
+    // ----------------------------------------------------------
+    fun logout() {
+        prefs.clearUid()
+        prefs.saveIsLoggedIn(false)
+        _state.value = AuthUiState.Idle
     }
 }

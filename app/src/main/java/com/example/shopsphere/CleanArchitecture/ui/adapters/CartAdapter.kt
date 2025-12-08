@@ -6,7 +6,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.shopsphere.CleanArchitecture.ui.models.PresentationProductResult
 import com.example.shopsphere.databinding.ItemCartBinding
-import java.text.NumberFormat
+import java.text.DecimalFormat
 import java.util.Locale
 
 class CartAdapter(
@@ -16,11 +16,19 @@ class CartAdapter(
 ) : RecyclerView.Adapter<CartAdapter.Holder>() {
 
     private var products: MutableList<PresentationProductResult> = mutableListOf()
-    private val currencyFormat = NumberFormat.getCurrencyInstance(Locale.US).apply {
+
+    // without $
+    private val currencyFormat = DecimalFormat("#,##0.00").apply {
+        minimumFractionDigits = 2
         maximumFractionDigits = 2
     }
 
     private val productQuantities = mutableMapOf<Int, Int>()
+
+    // Function لتنسيق السعر
+    private fun formatPrice(price: Double): String {
+        return "EGP${currencyFormat.format(price)}"
+    }
 
     fun submitList(product: List<PresentationProductResult>) {
         products.clear()
@@ -67,8 +75,9 @@ class CartAdapter(
                 val unitPrice = product.price
                 val totalPrice = unitPrice * quantity
 
-                productPrice.text = currencyFormat.format(unitPrice)
+                productPrice.text = formatPrice(totalPrice)
                 productQuantity.text = quantity.toString()
+
                 Glide.with(root)
                     .load(product.image)
                     .into(productImage)
@@ -80,6 +89,10 @@ class CartAdapter(
                     val newQuantity = quantity + 1
                     productQuantities[product.id] = newQuantity
                     productQuantity.text = newQuantity.toString()
+
+                    val newTotalPrice = unitPrice * newQuantity
+                    productPrice.text = formatPrice(newTotalPrice)
+
                     onQuantityChanged(product.id, newQuantity)
                 }
 
@@ -88,6 +101,9 @@ class CartAdapter(
                         val newQuantity = quantity - 1
                         productQuantities[product.id] = newQuantity
                         productQuantity.text = newQuantity.toString()
+                        val newTotalPrice = unitPrice * newQuantity
+                        productPrice.text = formatPrice(newTotalPrice)
+
                         onQuantityChanged(product.id, newQuantity)
                     }
                 }

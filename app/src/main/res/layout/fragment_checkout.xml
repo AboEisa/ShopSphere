@@ -84,7 +84,7 @@
                 android:layout_width="@dimen/_18sdp"
                 android:layout_height="@dimen/_18sdp"
                 android:src="@drawable/ic_home"
-                android:tint="@color/bright_green"
+                app:tint="@color/bright_green"
                />
 
             <LinearLayout
@@ -173,7 +173,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:tint="#23a36e"
+                app:tint="#23a36e"
                 android:src="@drawable/ic_edit" />
         </LinearLayout>
         <View
@@ -235,20 +235,6 @@
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:layout_marginBottom="2dp">
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/vat"
-                android:textColor="@color/_808080"
-                android:textSize="@dimen/_13sdp"/>
-            <TextView
-                android:id="@+id/txt_order_vat"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/_0_00"
-                android:textColor="#111827"
-                android:textSize="@dimen/_13sdp"/>
         </LinearLayout>
         <LinearLayout
             android:layout_width="match_parent"
@@ -267,7 +253,7 @@
                 android:id="@+id/textShippingFee"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="$ 80"
+                android:text="@string/egp_80"
                 android:textColor="#111827"
                 android:textSize="@dimen/_13sdp"/>
         </LinearLayout>

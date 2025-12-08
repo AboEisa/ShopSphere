@@ -17,7 +17,7 @@
     <string name="new_card">New Card</string>
     <string name="add_debit_or_credit_card">Add Debit or Credit Card</string>
     <string name="your_cart_is_empty">Your Cart Is Empty</string>
-    <string name="total_0_00">Total: $0.00</string>
+    <string name="total_0_00">Total: EGP0.00</string>
     <string name="checkout">Checkout</string>
     <string name="my_cart">My Cart</string>
     <string name="delivery_address">Delivery Address</string>
@@ -27,12 +27,11 @@
     <string name="_1234">**** **** **** 1234</string>
     <string name="order_summary">Order Summary</string>
     <string name="sub_total">Sub-total</string>
-    <string name="_5_870">$ 5,870</string>
-    <string name="vat">VAT (%)</string>
+    <string name="_5_870">EGP 5,870</string>
     <string name="_0_00">$ 0.00</string>
     <string name="shipping_fee">Shipping fee</string>
     <string name="total">Total</string>
-    <string name="_5_950">$ 5,950</string>
+    <string name="_5_950">EGP 5,950</string>
     <string name="place_order">Place Order</string>
     <string name="filters">Filters</string>
     <string name="apply_filter">Apply Filter</string>
@@ -55,12 +54,13 @@
     <string name="enter_your_full_address">Enter your full address...</string>
     <string name="regular_fit_slogan">Regular Fit Slogan</string>
     <string name="the_name_says_it_all_the_right_size_slightly_snugs_the_body_leaving_enough_room_for_comfort_in_the_sleeves_and_waist">The name says it all, the right size slightly snugs the body leaving enough room for comfort in the sleeves and waist.</string>
-    <string name="_1_190">$1,190</string>
+    <string name="_1_190">EGP1,190</string>
     <string name="add_to_cart">Add to Cart</string>
     <string name="regular_fit_polo">Regular Fit Polo</string>
 
     <!-- Authentication - Google Sign-In -->
     <string name="default_web_client_id">436349143820-ajq92i3vqsh79k8a1gur0ndfq43c7q7f.apps.googleusercontent.com</string>
+    <string name="egp_80">EGP 80</string>
 
 
 </resources>

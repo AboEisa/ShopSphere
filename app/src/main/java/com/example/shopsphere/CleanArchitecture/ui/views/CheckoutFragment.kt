@@ -46,16 +46,17 @@ class CheckoutFragment : Fragment() {
         sharedCartViewModel.cartItems.observe(viewLifecycleOwner) { items ->
             val subtotal = items.sumOf { it.price * (it.quantity ?: 1) }
             val totalWithShipping = subtotal + shippingCost
-            binding.txtOrderTotal.text = "$${String.format("%.2f", totalWithShipping)}"
-            binding.textSubTotal.text = "$${String.format("%.2f", subtotal)}"
-            binding.textShippingFee.text = "$${String.format("%.2f", shippingCost)}"
+            binding.txtOrderTotal.text = "EGP${String.format("%.2f", totalWithShipping)}"
+            binding.textSubTotal.text = "EGP${String.format("%.2f", subtotal)}"
+            binding.textShippingFee.text = "EGP${String.format("%.2f", shippingCost)}"
+
         }
 
         sharedCartViewModel.totalPrice.observe(viewLifecycleOwner) { total ->
             val totalWithShipping = total + shippingCost
-            binding.txtOrderTotal.text = "$${String.format("%.2f", totalWithShipping)}"
-            binding.textSubTotal.text = "$${String.format("%.2f", total)}"
-            binding.textShippingFee.text = "$${String.format("%.2f", shippingCost)}"
+            binding.txtOrderTotal.text = "EGP${String.format("%.2f", totalWithShipping)}"
+            binding.textSubTotal.text = "EGP${String.format("%.2f", total)}"
+            binding.textShippingFee.text = "EGP${String.format("%.2f", shippingCost)}"
         }
     }
 

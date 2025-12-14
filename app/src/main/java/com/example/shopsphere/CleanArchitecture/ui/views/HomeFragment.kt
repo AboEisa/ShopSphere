@@ -1,9 +1,12 @@
 package com.example.shopsphere.CleanArchitecture.ui.views
 
+import android.animation.ObjectAnimator
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -22,6 +25,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlin.math.abs
 
 @AndroidEntryPoint
 class HomeFragment : Fragment() {
@@ -37,6 +41,14 @@ class HomeFragment : Fragment() {
     private val adapterTypes: TypesAdapter by lazy { TypesAdapter() }
 
     private val cartViewModel: CartViewModel by activityViewModels()
+
+    // Variables for draggable FAB
+    private var dX = 0f
+    private var dY = 0f
+    private var isDragging = false
+    private var startX = 0f
+    private var startY = 0f
+    private val clickThreshold = 10f
 
     private val productsAdapter by lazy {
         HomeProductsAdapter(
@@ -71,7 +83,7 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // ❌ REMOVED enableDraggableFab()
+        setupDraggableFab()
         setupFloatingCartButton()
         observeCartItems()
         setupRecyclerView()
@@ -82,12 +94,112 @@ class HomeFragment : Fragment() {
         observeFilteredProducts()
         observeAllProductsAfterFilter()
         fetchProductsBasedOnType(selectedType)
+
+        //  Initialize badge position
+        updateBadgePosition()
     }
 
-    // ------------------------------------------------------
-    // 🔥 FAB is now static because this entire function is REMOVED
-    // ------------------------------------------------------
+    private fun setupDraggableFab() {
+        binding.fabCart.setOnTouchListener { view, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    dX = view.x - event.rawX
+                    dY = view.y - event.rawY
+                    startX = event.rawX
+                    startY = event.rawY
+                    isDragging = false
+                    return@setOnTouchListener true
+                }
 
+                MotionEvent.ACTION_MOVE -> {
+                    val deltaX = abs(event.rawX - startX)
+                    val deltaY = abs(event.rawY - startY)
+
+                    if (!isDragging && (deltaX > clickThreshold || deltaY > clickThreshold)) {
+                        isDragging = true
+                        view.animate().scaleX(1.15f).scaleY(1.15f).setDuration(200).start()
+                    }
+
+                    if (isDragging) {
+                        var newX = event.rawX + dX
+                        var newY = event.rawY + dY
+
+                        // Keep within screen bounds
+                        val minX = 0f
+                        val maxX = binding.root.width.toFloat() - view.width
+                        val minY = 0f
+                        val maxY = binding.root.height.toFloat() - view.height
+
+                        newX = newX.coerceIn(minX, maxX)
+                        newY = newY.coerceIn(minY, maxY)
+
+                        view.x = newX
+                        view.y = newY
+
+                        //  Update badge position while dragging
+                        updateBadgePosition()
+
+                        return@setOnTouchListener true
+                    }
+                }
+
+                MotionEvent.ACTION_UP -> {
+                    if (isDragging) {
+                        isDragging = false
+                        view.animate().scaleX(1f).scaleY(1f).setDuration(200).start()
+                        snapToEdge(view)
+                        return@setOnTouchListener true
+                    } else {
+                        val deltaX = abs(event.rawX - startX)
+                        val deltaY = abs(event.rawY - startY)
+
+                        if (deltaX < clickThreshold && deltaY < clickThreshold) {
+                            binding.fabCart.performClick()
+                        }
+                        return@setOnTouchListener true
+                    }
+                }
+            }
+            false
+        }
+    }
+
+
+    private fun updateBadgePosition() {
+        val fabX = binding.fabCart.x
+        val fabY = binding.fabCart.y
+        val fabWidth = binding.fabCart.width
+        val badgeWidth = binding.tvCartBadge.width
+
+        // Position badge at top-right corner of FAB
+        binding.tvCartBadge.x = fabX + fabWidth - badgeWidth + 4 // +4 for slight overlap
+        binding.tvCartBadge.y = fabY - 4 // -4 to position slightly above
+    }
+
+    private fun snapToEdge(view: View) {
+        val screenWidth = binding.root.width
+        val fabWidth = view.width
+        val currentX = view.x
+
+        val toLeftEdge = currentX
+        val toRightEdge = screenWidth - (currentX + fabWidth)
+
+        val targetX = if (toLeftEdge < toRightEdge) {
+            16f
+        } else {
+            (screenWidth - fabWidth - 16).toFloat()
+        }
+
+        view.animate()
+            .x(targetX)
+            .setDuration(300)
+            .setInterpolator(AccelerateDecelerateInterpolator())
+            .withEndAction {
+                // Update badge position after snap animation
+                updateBadgePosition()
+            }
+            .start()
+    }
 
     private fun setupRecyclerView() {
         binding.recyclerProducts.layoutManager = GridLayoutManager(requireContext(), 2)
@@ -195,12 +307,18 @@ class HomeFragment : Fragment() {
 
     private fun updateCartBadge(count: Int) {
         if (count > 0) {
+            // Show FAB when cart has items
+            binding.fabCart.show()
             binding.tvCartBadge.visibility = View.VISIBLE
             binding.tvCartBadge.text = when {
                 count > 99 -> "99+"
                 else -> count.toString()
             }
+            binding.tvCartBadge.post {
+                updateBadgePosition()
+            }
         } else {
+            binding.fabCart.hide()
             binding.tvCartBadge.visibility = View.GONE
         }
     }

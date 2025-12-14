@@ -42,7 +42,7 @@ class DetailsAdapter(
         fun bind(product: PresentationProductResult) {
             binding.apply {
                 productTitle.text = product.title
-                productPrice.text = "EGP${product.price}"
+                productPrice.text = "EGP ${product.price}"
                 productDescription.text = product.description
                 rate.text = "${product.rating.rate}/5"
                 rateCount.text = "(${product.rating.count} reviews)"

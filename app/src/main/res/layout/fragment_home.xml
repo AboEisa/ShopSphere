@@ -6,7 +6,6 @@
     android:layout_height="match_parent"
     tools:context=".CleanArchitecture.ui.views.HomeFragment">
 
-
     <TextView
         android:id="@+id/txt_discover"
         android:layout_width="wrap_content"
@@ -20,14 +19,13 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-
-
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/search"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginEnd="@dimen/_70sdp"
         android:layout_marginStart="@dimen/_20sdp"
+        android:layout_marginTop="@dimen/_12sdp"
         android:backgroundTintMode="add"
         android:textColorHint="?attr/colorOnSurface"
         app:boxBackgroundMode="outline"
@@ -39,7 +37,6 @@
         app:boxStrokeWidth="1.5sp"
         app:endIconMode="none"
         app:hintEnabled="false"
-        android:layout_marginTop="@dimen/_12sdp"
         app:hintTextColor="?attr/colorPrimary"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/txt_discover">
@@ -49,55 +46,50 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/edittext_background"
-            android:drawableStart="@drawable/ic_text_search"
-
+            android:clickable="true"
             android:drawablePadding="@dimen/_6sdp"
-            android:hint="@string/search_for_clothes"
-            android:inputType="none"
+            android:drawableStart="@drawable/ic_text_search"
             android:focusable="false"
             android:cursorVisible="false"
-            android:clickable="true"
-            android:textColorHint="?attr/colorOnSurface"
+            android:hint="@string/search_for_clothes"
             android:importantForAccessibility="no"
-            android:longClickable="false" />
+            android:inputType="none"
+            android:longClickable="false"
+            android:textColorHint="?attr/colorOnSurface" />
     </com.google.android.material.textfield.TextInputLayout>
-
 
     <ImageView
         android:id="@+id/filter"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/ic_filter"
-        app:layout_constraintTop_toTopOf="@id/search"
         android:layout_marginStart="@dimen/_10sdp"
         android:layout_marginTop="@dimen/_3sdp"
-
-
-        app:layout_constraintStart_toEndOf="@+id/search" />
-
+        android:src="@drawable/ic_filter"
+        app:layout_constraintStart_toEndOf="@+id/search"
+        app:layout_constraintTop_toTopOf="@id/search" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerProducts"
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:layout_marginTop="@dimen/_10sdp"
         app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/recyclerTypes"
         app:spanCount="2"
-        android:layout_marginTop="@dimen/_10sdp"
         tools:listitem="@layout/item_home" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerTypes"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/_20sdp"
         android:layout_marginTop="@dimen/_8sdp"
         android:orientation="horizontal"
-        tools:listitem="@layout/item_types"
-        android:layout_marginStart="@dimen/_20sdp"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/search" />
+        app:layout_constraintTop_toBottomOf="@id/search"
+        tools:listitem="@layout/item_types" />
 
     <TextView
         android:id="@+id/noResult"
@@ -113,46 +105,36 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <!-- ============================================ -->
-    <!-- FLOATING CART BUTTON WITH BADGE - FIXED -->
+    <!-- FAB خارج FrameLayout عشان يتحرك بحرية -->
     <!-- ============================================ -->
-    <FrameLayout
-        android:id="@+id/fabCartContainer"
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabCart"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
-        android:layout_marginBottom="80dp"
+        android:contentDescription="Shopping Cart"
+        app:backgroundTint="@color/bright_green"
+        app:elevation="6dp"
+        app:fabSize="normal"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:pressedTranslationZ="12dp"
+        app:srcCompat="@drawable/ic_cart"
+        app:tint="@android:color/white" />
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fabCart"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:contentDescription="Shopping Cart"
-            app:srcCompat="@drawable/ic_cart"
-            app:fabSize="normal"
-            app:tint="@android:color/white"
-            app:backgroundTint="@color/bright_green"
-            app:elevation="6dp"
-            app:pressedTranslationZ="12dp" />
-
-        <TextView
-            android:id="@+id/tvCartBadge"
-            android:layout_width="22dp"
-            android:layout_height="22dp"
-            android:layout_gravity="top|end"
-            android:layout_marginTop="2dp"
-            android:layout_marginEnd="2dp"
-            android:background="@drawable/badge_background"
-            android:elevation="8dp"
-            android:gravity="center"
-            android:textColor="@android:color/white"
-            android:textSize="11sp"
-            android:textStyle="bold"
-            android:visibility="gone"
-            tools:text="99"
-            tools:visibility="visible" />
-    </FrameLayout>
-
+    <!-- البادج هيتحرك مع الـ FAB برمجياً -->
+    <TextView
+        android:id="@+id/tvCartBadge"
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:background="@drawable/badge_background"
+        android:elevation="8dp"
+        android:gravity="center"
+        android:textColor="@android:color/white"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        tools:text="99"
+        tools:visibility="visible" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

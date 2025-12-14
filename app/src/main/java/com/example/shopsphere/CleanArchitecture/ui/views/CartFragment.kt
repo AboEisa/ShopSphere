@@ -136,7 +136,7 @@ class CartFragment : Fragment() {
     private fun updateTotalPrice() {
         if (_binding == null) return
         val totalPrice = cartAdapter.getTotalPrice()
-        binding.textTotalPrice.text = "Total: EGP${String.format("%.2f", totalPrice)}"
+        binding.textTotalPrice.text = "Total: EGP ${String.format("%.2f", totalPrice)}"
     }
 
     private fun showEmptyState() {

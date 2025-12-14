@@ -41,7 +41,7 @@ class SavedAdapter(private val onItemClick: (Int) -> Unit, private val onFavorit
         fun bind(product: PresentationProductResult) {
             binding.apply {
                 productTitle.text = product.title
-                originalPrice.text = "$${product.price}"
+                originalPrice.text = "EGP ${product.price}"
                 discountPercentage.text = "${product.rating.rate}%"
                 Glide.with(binding.root)
                     .load(product.image)

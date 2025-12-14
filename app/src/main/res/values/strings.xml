@@ -17,7 +17,7 @@
     <string name="new_card">New Card</string>
     <string name="add_debit_or_credit_card">Add Debit or Credit Card</string>
     <string name="your_cart_is_empty">Your Cart Is Empty</string>
-    <string name="total_0_00">Total: EGP0.00</string>
+    <string name="total_0_00">Total: EGP 0.00</string>
     <string name="checkout">Checkout</string>
     <string name="my_cart">My Cart</string>
     <string name="delivery_address">Delivery Address</string>

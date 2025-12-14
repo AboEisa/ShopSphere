@@ -57,6 +57,7 @@
         android:stepSize="1"
         style="@style/Widget.App.SeekBar"
         app:labelBehavior="gone"
+        app:trackColorActive="@color/bright_green"
         android:layout_marginBottom="16dp"
         android:layout_marginTop="8dp"/>
 

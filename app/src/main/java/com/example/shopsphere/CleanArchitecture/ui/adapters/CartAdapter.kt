@@ -7,7 +7,6 @@ import com.bumptech.glide.Glide
 import com.example.shopsphere.CleanArchitecture.ui.models.PresentationProductResult
 import com.example.shopsphere.databinding.ItemCartBinding
 import java.text.DecimalFormat
-import java.util.Locale
 
 class CartAdapter(
     private val onItemClick: (Int) -> Unit,
@@ -17,7 +16,7 @@ class CartAdapter(
 
     private var products: MutableList<PresentationProductResult> = mutableListOf()
 
-    // without $
+    // Currency formatter without $ symbol
     private val currencyFormat = DecimalFormat("#,##0.00").apply {
         minimumFractionDigits = 2
         maximumFractionDigits = 2
@@ -25,9 +24,9 @@ class CartAdapter(
 
     private val productQuantities = mutableMapOf<Int, Int>()
 
-    // Function لتنسيق السعر
+    // Function to format price
     private fun formatPrice(price: Double): String {
-        return "EGP${currencyFormat.format(price)}"
+        return "EGP ${currencyFormat.format(price)}" // Added space after EGP
     }
 
     fun submitList(product: List<PresentationProductResult>) {
@@ -72,6 +71,8 @@ class CartAdapter(
         fun bind(product: PresentationProductResult, quantity: Int) {
             binding.apply {
                 productTitle.text = product.title
+
+                // Fixed: unitPrice is now a Double, not a String
                 val unitPrice = product.price
                 val totalPrice = unitPrice * quantity
 
@@ -101,6 +102,7 @@ class CartAdapter(
                         val newQuantity = quantity - 1
                         productQuantities[product.id] = newQuantity
                         productQuantity.text = newQuantity.toString()
+
                         val newTotalPrice = unitPrice * newQuantity
                         productPrice.text = formatPrice(newTotalPrice)
 

@@ -21,22 +21,15 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    // Signing Configuration for Release
     signingConfigs {
         create("release") {
-            // Option 1: Using environment variables (recommended for CI/CD)
-            storeFile = file(System.getenv("KEYSTORE_FILE") ?: "../my-release-key.keystore")
-            storePassword = System.getenv("KEYSTORE_PASSWORD")
-            keyAlias = System.getenv("KEY_ALIAS")
-            keyPassword = System.getenv("KEY_PASSWORD")
-
-            // Option 2: If not using env variables, temporarily use direct values
-            // storeFile = file("../my-release-key.keystore")
-            // storePassword = "your_keystore_password"
-            // keyAlias = "my-key-alias"
-            // keyPassword = "your_key_password"
+            storeFile = file("/home/omaraboesh/AndroidStudioProjects/ShopSphere/my-release-key.keystore")
+            storePassword = "Asserr03010"
+            keyAlias = "shopsphere-key"
+            keyPassword = "Asserr03010"
         }
     }
+
 
     buildTypes {
         release {

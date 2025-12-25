@@ -80,7 +80,15 @@ class LoginFragment : Fragment() {
                     is LoginUiState.Loading -> setLoading(true)
                     is LoginUiState.Success -> {
                         setLoading(false)
-                        findNavController().navigate(R.id.action_loginFragment_to_homeFragment)
+                        findNavController().navigate(
+                            R.id.action_loginFragment_to_homeFragment,
+                            null,
+                            androidx.navigation.navOptions {
+                                popUpTo(R.id.loginFragment) {
+                                    inclusive = true
+                                }
+                            }
+                        )
                     }
                     is LoginUiState.Error -> {
                         setLoading(false)
@@ -111,11 +119,18 @@ class LoginFragment : Fragment() {
 
                 val result = credentialManager.getCredential(requireActivity(), request)
                 val credential = result.credential
-                if (credential is GoogleIdTokenCredential) {
-                    viewModel.onEvent(LoginUiEvent.GoogleToken(credential.idToken))
+
+                if (credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                    val googleIdTokenCredential =
+                        GoogleIdTokenCredential.createFrom(credential.data)
+
+                    viewModel.onEvent(
+                        LoginUiEvent.GoogleToken(googleIdTokenCredential.idToken)
+                    )
                 } else {
                     Toast.makeText(requireContext(), "Invalid Google credential", Toast.LENGTH_SHORT).show()
                 }
+
 
             } catch (e: GetCredentialException) {
                 Toast.makeText(requireContext(), e.message ?: "Google sign-in failed", Toast.LENGTH_SHORT).show()

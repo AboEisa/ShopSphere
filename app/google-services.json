@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "436349143820-mrl84ic8h2auft5k2l7tvshft9teor38.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.shopsphere",
+            "certificate_hash": "a12589cd9e837ba94222db8e90f8e89a39e80e32"
+          }
+        },
+        {
           "client_id": "436349143820-ur9nm7mtf2qtqqkmni7s9ggtstcmpm5k.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

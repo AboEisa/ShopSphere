@@ -23,7 +23,7 @@ class SavedViewModel @Inject constructor(
     private val sharedPreference: SharedPreference
 ) : ViewModel() {
 
-    private val _favoriteProducts = MutableLiveData<List<PresentationProductResult>>()
+    private val _favoriteProducts = MutableLiveData<List<PresentationProductResult>>(emptyList())
     val favoriteProducts: LiveData<List<PresentationProductResult>> get() = _favoriteProducts
 
     private val _loading = MutableLiveData(false)
@@ -54,8 +54,9 @@ class SavedViewModel @Inject constructor(
             try {
                 val favoriteIds = sharedPreference.getFavoriteProducts()
                 val favorites = getFavoriteProductsUseCase(favoriteIds)
-                _favoriteProducts.postValue(favorites.getOrNull()?.mapToPresentation())
-                _emptyState.postValue(favorites.getOrNull()?.isEmpty() == true)
+                val mappedFavorites = favorites.getOrNull()?.mapToPresentation().orEmpty()
+                _favoriteProducts.postValue(mappedFavorites)
+                _emptyState.postValue(mappedFavorites.isEmpty())
             } finally {
                 _loading.postValue(false)
             }
@@ -77,6 +78,11 @@ class SavedViewModel @Inject constructor(
 
     suspend fun isFavorite(productId: Int): Boolean {
         return isFavoriteUseCase(productId)
+    }
+
+    /** Synchronous check for adapter/binding; avoids runBlocking. */
+    fun isFavoriteSync(productId: Int): Boolean {
+        return sharedPreference.getFavoriteProducts().contains(productId)
     }
 
     fun addFavoriteProduct(productId: Int) {

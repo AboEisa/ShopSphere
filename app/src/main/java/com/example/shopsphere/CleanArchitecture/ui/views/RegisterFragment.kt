@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.navOptions
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.AuthUiState
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.RegisterViewModel
 import com.example.shopsphere.R
@@ -78,7 +79,7 @@ class RegisterFragment : Fragment() {
         }
 
         binding.tvLogin.setOnClickListener {
-            findNavController().navigate(R.id.action_registerFragment_to_loginFragment)
+            findNavController().navigateUp()
         }
     }
 
@@ -157,7 +158,18 @@ class RegisterFragment : Fragment() {
     }
 
     private fun navigateToHome() {
-        findNavController().navigate(RegisterFragmentDirections.actionRegisterFragmentToHomeFragment())
+        val navController = findNavController()
+        if (navController.currentDestination?.id != R.id.registerFragment) return
+        navController.navigate(
+            R.id.homeFragment,
+            null,
+            navOptions {
+                popUpTo(R.id.loginFragment) {
+                    inclusive = true
+                }
+                launchSingleTop = true
+            }
+        )
     }
 
     private fun toast(message: String) {

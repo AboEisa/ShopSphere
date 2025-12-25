@@ -17,7 +17,7 @@ class SearchViewModel @Inject constructor(
     private val getProductsUseCase: GetProductsUseCase
 ) : ViewModel() {
 
-    private val _searchResults = MutableLiveData<List<PresentationProductResult>>()
+    private val _searchResults = MutableLiveData<List<PresentationProductResult>>(emptyList())
     val searchResults: LiveData<List<PresentationProductResult>> = _searchResults
 
     fun searchProducts(query: String) {
@@ -27,7 +27,7 @@ class SearchViewModel @Inject constructor(
                 val filteredProducts = result.getOrNull()?.filter {
                     it.title.contains(query, ignoreCase = true)
                 }?.mapToPresentation()
-                _searchResults.postValue(filteredProducts!!)
+                _searchResults.postValue(filteredProducts.orEmpty())
             } else {
                 _searchResults.postValue(emptyList())
             }

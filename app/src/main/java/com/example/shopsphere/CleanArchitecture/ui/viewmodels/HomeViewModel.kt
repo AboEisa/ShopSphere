@@ -5,7 +5,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.shopsphere.CleanArchitecture.domain.GetProductsByCategoryUseCase
 import com.example.shopsphere.CleanArchitecture.domain.GetProductsUseCase
 import com.example.shopsphere.CleanArchitecture.ui.models.PresentationProductResult
 import com.example.shopsphere.CleanArchitecture.ui.models.mapToPresentation
@@ -16,97 +15,117 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val getProductsUseCase: GetProductsUseCase,
-    private val getProductsByCategoryUseCase: GetProductsByCategoryUseCase
+    private val getProductsUseCase: GetProductsUseCase
 ) : ViewModel() {
 
     private val _productsLiveData = MutableLiveData<List<PresentationProductResult>>()
     val productsLiveData: LiveData<List<PresentationProductResult>> = _productsLiveData
 
+    private val _filteredProductsLiveData = MutableLiveData<List<PresentationProductResult>>()
+    val filteredProductsLiveData: LiveData<List<PresentationProductResult>> = _filteredProductsLiveData
 
+    private val _categoriesLiveData = MutableLiveData<List<String>>(listOf(ALL_CATEGORY))
+    val categoriesLiveData: LiveData<List<String>> = _categoriesLiveData
+
+    private val _isLoading = MutableLiveData(false)
+    val isLoading: LiveData<Boolean> = _isLoading
+
+    private val _hasLoadedOnce = MutableLiveData(false)
+    val hasLoadedOnce: LiveData<Boolean> = _hasLoadedOnce
+
+    private var allProductsCache: List<PresentationProductResult> = emptyList()
+    private var selectedCategory: String = ALL_CATEGORY
+    private var activePriceRange: Pair<Float, Float>? = null
 
     init {
         fetchProducts()
     }
 
-     fun fetchProducts() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val result = getProductsUseCase.getProducts()
-            if (result.isSuccess) {
-                _productsLiveData.postValue(result.getOrNull()?.mapToPresentation())
-            } else {
-                Log.e("HomeViewModel", "Error fetching products: ${result.exceptionOrNull()?.message}")
-                _productsLiveData.postValue(emptyList())
-            }
-        }
+    fun fetchProducts() {
+        selectedCategory = ALL_CATEGORY
+        activePriceRange = null
+        loadAllProducts()
     }
 
     fun fetchProductsByCategory(category: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val result = getProductsByCategoryUseCase.getProductsByCategory(category)
-            if (result.isSuccess) {
-                _productsLiveData.postValue(result.getOrNull()?.mapToPresentation())
-            } else {
-                Log.e("HomeViewModel", "Error fetching products by category: ${result.exceptionOrNull()?.message}")
-                _productsLiveData.postValue(emptyList())
-            }
+        selectedCategory = category.ifBlank { ALL_CATEGORY }
+        if (allProductsCache.isEmpty()) {
+            loadAllProducts()
+        } else {
+            publishVisibleProducts()
         }
     }
-
-
-
-
-    private val _filteredProductsLiveData = MutableLiveData<List<PresentationProductResult>>()
-    val filteredProductsLiveData: LiveData<List<PresentationProductResult>> = _filteredProductsLiveData
 
     fun filterProducts(minPrice: Float, maxPrice: Float) {
+        activePriceRange = minPrice to maxPrice
+        publishVisibleProducts()
+    }
+
+    fun clearPriceFilter() {
+        activePriceRange = null
+        publishVisibleProducts()
+    }
+
+    private fun loadAllProducts() {
         viewModelScope.launch(Dispatchers.IO) {
-            val result = getProductsUseCase.getProducts()
-            if (result.isSuccess) {
-                val filteredProducts = result.getOrNull()?.filter { product ->
-                    product.price in minPrice..maxPrice
+            _isLoading.postValue(true)
+            try {
+                val result = getProductsUseCase.getProducts()
+                if (result.isSuccess) {
+                    allProductsCache = result.getOrNull()?.mapToPresentation().orEmpty()
+                    publishCategories()
+                    publishVisibleProducts()
+                } else {
+                    Log.e(
+                        TAG,
+                        "Error fetching products: ${result.exceptionOrNull()?.message}"
+                    )
+                    allProductsCache = emptyList()
+                    _categoriesLiveData.postValue(listOf(ALL_CATEGORY))
+                    _productsLiveData.postValue(emptyList())
+                    _filteredProductsLiveData.postValue(emptyList())
                 }
-                _filteredProductsLiveData.postValue(filteredProducts?.mapToPresentation())
+            } finally {
+                _hasLoadedOnce.postValue(true)
+                _isLoading.postValue(false)
             }
         }
     }
 
+    private fun publishCategories() {
+        val dynamicCategories = allProductsCache
+            .map { it.category.trim() }
+            .filter { it.isNotBlank() }
+            .distinctBy { it.lowercase() }
+            .sortedBy { it.lowercase() }
 
-//    fun searchProducts(query: String) {
-//        viewModelScope.launch(Dispatchers.IO) {
-//            val result = getProductsUseCase.getProducts()
-//            if (result.isSuccess) {
-//                val filteredProducts = result.getOrNull()?.filter { product ->
-//                    product.title.contains(query, ignoreCase = true)
-//                }
-//                _filteredProductsLiveData.postValue(filteredProducts?.mapToPresentation())
-//            }
-//        }
-//    }
+        _categoriesLiveData.postValue(listOf(ALL_CATEGORY) + dynamicCategories)
+    }
 
-//    fun sortProductsByPrice(ascending: Boolean) {
-//        viewModelScope.launch(Dispatchers.IO) {
-//            val result = getProductsUseCase.getProducts()
-//            if (result.isSuccess) {
-//                val sortedProducts = result.getOrNull()?.sortedBy { product ->
-//                    if (ascending) product.price else -product.price
-//                }
-//                _filteredProductsLiveData.postValue(sortedProducts?.mapToPresentation())
-//            }
-//        }
-//    }
+    private fun publishVisibleProducts() {
+        viewModelScope.launch(Dispatchers.Default) {
+            val categoryFiltered = if (selectedCategory.equals(ALL_CATEGORY, ignoreCase = true)) {
+                allProductsCache
+            } else {
+                allProductsCache.filter {
+                    it.category.trim().equals(selectedCategory.trim(), ignoreCase = true)
+                }
+            }
 
-//    fun sortProductsByRating(ascending: Boolean) {
-//        viewModelScope.launch(Dispatchers.IO) {
-//            val result = getProductsUseCase.getProducts()
-//            if (result.isSuccess) {
-//                val sortedProducts = result.getOrNull()?.sortedBy { product ->
-//                    if (ascending) product.rating.rate else -product.rating.rate
-//                }
-//                _filteredProductsLiveData.postValue(sortedProducts?.mapToPresentation())
-//            }
-//        }
-//    }
+            val priceFiltered = activePriceRange?.let { range ->
+                categoryFiltered.filter { product ->
+                    product.price.toFloat() in range.first..range.second
+                }
+            } ?: categoryFiltered
 
+            _productsLiveData.postValue(priceFiltered)
+            _filteredProductsLiveData.postValue(priceFiltered)
+            _hasLoadedOnce.postValue(true)
+        }
+    }
 
+    companion object {
+        private const val TAG = "HomeViewModel"
+        const val ALL_CATEGORY = "All"
+    }
 }

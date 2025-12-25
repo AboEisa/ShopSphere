@@ -2,28 +2,36 @@ package com.example.shopsphere.CleanArchitecture.ui.views
 
 import android.os.Bundle
 import android.view.View
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
-import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
 import com.example.shopsphere.R
 import com.example.shopsphere.databinding.ActivityMainBinding
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
-import androidx.navigation.NavGraph
 
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
+
+    companion object {
+        const val EXTRA_OPEN_HOME = "openHome"
+        const val EXTRA_OPEN_LOGIN = "openLogin"
+    }
 
     private var _binding: ActivityMainBinding? = null
     private val binding get() = _binding!!
 
     private lateinit var navController: NavController
 
-    @Inject
-    lateinit var sharedPref: SharedPreference   // <-- injected login cache
+    private val rootDestinations = setOf(
+        R.id.homeFragment,
+        R.id.searchFragment,
+        R.id.savedFragment,
+        R.id.cartFragment,
+        R.id.accountFragment
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,39 +44,57 @@ class MainActivity : AppCompatActivity() {
 
         navController = navHostFragment.navController
 
-        val openHome = intent.getBooleanExtra("openHome", false)
+        val openHome = intent.getBooleanExtra(EXTRA_OPEN_HOME, false)
+        val openLogin = intent.getBooleanExtra(EXTRA_OPEN_LOGIN, false)
 
         val graph = navController.navInflater.inflate(R.navigation.nav_graph)
 
-        if (openHome) {
-            graph.setStartDestination(R.id.homeFragment)
-        } else {
-            graph.setStartDestination(R.id.onBoardFragment)
+        when {
+            openHome -> graph.setStartDestination(R.id.homeFragment)
+            openLogin -> graph.setStartDestination(R.id.loginFragment)
+            else -> graph.setStartDestination(R.id.onBoardFragment)
         }
 
-
         navController.graph = graph
-
-        // ------------------------------------
-
 
         // Connect bottom nav AFTER setting the graph
         binding.bottomNav.setupWithNavController(navController)
 
         // Hide or show bottom navigation based on current screen
         navController.addOnDestinationChangedListener { _, destination, _ ->
-            when (destination.id) {
-                R.id.onBoardFragment,
-                R.id.loginFragment,
-                R.id.registerFragment -> {
-                    binding.bottomNav.visibility = View.GONE
-                }
-                else -> binding.bottomNav.visibility = View.VISIBLE
-            }
+            binding.bottomNav.visibility =
+                if (destination.id in rootDestinations) View.VISIBLE else View.GONE
         }
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                handleBackPress()
+            }
+        })
     }
 
     override fun onSupportNavigateUp(): Boolean {
         return navController.navigateUp() || super.onSupportNavigateUp()
+    }
+
+    private fun handleBackPress() {
+        val currentId = navController.currentDestination?.id
+        if (currentId == null) {
+            finish()
+            return
+        }
+
+        if (currentId in rootDestinations) {
+            if (currentId != R.id.homeFragment) {
+                binding.bottomNav.selectedItemId = R.id.homeFragment
+            } else {
+                finish()
+            }
+            return
+        }
+
+        if (!navController.popBackStack()) {
+            finish()
+        }
     }
 }

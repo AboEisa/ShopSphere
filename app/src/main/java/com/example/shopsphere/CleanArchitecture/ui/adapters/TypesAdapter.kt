@@ -18,6 +18,13 @@ class TypesAdapter : RecyclerView. Adapter<TypesAdapter.Holder>() {
     var onTypeClick: ((String) -> Unit)? = null
     private var selectedPosition: Int = 0
 
+    fun submitTypes(items: List<String>, selectedType: String) {
+        list = ArrayList(items)
+        val index = list?.indexOfFirst { it.equals(selectedType, ignoreCase = true) } ?: -1
+        selectedPosition = if (index >= 0) index else 0
+        notifyDataSetChanged()
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
         val binding = ItemTypesBinding.inflate(LayoutInflater. from(parent.context), parent, false)
         return Holder(binding)

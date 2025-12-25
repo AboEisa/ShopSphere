@@ -3,15 +3,16 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:shape="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="wrap_content"
+    android:paddingBottom="12dp">
 
     <!-- صورة المنتج + زرار القلب -->
     <androidx.cardview.widget.CardView
         android:id="@+id/productImageCard"
         android:layout_width="0dp"
-        android:layout_height="@dimen/_300sdp"
-        app:cardCornerRadius="20dp"
-        app:cardElevation="2dp"
+        android:layout_height="250dp"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="1dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -27,7 +28,7 @@
                 android:id="@+id/productImage"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:scaleType="fitCenter"
+                android:scaleType="centerCrop"
                 android:src="@drawable/ic_launcher_background"
                 android:clipToOutline="true" />
 
@@ -55,12 +56,12 @@
         android:id="@+id/productTitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="18dp"
         android:layout_marginStart="@dimen/_20sdp"
         android:layout_marginEnd="16dp"
         android:text="@string/regular_fit_slogan"
         android:textColor="@color/_000000"
-        android:textSize="20sp"
+        android:textSize="22sp"
         android:textStyle="bold"
         app:layout_constraintTop_toBottomOf="@id/productImageCard"
         app:layout_constraintStart_toStartOf="parent"
@@ -71,8 +72,8 @@
         android:id="@+id/ratingLayout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:layout_marginStart="16dp"
+        android:layout_marginTop="6dp"
+        android:layout_marginStart="@dimen/_20sdp"
         android:layout_marginEnd="16dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
@@ -98,42 +99,129 @@
             android:id="@+id/rateCount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            android:text="(45 reviews)"
+            android:layout_marginStart="8dp"
+            android:text="Stock: 20"
             android:textColor="@color/_808080"
             android:textSize="14sp" />
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/buttonViewReviews"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:layout_marginEnd="16dp"
+        android:foreground="?attr/selectableItemBackgroundBorderless"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="4dp"
+        android:text="@string/reviews_view_all"
+        android:textColor="@color/bright_green"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/ratingLayout" />
 
     <!-- وصف المنتج -->
     <TextView
         android:id="@+id/productDescription"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="10dp"
         android:layout_marginStart="@dimen/_20sdp"
         android:layout_marginEnd="16dp"
         android:text="@string/the_name_says_it_all_the_right_size_slightly_snugs_the_body_leaving_enough_room_for_comfort_in_the_sleeves_and_waist"
         android:textColor="#808080"
-        android:textSize="14sp"
-        android:maxLines="6"
-        app:layout_constraintTop_toBottomOf="@id/ratingLayout"
+        android:textSize="15sp"
+        android:maxLines="4"
+        app:layout_constraintTop_toBottomOf="@id/buttonViewReviews"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
+
+    <TextView
+        android:id="@+id/textSizeLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:layout_marginStart="@dimen/_20sdp"
+        android:text="@string/choose_size"
+        android:textColor="#111827"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/productDescription" />
+
+    <LinearLayout
+        android:id="@+id/layoutSizeOptions"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/_20sdp"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/textSizeLabel">
+
+        <TextView
+            android:id="@+id/sizeS"
+            android:layout_width="44dp"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_size_chip_unselected"
+            android:gravity="center"
+            android:text="S"
+            android:textColor="#111827"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/sizeM"
+            android:layout_width="44dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/bg_size_chip_selected"
+            android:gravity="center"
+            android:text="M"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/sizeL"
+            android:layout_width="44dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/bg_size_chip_unselected"
+            android:gravity="center"
+            android:text="L"
+            android:textColor="#111827"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/sizeXL"
+            android:layout_width="50dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/bg_size_chip_unselected"
+            android:gravity="center"
+            android:text="XL"
+            android:textColor="#111827"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 
 
     <LinearLayout
         android:id="@+id/priceAndButtonLayout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="16dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
+        android:layout_marginTop="18dp"
+        android:layout_marginBottom="24dp"
+        android:layout_marginStart="@dimen/_20sdp"
+        android:layout_marginEnd="@dimen/_20sdp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/layoutSizeOptions">
 
 
         <LinearLayout
@@ -176,7 +264,9 @@
                 android:textColor="@android:color/white"
                 app:backgroundTint="@color/bright_green"
                 app:cornerRadius="10dp"
+                app:icon="@drawable/ic_cart"
                 app:iconPadding="8dp"
+                app:iconTint="@android:color/white"
                 app:strokeWidth="0dp" />
 
 

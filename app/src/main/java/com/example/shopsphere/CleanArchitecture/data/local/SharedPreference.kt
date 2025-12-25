@@ -37,6 +37,18 @@ class SharedPreference @Inject constructor(
         sharedPref.edit().remove("uid").apply()
     }
 
+    fun saveProfile(name: String, email: String, phone: String) {
+        sharedPref.edit()
+            .putString("profile_name", name)
+            .putString("profile_email", email)
+            .putString("profile_phone", phone)
+            .apply()
+    }
+
+    fun getProfileName(): String = sharedPref.getString("profile_name", "") ?: ""
+    fun getProfileEmail(): String = sharedPref.getString("profile_email", "") ?: ""
+    fun getProfilePhone(): String = sharedPref.getString("profile_phone", "") ?: ""
+
     // ----------------------------------------------------------
     // LOGIN STATE (CRITICAL FIX)
     // ----------------------------------------------------------
@@ -105,15 +117,13 @@ class SharedPreference @Inject constructor(
     }
 
     fun getCartProducts(): Map<Int, Int> {
-        val json = sharedPref.getString("cart_products", null)
-        return if (json != null) {
-            try {
-                val type = object : TypeToken<Map<Int, Int>>() {}.type
-                gson.fromJson(json, type) ?: emptyMap()
-            } catch (e: Exception) {
-                emptyMap()
-            }
-        } else {
+        val json = sharedPref.getString("cart_products", null) ?: return emptyMap()
+        return try {
+            // JSON object keys are always strings; deserialize then convert to Int keys
+            val type = object : TypeToken<Map<String, Int>>() {}.type
+            val raw = gson.fromJson<Map<String, Int>>(json, type) ?: emptyMap()
+            raw.mapKeys { (k, _) -> k.toIntOrNull() ?: -1 }.filterKeys { it >= 0 }
+        } catch (e: Exception) {
             emptyMap()
         }
     }
@@ -139,7 +149,7 @@ class SharedPreference @Inject constructor(
     fun updateQuantity(productId: Int, newQuantity: Int) {
         val currentCart = getCartProducts().toMutableMap()
         if (currentCart.containsKey(productId)) {
-            currentCart[productId] = newQuantity
+            currentCart[productId] = newQuantity.coerceAtLeast(1)
             saveCartProducts(currentCart)
         }
     }

@@ -3,8 +3,6 @@ package com.example.shopsphere.CleanArchitecture.ui.views
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -13,6 +11,8 @@ import com.example.shopsphere.R
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.SplashViewModel
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 @SuppressLint("CustomSplashScreen")
@@ -30,8 +30,8 @@ class SplashActivity : AppCompatActivity() {
     }
 
     private fun navigate() {
-        Handler(Looper.getMainLooper()).postDelayed({
-
+        lifecycleScope.launch {
+            delay(1500)
             val auth = FirebaseAuth.getInstance()
             val currentUser = auth.currentUser
 
@@ -54,26 +54,21 @@ class SplashActivity : AppCompatActivity() {
 
             } else {
                 // CASE 2 — No Firebase user, check SharedPreferences as fallback
-                lifecycleScope.launch {
-                    viewModel.isLoggedIn.collect { isLoggedIn ->
-                        if (isLoggedIn) {
-                            // User has valid session in SharedPreferences
-                            openMain(home = true)
-                        } else {
-                            // No valid session anywhere
-                            openMain(home = false)
-                        }
-                        return@collect // Collect once
-                    }
+                val isLoggedIn = viewModel.isLoggedIn.first()
+                if (isLoggedIn) {
+                    // User has valid session in SharedPreferences
+                    openMain(home = true)
+                } else {
+                    // No valid session anywhere
+                    openMain(home = false)
                 }
             }
-
-        }, 1500)
+        }
     }
 
     private fun openMain(home: Boolean) {
         val intent = Intent(this, MainActivity::class.java)
-        intent.putExtra("openHome", home)
+        intent.putExtra(MainActivity.EXTRA_OPEN_HOME, home)
         startActivity(intent)
         finish()
     }

@@ -37,9 +37,10 @@ class CartViewModel @Inject constructor(
     private fun loadCartItemCount() {
         viewModelScope.launch {
             try {
-                val count = repository.getCartItemCount()
+                val count = sharedPreference.getCartItemCount()
                 _cartItemCount.value = count
             } catch (e: Exception) {
+                Log.e("CartViewModel", "loadCartItemCount error", e)
                 _cartItemCount.value = 0
             }
         }
@@ -111,15 +112,31 @@ class CartViewModel @Inject constructor(
         _totalPrice.postValue(total)
     }
 
-    fun addProductToCart(productId: Int) {
-        viewModelScope.launch(Dispatchers.IO) {
+    fun addProductToCart(productId: Int, availableStock: Int): Boolean {
+        return try {
+            val cartMap = sharedPreference.getCartProducts()
+            val currentQuantity = cartMap[productId] ?: 0
+            val stock = availableStock.coerceAtLeast(0)
+
+            if (stock <= 0 || currentQuantity >= stock) {
+                return false
+            }
+
             sharedPreference.addCartProduct(productId)
+            loadCartItemCount()
+            true
+        } catch (e: Exception) {
+            Log.e("CartViewModel", "addProductToCart error", e)
+            false
         }
     }
 
     fun removeFromCart(productId: Int) {
-        viewModelScope.launch(Dispatchers.IO) {
+        try {
             sharedPreference.removeCartProduct(productId)
+            loadCartItemCount()
+        } catch (e: Exception) {
+            Log.e("CartViewModel", "removeFromCart error", e)
         }
     }
 
@@ -131,9 +148,14 @@ class CartViewModel @Inject constructor(
     }
 
     fun isInCart(productId: Int): Boolean {
-        return sharedPreference.getCartProducts().contains(productId).also {
-            Log.d("CartViewModel", "isInCart: $productId, result: $it")
+        return try {
+            val cart = sharedPreference.getCartProducts()
+            cart.containsKey(productId).also {
+                Log.d("CartViewModel", "isInCart: $productId, result: $it")
+            }
+        } catch (e: Exception) {
+            Log.e("CartViewModel", "isInCart error", e)
+            false
         }
     }
 }
-

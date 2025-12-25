@@ -3,15 +3,29 @@
   <component name="AppInsightsSettings">
     <option name="tabSettings">
       <map>
+        <entry key="Android Vitals">
+          <value>
+            <InsightsFilterSettings>
+              <option name="connection">
+                <ConnectionSetting>
+                  <option name="appId" value="com.zakrni.app" />
+                </ConnectionSetting>
+              </option>
+              <option name="signal" value="SIGNAL_UNSPECIFIED" />
+              <option name="timeIntervalDays" value="SEVEN_DAYS" />
+              <option name="visibilityType" value="ALL" />
+            </InsightsFilterSettings>
+          </value>
+        </entry>
         <entry key="Firebase Crashlytics">
           <value>
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
                   <option name="appId" value="com.example.shopsphere" />
-                  <option name="mobileSdkAppId" value="1:436349143820:android:70b9c2aca23863826bd729" />
-                  <option name="projectId" value="shopsphere-1225b" />
-                  <option name="projectNumber" value="436349143820" />
+                  <option name="mobileSdkAppId" value="1:340654695612:android:e699ade056577bd8ebdcb9" />
+                  <option name="projectId" value="shop-shpere-bb61c" />
+                  <option name="projectNumber" value="340654695612" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

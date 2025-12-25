@@ -35,6 +35,9 @@
     <color name="ffffff">#FFFFFF</color>
     <color name="ff0000">#FF0000</color>
     <color name="bright_green">#23a36e</color>
+    <color name="status_blue">#1E40AF</color>
+    <color name="status_orange">#92400E</color>
+    <color name="review_star_active">#F59E0B</color>
 
     <!-- Primary Colors -->
     <color name="colorPrimary">#199E79</color>

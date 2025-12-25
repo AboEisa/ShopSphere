@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.navOptions
 import com.example.shopsphere.R
 import com.example.shopsphere.databinding.FragmentOnBoardBinding
 
@@ -31,8 +32,15 @@ class OnBoardFragment : Fragment() {
 
     private fun onClicks(){
         binding.getStartedBtn.setOnClickListener {
-            findNavController(). navigate(
-                OnBoardFragmentDirections.actionOnBoardFragmentToLoginFragment()
+            findNavController().navigate(
+                R.id.action_onBoardFragment_to_loginFragment,
+                null,
+                navOptions {
+                    popUpTo(R.id.onBoardFragment) {
+                        inclusive = true
+                    }
+                    launchSingleTop = true
+                }
             )
         }
     }

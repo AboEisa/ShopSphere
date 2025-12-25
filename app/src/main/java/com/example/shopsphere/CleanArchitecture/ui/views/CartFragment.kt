@@ -26,7 +26,7 @@ class CartFragment : Fragment() {
     private val cartViewModel: CartViewModel by viewModels()
     private val sharedCartViewModel: SharedCartViewModel by activityViewModels()
     private lateinit var cartAdapter: CartAdapter
-    val productId = 0
+    private val productId = 0
 
 
     override fun onCreateView(
@@ -63,7 +63,40 @@ class CartFragment : Fragment() {
         binding.btnCheckout.setOnClickListener {
             if (!isAdded || _binding == null) return@setOnClickListener
 
-            sharedCartViewModel.setCartItems(cartAdapter.getItems())
+            val items = cartAdapter.getItems()
+            if (items.isEmpty()) {
+                Toast.makeText(
+                    requireContext(),
+                    getString(com.example.shopsphere.R.string.validation_cart_empty),
+                    Toast.LENGTH_SHORT
+                ).show()
+                return@setOnClickListener
+            }
+
+            val invalidStockItem = items.firstOrNull { item ->
+                val stock = item.rating.count.coerceAtLeast(0)
+                val quantity = item.quantity.coerceAtLeast(1)
+                quantity > stock || stock <= 0
+            }
+            if (invalidStockItem != null) {
+                val stock = invalidStockItem.rating.count.coerceAtLeast(0)
+                val message = if (stock <= 0) {
+                    getString(
+                        com.example.shopsphere.R.string.validation_product_out_of_stock,
+                        invalidStockItem.title
+                    )
+                } else {
+                    getString(
+                        com.example.shopsphere.R.string.validation_product_stock_exceeded,
+                        invalidStockItem.title,
+                        stock
+                    )
+                }
+                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            sharedCartViewModel.setCartItems(items)
             findNavController().navigate(
                CartFragmentDirections.actionCartFragmentToCheckoutFragment(
                    productId
@@ -92,6 +125,19 @@ class CartFragment : Fragment() {
                 if (!isAdded || _binding == null) return@CartAdapter
                 cartViewModel.updateQuantity(productId, newQuantity)
                 updateTotalPrice()
+            },
+            onStockLimitReached = { productTitle, stock ->
+                if (!isAdded || _binding == null) return@CartAdapter
+                val message = if (stock <= 0) {
+                    getString(com.example.shopsphere.R.string.validation_product_out_of_stock, productTitle)
+                } else {
+                    getString(
+                        com.example.shopsphere.R.string.validation_product_stock_exceeded,
+                        productTitle,
+                        stock
+                    )
+                }
+                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
             }
         )
         binding.recyclerView.adapter = cartAdapter
@@ -102,10 +148,33 @@ class CartFragment : Fragment() {
         cartViewModel.cartProducts.observe(viewLifecycleOwner) { cartProducts ->
             if (!isAdded || _binding == null) return@observe
             if (cartProducts != null) {
-                cartAdapter.submitList(cartProducts)
+                val normalizedProducts = normalizeQuantitiesAgainstStock(cartProducts)
+                cartAdapter.submitList(normalizedProducts)
                 updateTotalPrice()
-                binding.recyclerView.visibility = if (cartProducts.isEmpty()) View.GONE else View.VISIBLE
-                updateEmptyStateVisibility(cartProducts.isEmpty())
+                binding.recyclerView.visibility = if (normalizedProducts.isEmpty()) View.GONE else View.VISIBLE
+                updateEmptyStateVisibility(normalizedProducts.isEmpty())
+            }
+        }
+    }
+
+    private fun normalizeQuantitiesAgainstStock(
+        products: List<PresentationProductResult>
+    ): List<PresentationProductResult> {
+        return products.mapNotNull { product ->
+            val stock = product.rating.count.coerceAtLeast(0)
+            val quantity = product.quantity.coerceAtLeast(1)
+            when {
+                stock <= 0 -> {
+                    cartViewModel.removeFromCart(product.id)
+                    null
+                }
+
+                quantity > stock -> {
+                    cartViewModel.updateQuantity(product.id, stock)
+                    product.copy(quantity = stock)
+                }
+
+                else -> product
             }
         }
     }

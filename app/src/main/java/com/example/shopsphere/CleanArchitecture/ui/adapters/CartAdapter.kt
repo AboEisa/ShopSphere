@@ -11,7 +11,8 @@ import java.text.DecimalFormat
 class CartAdapter(
     private val onItemClick: (Int) -> Unit,
     private val onRemoveClick: (Int) -> Unit,
-    private val onQuantityChanged: (Int, Int) -> Unit
+    private val onQuantityChanged: (Int, Int) -> Unit,
+    private val onStockLimitReached: (String, Int) -> Unit
 ) : RecyclerView.Adapter<CartAdapter.Holder>() {
 
     private var products: MutableList<PresentationProductResult> = mutableListOf()
@@ -39,7 +40,11 @@ class CartAdapter(
         notifyDataSetChanged()
     }
 
-    fun getItems(): List<PresentationProductResult> = products.toList()
+    fun getItems(): List<PresentationProductResult> {
+        return products.map { product ->
+            product.copy(quantity = productQuantities[product.id] ?: product.quantity)
+        }
+    }
 
     fun getTotalPrice(): Double {
         return products.sumOf { product ->
@@ -87,7 +92,18 @@ class CartAdapter(
                 removeButton.setOnClickListener { onRemoveClick(product.id) }
 
                 btnIncrease.setOnClickListener {
-                    val newQuantity = quantity + 1
+                    val currentQuantity = productQuantities[product.id] ?: quantity
+                    val stock = product.rating.count.coerceAtLeast(0)
+                    if (stock <= 0) {
+                        onStockLimitReached(product.title, 0)
+                        return@setOnClickListener
+                    }
+                    if (currentQuantity >= stock) {
+                        onStockLimitReached(product.title, stock)
+                        return@setOnClickListener
+                    }
+
+                    val newQuantity = currentQuantity + 1
                     productQuantities[product.id] = newQuantity
                     productQuantity.text = newQuantity.toString()
 
@@ -98,8 +114,9 @@ class CartAdapter(
                 }
 
                 btnDecrease.setOnClickListener {
-                    if (quantity > 1) {
-                        val newQuantity = quantity - 1
+                    val currentQuantity = productQuantities[product.id] ?: quantity
+                    if (currentQuantity > 1) {
+                        val newQuantity = currentQuantity - 1
                         productQuantities[product.id] = newQuantity
                         productQuantity.text = newQuantity.toString()
 

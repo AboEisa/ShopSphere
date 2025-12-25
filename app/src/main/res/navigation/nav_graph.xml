@@ -115,6 +115,44 @@
         android:label="fragment_account"
         tools:layout="@layout/fragment_account" />
     <fragment
+        android:id="@+id/faqsFragment"
+        android:name="com.example.shopsphere.CleanArchitecture.ui.views.FaqsFragment"
+        android:label="fragment_faqs"
+        tools:layout="@layout/fragment_faqs" />
+    <fragment
+        android:id="@+id/helpCenterFragment"
+        android:name="com.example.shopsphere.CleanArchitecture.ui.views.HelpCenterFragment"
+        android:label="fragment_help_center"
+        tools:layout="@layout/fragment_help_center" />
+    <fragment
+        android:id="@+id/ordersFragment"
+        android:name="com.example.shopsphere.CleanArchitecture.ui.views.OrdersFragment"
+        android:label="fragment_orders"
+        tools:layout="@layout/fragment_orders" >
+        <action
+            android:id="@+id/action_ordersFragment_to_trackOrderFragment"
+            app:destination="@id/trackOrderFragment"
+            app:enterAnim="@anim/animation"
+            app:exitAnim="@anim/animation2"
+            app:popEnterAnim="@anim/animation3"
+            app:popExitAnim="@anim/animation4" />
+    </fragment>
+    <fragment
+        android:id="@+id/myDetailsFragment"
+        android:name="com.example.shopsphere.CleanArchitecture.ui.views.MyDetailsFragment"
+        android:label="fragment_my_details"
+        tools:layout="@layout/fragment_my_details" />
+    <fragment
+        android:id="@+id/addressBookFragment"
+        android:name="com.example.shopsphere.CleanArchitecture.ui.views.AddressBookFragment"
+        android:label="fragment_address_book"
+        tools:layout="@layout/fragment_address_book" />
+    <fragment
+        android:id="@+id/paymentMethodsFragment"
+        android:name="com.example.shopsphere.CleanArchitecture.ui.views.PaymentMethodsFragment"
+        android:label="fragment_payment_methods"
+        tools:layout="@layout/fragment_payment_methods" />
+    <fragment
         android:id="@+id/detailsFragment"
         android:name="com.example.shopsphere.CleanArchitecture.ui.views.DetailsFragment"
         android:label="fragment_details"
@@ -125,6 +163,13 @@
         <action
             android:id="@+id/action_detailsFragment_to_savedFragment"
             app:destination="@id/savedFragment"
+            app:enterAnim="@anim/animation"
+            app:exitAnim="@anim/animation2"
+            app:popEnterAnim="@anim/animation3"
+            app:popExitAnim="@anim/animation4" />
+        <action
+            android:id="@+id/action_detailsFragment_to_reviewsFragment"
+            app:destination="@id/reviewsFragment"
             app:enterAnim="@anim/animation"
             app:exitAnim="@anim/animation2"
             app:popEnterAnim="@anim/animation3"
@@ -159,8 +204,29 @@
             app:popEnterAnim="@anim/animation3"
             app:popExitAnim="@anim/animation4"/>
         <action
+            android:id="@+id/action_checkoutFragment_to_addressBookFragment"
+            app:destination="@id/addressBookFragment"
+            app:enterAnim="@anim/animation"
+            app:exitAnim="@anim/animation2"
+            app:popEnterAnim="@anim/animation3"
+            app:popExitAnim="@anim/animation4"/>
+        <action
+            android:id="@+id/action_checkoutFragment_to_paymentMethodsFragment"
+            app:destination="@id/paymentMethodsFragment"
+            app:enterAnim="@anim/animation"
+            app:exitAnim="@anim/animation2"
+            app:popEnterAnim="@anim/animation3"
+            app:popExitAnim="@anim/animation4"/>
+        <action
             android:id="@+id/action_checkoutFragment_to_homeFragment"
             app:destination="@id/homeFragment" />
+        <action
+            android:id="@+id/action_checkoutFragment_to_trackOrderFragment"
+            app:destination="@id/trackOrderFragment"
+            app:enterAnim="@anim/animation"
+            app:exitAnim="@anim/animation2"
+            app:popEnterAnim="@anim/animation3"
+            app:popExitAnim="@anim/animation4" />
     </fragment>
     <fragment
         android:id="@+id/mapsFragment"
@@ -172,6 +238,24 @@
         android:name="com.example.shopsphere.CleanArchitecture.ui.views.AddCardFragment"
         android:label="fragment_add_card"
         tools:layout="@layout/fragment_add_card" />
+    <fragment
+        android:id="@+id/trackOrderFragment"
+        android:name="com.example.shopsphere.CleanArchitecture.ui.views.TrackOrderFragment"
+        android:label="fragment_track_order"
+        tools:layout="@layout/fragment_track_order">
+        <argument
+            android:name="orderId"
+            app:argType="string" />
+    </fragment>
+    <fragment
+        android:id="@+id/reviewsFragment"
+        android:name="com.example.shopsphere.CleanArchitecture.ui.views.ReviewsFragment"
+        android:label="fragment_reviews"
+        tools:layout="@layout/fragment_reviews">
+        <argument
+            android:name="productId"
+            app:argType="integer" />
+    </fragment>
     <!-- ONBOARD -->
     <fragment
         android:id="@+id/onBoardFragment"

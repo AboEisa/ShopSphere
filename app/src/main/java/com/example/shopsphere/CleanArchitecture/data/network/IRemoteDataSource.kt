@@ -1,10 +1,6 @@
 package com.example.shopsphere.CleanArchitecture.data.network
 
-
-import com.example.shopsphere.CleanArchitecture.data.models.AddToCartRequest
-import com.example.shopsphere.CleanArchitecture.data.models.CartProduct
 import com.example.shopsphere.CleanArchitecture.data.models.ProductResult
-import com.example.shopsphere.CleanArchitecture.domain.DomainAddToCartRequest
 
 
 interface IRemoteDataSource {

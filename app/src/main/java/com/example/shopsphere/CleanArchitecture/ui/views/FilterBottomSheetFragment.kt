@@ -70,7 +70,7 @@ class FilterBottomSheetFragment : BottomSheetDialogFragment() {
     }
 
     fun resetFilters() {
-       productsViewModel.fetchProducts()
+        productsViewModel.clearPriceFilter()
         dismiss()
     }
 

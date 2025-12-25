@@ -7,6 +7,7 @@ import com.example.shopsphere.CleanArchitecture.domain.DomainProductResult
 import com.example.shopsphere.CleanArchitecture.domain.IRepository
 import com.google.firebase.auth.FacebookAuthProvider
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.tasks.await
@@ -103,7 +104,12 @@ class Repository @Inject constructor(
             firebaseAuth.signInWithCredential(credential).await()
             Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(e)
+            val readableException = if (e is FirebaseAuthException) {
+                Exception("${e.errorCode}: ${e.localizedMessage.orEmpty()}".trim(), e)
+            } else {
+                e
+            }
+            Result.failure(readableException)
         }
 
 

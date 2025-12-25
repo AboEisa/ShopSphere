@@ -18,7 +18,6 @@ import com.example.shopsphere.CleanArchitecture.ui.viewmodels.SavedViewModel
 import com.example.shopsphere.databinding.FragmentDetailsBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 @AndroidEntryPoint
 class DetailsFragment : Fragment() {
@@ -48,35 +47,63 @@ class DetailsFragment : Fragment() {
             },
             isFavorite = { productId ->
                 if (!isAdded || _binding == null) return@DetailsAdapter false
-                runBlocking { favoriteViewModel.isFavorite(productId) }
+                favoriteViewModel.isFavoriteSync(productId)
             },
             onAddToCartClick = { productId ->
                 if (!isAdded || _binding == null) return@DetailsAdapter
-                val product = detailsViewModel.productLiveData.value
-                product?.let {
-                    cartViewModel.addProductToCart(productId)
-                    sharedCartViewModel.refreshCartCount()
-                    if (isAdded && _binding != null) {
-                        Toast.makeText(
-                            requireContext(),
-                            "Product added to cart",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                try {
+                    val product = detailsViewModel.productLiveData.value
+                    product?.let {
+                        val stock = it.rating.count.coerceAtLeast(0)
+                        val added = cartViewModel.addProductToCart(productId, stock)
+                        sharedCartViewModel.refreshCartCount()
+                        if (isAdded && _binding != null && added) {
+                            context?.let { ctx ->
+                                Toast.makeText(ctx, "Product added to cart", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    context?.let { ctx ->
+                        Toast.makeText(ctx, "Something went wrong", Toast.LENGTH_SHORT).show()
                     }
                 }
             },
             isInCart = { productId ->
                 if (!isAdded || _binding == null) return@DetailsAdapter false
-                cartViewModel.isInCart(productId)
+                try {
+                    cartViewModel.isInCart(productId)
+                } catch (e: Exception) {
+                    false
+                }
             },
             removeFromCart = { productId ->
                 if (!isAdded || _binding == null) return@DetailsAdapter
-                cartViewModel.removeFromCart(productId)
-                sharedCartViewModel.refreshCartCount()
-                if (isAdded && _binding != null) {
+                try {
+                    cartViewModel.removeFromCart(productId)
+                    sharedCartViewModel.refreshCartCount()
+                    if (isAdded && _binding != null) {
+                        context?.let { ctx ->
+                            Toast.makeText(ctx, "Product removed from cart", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                } catch (e: Exception) {
+                    context?.let { ctx ->
+                        Toast.makeText(ctx, "Something went wrong", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            },
+            onViewReviews = { productId ->
+                if (!isAdded || _binding == null) return@DetailsAdapter
+                val action = DetailsFragmentDirections.actionDetailsFragmentToReviewsFragment(productId)
+                findNavController().navigate(action)
+            },
+            onOutOfStockClick = { title ->
+                if (!isAdded || _binding == null) return@DetailsAdapter
+                context?.let { ctx ->
                     Toast.makeText(
-                        requireContext(),
-                        "Product removed from cart",
+                        ctx,
+                        ctx.getString(com.example.shopsphere.R.string.validation_product_out_of_stock, title),
                         Toast.LENGTH_SHORT
                     ).show()
                 }

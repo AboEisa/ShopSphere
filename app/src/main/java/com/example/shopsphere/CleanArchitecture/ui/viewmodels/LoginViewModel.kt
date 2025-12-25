@@ -2,12 +2,10 @@ package com.example.shopsphere.CleanArchitecture.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
 import com.example.shopsphere.CleanArchitecture.domain.auth.GoogleLoginUseCase
 import com.example.shopsphere.CleanArchitecture.domain.auth.LoginUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 @HiltViewModel
@@ -51,5 +49,11 @@ class LoginViewModel @Inject constructor(
         _uiState.value =
             if (result.isSuccess) LoginUiState.Success
             else LoginUiState.Error(result.exceptionOrNull()?.message ?: "Unknown error")
+    }
+
+    fun consumeTransientState() {
+        if (_uiState.value is LoginUiState.Success || _uiState.value is LoginUiState.Error) {
+            _uiState.value = LoginUiState.Idle
+        }
     }
 }

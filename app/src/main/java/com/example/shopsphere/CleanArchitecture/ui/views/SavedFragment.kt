@@ -71,8 +71,9 @@ class SavedFragment : Fragment() {
     private fun observeViewModel() {
         viewModel.favoriteProducts.observe(viewLifecycleOwner) { products ->
             if (!isAdded || _binding == null) return@observe
-            adapter.submitList(products)
-            if (products.isEmpty()) {
+            val safeProducts = products.orEmpty()
+            adapter.submitList(safeProducts)
+            if (safeProducts.isEmpty()) {
                 showEmptyState()
             } else {
                 hideEmptyState()

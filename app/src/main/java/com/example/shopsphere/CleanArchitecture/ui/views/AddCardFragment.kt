@@ -1,29 +1,28 @@
 package com.example.shopsphere.CleanArchitecture.ui.views
 
 import android.os.Bundle
-import android.util.Log
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.setFragmentResult
 import androidx.navigation.fragment.findNavController
+import com.example.shopsphere.CleanArchitecture.utils.showSuccessDialog
 import com.example.shopsphere.databinding.FragmentAddCardBinding
-import com.stripe.android.PaymentConfiguration
-import com.stripe.android.Stripe
-import com.stripe.android.model.ConfirmPaymentIntentParams
-import com.stripe.android.model.PaymentMethodCreateParams
-import okhttp3.*
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.RequestBody.Companion.toRequestBody
-import org.json.JSONObject
-import java.io.IOException
+import dagger.hilt.android.AndroidEntryPoint
+import com.google.firebase.auth.FirebaseAuth
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class AddCardFragment : Fragment() {
 
     private var _binding: FragmentAddCardBinding? = null
     private val binding get() = _binding!!
-    private lateinit var stripe: Stripe
+
+    @Inject
+    lateinit var firebaseAuth: FirebaseAuth
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -35,27 +34,45 @@ class AddCardFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        val publishableKey = PaymentConfiguration.getInstance(requireContext()).publishableKey
-        stripe = Stripe(requireContext(), publishableKey)
+        setupLivePreview()
 
         binding.btnAddCart.setOnClickListener {
-            val params = binding.cardInputWidget.paymentMethodCreateParams
-            if (params == null) {
-                showToast("Invalid card details")
+            val holderName = binding.editCardHolder.text.toString().trim()
+            val cardDigits = binding.editCardNumber.text.toString().filter { it.isDigit() }
+            val expiry = binding.editExpiry.text.toString().trim()
+            val cvv = binding.editCvv.text.toString().trim()
+
+            if (holderName.isBlank()) {
+                binding.editCardHolder.error = getString(com.example.shopsphere.R.string.add_card_invalid_holder)
+                return@setOnClickListener
+            }
+            if (cardDigits.length !in 13..19) {
+                binding.editCardNumber.error = getString(com.example.shopsphere.R.string.add_card_invalid_number)
+                return@setOnClickListener
+            }
+            if (!isValidExpiry(expiry)) {
+                binding.editExpiry.error = getString(com.example.shopsphere.R.string.add_card_invalid_expiry)
+                return@setOnClickListener
+            }
+            if (cvv.length !in 3..4 || cvv.any { !it.isDigit() }) {
+                binding.editCvv.error = getString(com.example.shopsphere.R.string.add_card_invalid_cvv)
                 return@setOnClickListener
             }
 
-            getClientSecret { clientSecret ->
-                requireActivity().runOnUiThread {
-                    if (!clientSecret.isNullOrEmpty()) {
-                        val confirmParams = ConfirmPaymentIntentParams
-                            .createWithPaymentMethodCreateParams(params, clientSecret)
-                        stripe.confirmPayment(this, confirmParams)
-                    } else {
-                        showToast("Failed to fetch client secret")
-                    }
-                }
+            val brand = detectBrand(cardDigits)
+            val lastFour = cardDigits.takeLast(4)
+
+            val result = Bundle().apply {
+                putString("card_brand", brand)
+                putString("card_last_four", lastFour)
+                putString("card_holder_name", holderName)
+            }
+            setFragmentResult("card_result", result)
+            showSuccessDialog(
+                title = getString(com.example.shopsphere.R.string.add_card_saved_title),
+                message = getString(com.example.shopsphere.R.string.add_card_saved_message)
+            ) {
+                findNavController().navigateUp()
             }
         }
 
@@ -64,46 +81,71 @@ class AddCardFragment : Fragment() {
         }
     }
 
-    private fun getClientSecret(callback: (String?) -> Unit) {
-        val client = OkHttpClient()
-        val json = JSONObject()
-        val requestBody = json.toString().toRequestBody("application/json".toMediaType())
+    private fun setupLivePreview() {
+        val defaultHolder = firebaseAuth.currentUser?.displayName?.takeIf { it.isNotBlank() } ?: "ShopSphere User"
+        binding.textCardHolderPreview.text = defaultHolder
 
-        val request = Request.Builder()
-            .url("http://10.0.2.2:4242/create-payment-intent") // Localhost for emulator
-            .post(requestBody)
-            .build()
-
-        client.newCall(request).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                Log.e("Stripe", "Network error: ${e.message}")
-                requireActivity().runOnUiThread {
-                    showToast("Network error: ${e.message}")
-                }
-                callback(null)
+        binding.editCardHolder.addTextChangedListener(simpleWatcher {
+            val holder = binding.editCardHolder.text.toString().trim()
+            binding.textCardHolderPreview.text = if (holder.isNotBlank()) holder.uppercase() else defaultHolder.uppercase()
+        })
+        binding.editCardNumber.addTextChangedListener(simpleWatcher {
+            val digits = binding.editCardNumber.text.toString().filter { ch -> ch.isDigit() }
+            val formatted = formatCardNumber(digits)
+            if (binding.editCardNumber.text.toString() != formatted) {
+                binding.editCardNumber.setText(formatted)
+                binding.editCardNumber.setSelection(formatted.length)
             }
-
-            override fun onResponse(call: Call, response: Response) {
-                val bodyString = response.body?.string()
-                Log.d("Stripe", "Server response: $bodyString")
-
-                try {
-                    val jsonResponse = JSONObject(bodyString ?: "{}")
-                    val clientSecret = jsonResponse.optString("clientSecret", null)
-                    callback(clientSecret)
-                } catch (e: Exception) {
-                    Log.e("Stripe", "Invalid JSON", e)
-                    requireActivity().runOnUiThread {
-                        showToast("Invalid response from server")
-                    }
-                    callback(null)
-                }
+            binding.textCardNumberPreview.text =
+                if (digits.length >= 4) formatCardNumber(digits).padEnd(19, '*')
+                else "**** **** **** 1234"
+        })
+        binding.editExpiry.addTextChangedListener(simpleWatcher {
+            val formatted = formatExpiry(binding.editExpiry.text.toString())
+            if (binding.editExpiry.text.toString() != formatted) {
+                binding.editExpiry.setText(formatted)
+                binding.editExpiry.setSelection(formatted.length)
             }
+            binding.textExpiryPreview.text = if (formatted.isBlank()) "MM/YY" else formatted
         })
     }
 
-    private fun showToast(message: String) {
-        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+    private fun simpleWatcher(onAfter: () -> Unit): TextWatcher {
+        return object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
+            override fun afterTextChanged(s: Editable?) = onAfter.invoke()
+        }
+    }
+
+    private fun formatCardNumber(digits: String): String {
+        return digits.chunked(4).joinToString(" ").take(19)
+    }
+
+    private fun formatExpiry(raw: String): String {
+        val digits = raw.filter { it.isDigit() }.take(4)
+        return when {
+            digits.length >= 3 -> digits.substring(0, 2) + "/" + digits.substring(2)
+            else -> digits
+        }
+    }
+
+    private fun detectBrand(digits: String): String {
+        return when {
+            digits.startsWith("4") -> "VISA"
+            digits.startsWith("34") || digits.startsWith("37") -> "AMEX"
+            digits.startsWith("5") || digits.startsWith("2") -> "MASTERCARD"
+            else -> "CARD"
+        }
+    }
+
+    private fun isValidExpiry(expiry: String): Boolean {
+        val parts = expiry.split("/")
+        if (parts.size != 2) return false
+        val month = parts[0].toIntOrNull() ?: return false
+        val year = parts[1].toIntOrNull() ?: return false
+        if (parts[0].length != 2 || parts[1].length != 2) return false
+        return month in 1..12 && year >= 0
     }
 
     override fun onDestroyView() {

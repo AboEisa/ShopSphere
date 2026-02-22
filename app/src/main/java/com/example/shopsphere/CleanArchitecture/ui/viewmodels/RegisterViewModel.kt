@@ -4,7 +4,10 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
+import com.example.shopsphere.CleanArchitecture.domain.auth.FacebookLoginUseCase
+import com.example.shopsphere.CleanArchitecture.domain.auth.GoogleLoginUseCase
 import com.example.shopsphere.CleanArchitecture.domain.auth.RegisterUseCase
+import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,7 +24,10 @@ sealed class AuthUiState {
 @HiltViewModel
 class RegisterViewModel @Inject constructor(
     private val registerUseCase: RegisterUseCase,
-    private val prefs: SharedPreference
+    private val googleLoginUseCase: GoogleLoginUseCase,
+    private val facebookLoginUseCase: FacebookLoginUseCase,
+    private val prefs: SharedPreference,
+    private val firebaseAuth: FirebaseAuth
 ) : ViewModel() {
 
     companion object {
@@ -47,20 +53,8 @@ class RegisterViewModel @Inject constructor(
                 val result = registerUseCase(name, email, password)
 
                 if (result.isSuccess) {
-                    val uid = result.getOrNull() ?: ""
-                    Log.d(TAG, "Registration successful! UID: $uid")
-
-                    if (uid.isNotEmpty()) {
-                        Log.d(TAG, "Saving UID to SharedPreferences")
-                        prefs.saveUid(uid)
-
-                        Log.d(TAG, "Saving isLoggedIn = true")
-                        prefs.saveIsLoggedIn(true)
-
-                        Log.d(TAG, "Verifying save - UID: ${prefs.getUid()}, isLoggedIn: ${prefs.isLoggedIn()}")
-                    } else {
-                        Log.w(TAG, "UID is empty!")
-                    }
+                    val uid = result.getOrNull().orEmpty()
+                    markLoggedIn(uid)
 
                     Log.d(TAG, "Setting state to Success")
                     _state.value = AuthUiState.Success("Account created successfully!")
@@ -75,6 +69,48 @@ class RegisterViewModel @Inject constructor(
                 Log.e(TAG, "Exception during registration: ${e.message}", e)
                 _state.value = AuthUiState.Error(e.message ?: "Unknown error occurred")
             }
+        }
+    }
+
+    fun continueWithGoogle(idToken: String) {
+        viewModelScope.launch {
+            _state.value = AuthUiState.Loading
+            val result = googleLoginUseCase(idToken)
+            _state.value = if (result.isSuccess) {
+                markLoggedIn(firebaseAuth.currentUser?.uid.orEmpty())
+                AuthUiState.Success("Signed in successfully!")
+            } else {
+                AuthUiState.Error(result.exceptionOrNull()?.message ?: "Google sign-in failed")
+            }
+        }
+    }
+
+    fun continueWithFacebook(accessToken: String) {
+        viewModelScope.launch {
+            _state.value = AuthUiState.Loading
+            val result = facebookLoginUseCase(accessToken)
+            _state.value = if (result.isSuccess) {
+                markLoggedIn(firebaseAuth.currentUser?.uid.orEmpty())
+                AuthUiState.Success("Signed in successfully!")
+            } else {
+                AuthUiState.Error(result.exceptionOrNull()?.message ?: "Facebook sign-in failed")
+            }
+        }
+    }
+
+    fun consumeTransientState() {
+        if (_state.value is AuthUiState.Success || _state.value is AuthUiState.Error) {
+            _state.value = AuthUiState.Idle
+        }
+    }
+
+    private fun markLoggedIn(uid: String) {
+        if (uid.isNotBlank()) {
+            prefs.saveUid(uid)
+            prefs.saveIsLoggedIn(true)
+            Log.d(TAG, "Session saved. UID: $uid")
+        } else {
+            Log.w(TAG, "UID is empty, session was not persisted")
         }
     }
 }

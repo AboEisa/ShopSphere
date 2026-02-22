@@ -1,5 +1,6 @@
 package com.example.shopsphere.CleanArchitecture.ui.views
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -24,6 +25,11 @@ import com.example.shopsphere.CleanArchitecture.ui.viewmodels.LoginUiState
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.LoginViewModel
 import com.example.shopsphere.databinding.FragmentLoginBinding
 import com.example.shopsphere.R
+import com.facebook.CallbackManager
+import com.facebook.FacebookCallback
+import com.facebook.FacebookException
+import com.facebook.login.LoginManager
+import com.facebook.login.LoginResult
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
@@ -42,6 +48,7 @@ class LoginFragment : Fragment() {
     private val binding get() = _binding!!
 
     private lateinit var credentialManager: CredentialManager
+    private lateinit var callbackManager: CallbackManager
     private val viewModel: LoginViewModel by viewModels()
     private var googleSignInJob: Job? = null
 
@@ -50,6 +57,8 @@ class LoginFragment : Fragment() {
     ): View {
         _binding = FragmentLoginBinding.inflate(inflater, container, false)
         credentialManager = CredentialManager.create(requireContext())
+        callbackManager = CallbackManager.Factory.create()
+        registerFacebookCallback()
         return binding.root
     }
 
@@ -75,6 +84,10 @@ class LoginFragment : Fragment() {
 
         binding.btnLoginGoogle.setOnClickListener {
             signInWithGoogle()
+        }
+
+        binding.btnLoginFacebook.setOnClickListener {
+            signInWithFacebook()
         }
 
         binding.tvJoin.setOnClickListener {
@@ -113,6 +126,7 @@ class LoginFragment : Fragment() {
         _binding?.let { safeBinding ->
             safeBinding.btnLogin.isEnabled = !isLoading
             safeBinding.btnLoginGoogle.isEnabled = !isLoading
+            safeBinding.btnLoginFacebook.isEnabled = !isLoading
         }
     }
 
@@ -149,6 +163,37 @@ class LoginFragment : Fragment() {
                 }
             }
         }
+    }
+
+    private fun signInWithFacebook() {
+        if (!isAdded) return
+        setLoading(true)
+        LoginManager.getInstance().logInWithReadPermissions(
+            this,
+            listOf("email", "public_profile")
+        )
+    }
+
+    private fun registerFacebookCallback() {
+        LoginManager.getInstance().registerCallback(
+            callbackManager,
+            object : FacebookCallback<LoginResult> {
+                override fun onCancel() {
+                    setLoading(false)
+                    showToastSafely(getString(R.string.facebook_sign_in_cancelled))
+                }
+
+                override fun onError(error: FacebookException) {
+                    Log.e(TAG, "Facebook sign-in failed", error)
+                    setLoading(false)
+                    showToastSafely(getString(R.string.facebook_sign_in_failed))
+                }
+
+                override fun onSuccess(result: LoginResult) {
+                    viewModel.onEvent(LoginUiEvent.FacebookToken(result.accessToken.token))
+                }
+            }
+        )
     }
 
     private suspend fun tryGetGoogleCredential(webClientId: String): androidx.credentials.Credential {
@@ -232,6 +277,12 @@ class LoginFragment : Fragment() {
                 lower.contains("an internal error has occurred") ->
                 getString(R.string.google_sign_in_console_not_configured)
 
+            lower.contains("facebook") && lower.contains("cancel") ->
+                getString(R.string.facebook_sign_in_cancelled)
+
+            lower.contains("facebook") ->
+                getString(R.string.facebook_sign_in_failed)
+
             else -> message
         }
     }
@@ -258,9 +309,16 @@ class LoginFragment : Fragment() {
         Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
     }
 
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        callbackManager.onActivityResult(requestCode, resultCode, data)
+    }
+
     override fun onDestroyView() {
         googleSignInJob?.cancel()
         googleSignInJob = null
+        LoginManager.getInstance().unregisterCallback(callbackManager)
         super.onDestroyView()
         _binding = null
     }

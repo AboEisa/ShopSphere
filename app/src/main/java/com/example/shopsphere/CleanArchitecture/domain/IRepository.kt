@@ -18,6 +18,7 @@ interface IRepository {
     String): Result<Boolean>
     suspend fun login(email: String, password: String): Result<Unit>
     suspend fun loginWithGoogle(idToken: String): Result<Unit>
+    suspend fun loginWithFacebook(accessToken: String): Result<Unit>
 
     fun logout()
     fun currentUserId(): String?

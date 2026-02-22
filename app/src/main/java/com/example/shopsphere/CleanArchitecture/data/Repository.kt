@@ -112,6 +112,20 @@ class Repository @Inject constructor(
             Result.failure(readableException)
         }
 
+    override suspend fun loginWithFacebook(accessToken: String): Result<Unit> =
+        try {
+            val credential = FacebookAuthProvider.getCredential(accessToken)
+            firebaseAuth.signInWithCredential(credential).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            val readableException = if (e is FirebaseAuthException) {
+                Exception("${e.errorCode}: ${e.localizedMessage.orEmpty()}".trim(), e)
+            } else {
+                e
+            }
+            Result.failure(readableException)
+        }
+
 
 
     override suspend fun registerEmail(

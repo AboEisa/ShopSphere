@@ -2,8 +2,11 @@ package com.example.shopsphere.CleanArchitecture.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
+import com.example.shopsphere.CleanArchitecture.domain.auth.FacebookLoginUseCase
 import com.example.shopsphere.CleanArchitecture.domain.auth.GoogleLoginUseCase
 import com.example.shopsphere.CleanArchitecture.domain.auth.LoginUseCase
+import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -11,7 +14,10 @@ import javax.inject.Inject
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val loginUseCase: LoginUseCase,
-    private val googleLoginUseCase: GoogleLoginUseCase
+    private val googleLoginUseCase: GoogleLoginUseCase,
+    private val facebookLoginUseCase: FacebookLoginUseCase,
+    private val prefs: SharedPreference,
+    private val firebaseAuth: FirebaseAuth
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Idle)
@@ -30,6 +36,8 @@ class LoginViewModel @Inject constructor(
             is LoginUiEvent.LoginClicked -> login()
 
             is LoginUiEvent.GoogleToken -> loginWithGoogle(event.idToken)
+
+            is LoginUiEvent.FacebookToken -> loginWithFacebook(event.accessToken)
         }
     }
 
@@ -37,23 +45,49 @@ class LoginViewModel @Inject constructor(
         _uiState.value = LoginUiState.Loading
 
         val result = loginUseCase(email, password)
-        _uiState.value =
-            if (result.isSuccess) LoginUiState.Success
-            else LoginUiState.Error(result.exceptionOrNull()?.message ?: "Unknown error")
+        _uiState.value = if (result.isSuccess) {
+            markLoggedIn()
+            LoginUiState.Success
+        } else {
+            LoginUiState.Error(result.exceptionOrNull()?.message ?: "Unknown error")
+        }
     }
 
     private fun loginWithGoogle(idToken: String) = viewModelScope.launch {
         _uiState.value = LoginUiState.Loading
 
         val result = googleLoginUseCase(idToken)
-        _uiState.value =
-            if (result.isSuccess) LoginUiState.Success
-            else LoginUiState.Error(result.exceptionOrNull()?.message ?: "Unknown error")
+        _uiState.value = if (result.isSuccess) {
+            markLoggedIn()
+            LoginUiState.Success
+        } else {
+            LoginUiState.Error(result.exceptionOrNull()?.message ?: "Unknown error")
+        }
+    }
+
+    private fun loginWithFacebook(accessToken: String) = viewModelScope.launch {
+        _uiState.value = LoginUiState.Loading
+
+        val result = facebookLoginUseCase(accessToken)
+        _uiState.value = if (result.isSuccess) {
+            markLoggedIn()
+            LoginUiState.Success
+        } else {
+            LoginUiState.Error(result.exceptionOrNull()?.message ?: "Unknown error")
+        }
     }
 
     fun consumeTransientState() {
         if (_uiState.value is LoginUiState.Success || _uiState.value is LoginUiState.Error) {
             _uiState.value = LoginUiState.Idle
+        }
+    }
+
+    private fun markLoggedIn() {
+        val uid = firebaseAuth.currentUser?.uid.orEmpty()
+        if (uid.isNotBlank()) {
+            prefs.saveUid(uid)
+            prefs.saveIsLoggedIn(true)
         }
     }
 }

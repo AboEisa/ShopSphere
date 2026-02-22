@@ -128,6 +128,11 @@
     <string name="google_sign_in_console_not_configured">Google Sign-In is not configured correctly. Please verify SHA keys and OAuth client in Firebase/Google Cloud Console.</string>
     <string name="invalid_google_credential">Invalid Google credential received. Please try again.</string>
     <string name="google_sign_in_api_key_restricted">Google Sign-In is blocked by API key restrictions. Allow Identity Toolkit API for your Firebase key.</string>
+    <string name="facebook_sign_in_failed">Facebook sign-in failed. Please try again.</string>
+    <string name="facebook_sign_in_cancelled">Facebook sign-in was cancelled.</string>
+    <string name="facebook_app_id">123456789012345</string>
+    <string name="facebook_client_token">replace_with_facebook_client_token</string>
+    <string name="fb_login_protocol_scheme">fb123456789012345</string>
     <string name="egp_80">EGP 80</string>
     <string name="dialog_ok">OK</string>
     <string name="dialog_cancel">Cancel</string>

@@ -28,6 +28,7 @@ struct SearchView: View {
                     get: { viewModel.query },
                     set: { viewModel.onQueryChanged($0) }
                 ))
+                .foregroundColor(AppTheme.textPrimary)
                 .autocapitalization(.none)
 
                 if !viewModel.query.isEmpty {

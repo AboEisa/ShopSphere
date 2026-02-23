@@ -90,6 +90,7 @@ struct MyDetailsView: View {
                 Image(systemName: icon)
                     .foregroundColor(AppTheme.textSecondary)
                 TextField(title, text: text)
+                    .foregroundColor(AppTheme.textPrimary)
                     .keyboardType(keyboardType)
             }
             .padding(12)

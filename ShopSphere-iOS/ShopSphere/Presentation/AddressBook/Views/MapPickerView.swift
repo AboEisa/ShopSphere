@@ -51,11 +51,13 @@ struct MapPickerView: View {
             // Bottom Card
             VStack(spacing: 12) {
                 TextField("Address nickname (e.g. Home, Work)", text: $nickname)
+                    .foregroundColor(AppTheme.textPrimary)
                     .padding(12)
                     .background(AppTheme.lightGray)
                     .cornerRadius(AppTheme.cornerRadius)
 
                 TextField("Full address", text: $addressText)
+                    .foregroundColor(AppTheme.textPrimary)
                     .padding(12)
                     .background(AppTheme.lightGray)
                     .cornerRadius(AppTheme.cornerRadius)

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>340654695612-cdqck9mpfeq0v55gq475pkrka2menhsm.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.340654695612-cdqck9mpfeq0v55gq475pkrka2menhsm</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>340654695612-5n9m4mg1urlq0b2bdqalajuims1mp4g1.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyBeVB-lVmZJflOVIeMo-zK9WL77ZpygcjE</string>
+	<key>GCM_SENDER_ID</key>
+	<string>340654695612</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.shopsphere.app</string>
+	<key>PROJECT_ID</key>
+	<string>shop-shpere-bb61c</string>
+	<key>STORAGE_BUCKET</key>
+	<string>shop-shpere-bb61c.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:340654695612:ios:ae0a2c95b02a01b3ebdcb9</string>
+</dict>
+</plist>

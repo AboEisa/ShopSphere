@@ -43,22 +43,19 @@ struct SplashView: View {
             withAnimation { showProgress = true }
             try? await Task.sleep(for: .seconds(AppConstants.splashDelaySeconds))
 
-            // Check localStorage first (it is cleared on logout).
-            // Only fall back to Firebase currentUser to recover sessions
-            // where the user was logged in but the flag wasn't set yet.
-            let hasLocalFlag = container.localStorage.isLoggedIn
-            let firebaseUser = Auth.auth().currentUser
+            // Read directly from UserDefaults to avoid any caching
+            let isLoggedIn = UserDefaults.standard.bool(forKey: StorageKeys.isLoggedIn)
+            print("🔑 Splash – isLoggedIn=\(isLoggedIn), firebaseUser=\(Auth.auth().currentUser?.uid ?? "nil")")
 
-            if hasLocalFlag, firebaseUser != nil {
-                // Normal logged-in state
-                container.localStorage.uid = firebaseUser!.uid
+            if isLoggedIn {
+                // Sync UID from Firebase if available
+                if let user = Auth.auth().currentUser {
+                    container.localStorage.uid = user.uid
+                }
                 withAnimation { appState = .main }
-            } else if !hasLocalFlag, firebaseUser != nil {
-                // localStorage was cleared (logout) but Firebase session
-                // is still alive — force sign-out to stay consistent.
-                try? Auth.auth().signOut()
-                withAnimation { appState = .onboard }
             } else {
+                // Ensure Firebase is also signed out
+                try? Auth.auth().signOut()
                 withAnimation { appState = .onboard }
             }
         }

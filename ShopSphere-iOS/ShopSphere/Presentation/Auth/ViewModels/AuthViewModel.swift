@@ -168,6 +168,9 @@ final class AuthViewModel {
         // the app won't treat the user as logged-in on next launch.
         localStorage?.isLoggedIn = false
         localStorage?.clear()
+        // Force write to disk immediately
+        UserDefaults.standard.synchronize()
+        print("🚪 Logout – isLoggedIn after clear: \(UserDefaults.standard.bool(forKey: StorageKeys.isLoggedIn))")
         repository?.logout()
         GIDSignIn.sharedInstance.signOut()
         LoginManager().logOut()

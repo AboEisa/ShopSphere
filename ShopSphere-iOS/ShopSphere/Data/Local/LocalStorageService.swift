@@ -155,13 +155,14 @@ final class LocalStorageService {
     // MARK: - Clear All
 
     func clear() {
+        defaults.set(false, forKey: StorageKeys.isLoggedIn)
         defaults.removeObject(forKey: StorageKeys.uid)
         defaults.removeObject(forKey: StorageKeys.profileName)
         defaults.removeObject(forKey: StorageKeys.profileEmail)
         defaults.removeObject(forKey: StorageKeys.profilePhone)
-        defaults.removeObject(forKey: StorageKeys.isLoggedIn)
         defaults.removeObject(forKey: StorageKeys.favoriteProducts)
         defaults.removeObject(forKey: StorageKeys.cartProducts)
+        defaults.synchronize() // Force immediate disk write
         changes.send()
     }
 }

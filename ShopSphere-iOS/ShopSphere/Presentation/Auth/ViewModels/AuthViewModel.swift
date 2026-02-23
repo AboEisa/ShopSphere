@@ -41,9 +41,9 @@ final class AuthViewModel {
     // MARK: - Auth State Check
 
     func checkLoginState() -> Bool {
-        let firebaseLoggedIn = Auth.auth().currentUser != nil
-        let localLoggedIn = localStorage?.isLoggedIn ?? false
-        return firebaseLoggedIn || localLoggedIn
+        // localStorage.isLoggedIn is the source of truth.
+        // It is set to true on login and cleared on logout.
+        return localStorage?.isLoggedIn ?? false
     }
 
     func syncAuthState() {
@@ -164,10 +164,13 @@ final class AuthViewModel {
     // MARK: - Logout
 
     func logout() {
+        // Clear local flag first so even if Firebase signOut fails,
+        // the app won't treat the user as logged-in on next launch.
+        localStorage?.isLoggedIn = false
+        localStorage?.clear()
         repository?.logout()
         GIDSignIn.sharedInstance.signOut()
         LoginManager().logOut()
-        localStorage?.clear()
         isLoggedIn = false
         state = .idle
         clearFields()

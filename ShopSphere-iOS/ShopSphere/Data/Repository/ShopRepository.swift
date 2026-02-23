@@ -95,7 +95,11 @@ final class ShopRepository: RepositoryProtocol {
     }
 
     func logout() {
-        try? firebaseAuth.signOut()
+        do {
+            try firebaseAuth.signOut()
+        } catch {
+            print("Firebase signOut error: \(error)")
+        }
         localStorage.clear()
     }
 

@@ -24,26 +24,22 @@ struct ContentView: View {
 
             case .login:
                 LoginView(appState: $appState, viewModel: authViewModel)
-                    .onAppear {
-                        authViewModel.configure(
-                            repository: container.repository,
-                            localStorage: container.localStorage
-                        )
-                    }
 
             case .register:
                 RegisterView(appState: $appState, viewModel: authViewModel)
-                    .onAppear {
-                        authViewModel.configure(
-                            repository: container.repository,
-                            localStorage: container.localStorage
-                        )
-                    }
 
             case .main:
                 MainTabView(authViewModel: authViewModel, appState: $appState)
             }
         }
         .animation(.easeInOut(duration: 0.3), value: appState)
+        .onAppear {
+            // Configure AuthViewModel once with DI container so logout
+            // always has valid references to localStorage and repository.
+            authViewModel.configure(
+                repository: container.repository,
+                localStorage: container.localStorage
+            )
+        }
     }
 }

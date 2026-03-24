@@ -115,7 +115,7 @@ class CartFragment : Fragment() {
             },
             onRemoveClick = { productId ->
                 if (!isAdded || _binding == null) return@CartAdapter
-                cartViewModel.removeFromCart(productId)
+                cartViewModel.removeCartLine(productId)
                 updateTotalPrice()
                 if (isAdded && _binding != null) {
                     Toast.makeText(requireContext(), "Product removed from cart", Toast.LENGTH_SHORT).show()
@@ -165,12 +165,12 @@ class CartFragment : Fragment() {
             val quantity = product.quantity.coerceAtLeast(1)
             when {
                 stock <= 0 -> {
-                    cartViewModel.removeFromCart(product.id)
+                    cartViewModel.removeCartLine(product.cartLineId)
                     null
                 }
 
                 quantity > stock -> {
-                    cartViewModel.updateQuantity(product.id, stock)
+                    cartViewModel.updateQuantity(product.cartLineId, stock)
                     product.copy(quantity = stock)
                 }
 

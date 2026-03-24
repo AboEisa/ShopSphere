@@ -125,6 +125,11 @@
         android:label="fragment_help_center"
         tools:layout="@layout/fragment_help_center" />
     <fragment
+        android:id="@+id/notificationsFragment"
+        android:name="com.example.shopsphere.CleanArchitecture.ui.views.NotificationsFragment"
+        android:label="fragment_notifications"
+        tools:layout="@layout/fragment_notifications" />
+    <fragment
         android:id="@+id/ordersFragment"
         android:name="com.example.shopsphere.CleanArchitecture.ui.views.OrdersFragment"
         android:label="fragment_orders"
@@ -256,6 +261,11 @@
             android:name="productId"
             app:argType="integer" />
     </fragment>
+    <fragment
+        android:id="@+id/customerServiceFragment"
+        android:name="com.example.shopsphere.CleanArchitecture.ui.views.CustomerServiceFragment"
+        android:label="fragment_customer_service"
+        tools:layout="@layout/fragment_customer_service" />
     <!-- ONBOARD -->
     <fragment
         android:id="@+id/onBoardFragment"

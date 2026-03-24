@@ -33,6 +33,14 @@ class MainActivity : AppCompatActivity() {
         R.id.accountFragment
     )
 
+    private val bottomNavVisibleDestinations = rootDestinations + setOf(
+        R.id.ordersFragment,
+        R.id.myDetailsFragment,
+        R.id.notificationsFragment,
+        R.id.faqsFragment,
+        R.id.helpCenterFragment
+    )
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         _binding = ActivityMainBinding.inflate(layoutInflater)
@@ -63,7 +71,7 @@ class MainActivity : AppCompatActivity() {
         // Hide or show bottom navigation based on current screen
         navController.addOnDestinationChangedListener { _, destination, _ ->
             binding.bottomNav.visibility =
-                if (destination.id in rootDestinations) View.VISIBLE else View.GONE
+                if (destination.id in bottomNavVisibleDestinations) View.VISIBLE else View.GONE
         }
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {

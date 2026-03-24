@@ -1,13 +1,16 @@
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="16dp"
     android:layout_marginVertical="8dp"
-    app:cardBackgroundColor="#FFFFFF"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="2dp">
+    app:cardBackgroundColor="@android:color/white"
+    app:cardCornerRadius="14dp"
+    app:cardElevation="0dp"
+    app:strokeColor="#EAEAEA"
+    app:strokeWidth="1dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -16,22 +19,14 @@
         android:orientation="horizontal"
         android:padding="12dp">
 
-        <!-- Product Image with rounded corners -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            app:cardCornerRadius="8dp"
-            app:cardElevation="0dp">
+        <ImageView
+            android:id="@+id/productImage"
+            android:layout_width="84dp"
+            android:layout_height="92dp"
+            android:background="@drawable/bg_form_field"
+            android:scaleType="centerCrop"
+            tools:src="@drawable/ic_launcher_background" />
 
-            <ImageView
-                android:id="@+id/productImage"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="centerCrop"
-                tools:src="@drawable/ic_launcher_background" />
-        </androidx.cardview.widget.CardView>
-
-        <!-- Product Details -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -39,29 +34,35 @@
             android:layout_weight="1"
             android:orientation="vertical">
 
-            <!-- Product Title -->
             <TextView
                 android:id="@+id/productTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:maxLines="1"
+                android:maxLines="2"
                 android:textColor="#212121"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                tools:text="Classic Denim Jacket" />
+                tools:text="Regular Fit Slogan" />
 
-            <!-- Product Price -->
+            <TextView
+                android:id="@+id/textProductSize"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textColor="#A3A3A3"
+                android:textSize="13sp"
+                tools:text="Size M" />
+
             <TextView
                 android:id="@+id/productPrice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:textColor="#9E9E9E"
-                android:textSize="14sp"
-                tools:text="EGP 1299. 99" />
+                android:layout_marginTop="8dp"
+                android:textColor="#212121"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                tools:text="EGP 1,190" />
 
-            <!-- Quantity Selector -->
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -75,53 +76,42 @@
                     android:layout_width="36dp"
                     android:layout_height="36dp"
                     android:background="@drawable/bg_quantity_button_left"
-                    android:contentDescription="Decrease quantity"
-                    android:src="@drawable/ic_minus"
                     android:padding="10dp"
-                    app:tint="#616161" />
-
-                <View
-                    android:layout_width="1dp"
-                    android:layout_height="20dp"
-                    android:background="#E0E0E0" />
+                    android:src="@drawable/ic_minus"
+                    app:tint="#616161"
+                    tools:ignore="ContentDescription" />
 
                 <TextView
                     android:id="@+id/productQuantity"
-                    android:layout_width="40dp"
+                    android:layout_width="42dp"
                     android:layout_height="36dp"
-                    android:background="#F5F5F5"
+                    android:background="#F8F8F8"
                     android:gravity="center"
-                    android:text="2"
                     android:textColor="#212121"
                     android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <View
-                    android:layout_width="1dp"
-                    android:layout_height="20dp"
-                    android:background="#E0E0E0" />
+                    android:textStyle="bold"
+                    tools:text="2" />
 
                 <ImageButton
                     android:id="@+id/btnIncrease"
                     android:layout_width="36dp"
                     android:layout_height="36dp"
                     android:background="@drawable/bg_quantity_button_right"
-                    android:contentDescription="Increase quantity"
-                    android:src="@drawable/ic_plus"
                     android:padding="10dp"
-                    app:tint="#616161" />
+                    android:src="@drawable/ic_plus"
+                    app:tint="#616161"
+                    tools:ignore="ContentDescription" />
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Delete Button -->
         <ImageButton
             android:id="@+id/removeButton"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:layout_gravity="center"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Remove item"
             android:src="@drawable/ic_delete"
-            app:tint="#F44336" />
+            app:tint="#F44336"
+            tools:ignore="ContentDescription" />
     </LinearLayout>
-</androidx.cardview.widget.CardView>
+
+</com.google.android.material.card.MaterialCardView>

@@ -78,9 +78,8 @@ class Repository @Inject constructor(
 
     override suspend fun getCartProducts(ids: List<Int>): Result<List<DomainProductResult>> {
         return try {
-            val cartIds = sharedPreferencesHelper.getCartProducts()
             val allProducts = remoteDataSource.getProducts().getOrThrow()
-            val cartProducts = allProducts.filter { cartIds.contains(it.id) }
+            val cartProducts = allProducts.filter { ids.contains(it.id) }
             Result.success(cartProducts.map { it.mapToDomain() })
         } catch (e: Exception) {
             Result.failure(e)

@@ -4,407 +4,400 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F8FAFC"
+    android:background="@android:color/white"
     tools:context=".CleanArchitecture.ui.views.AccountFragment">
 
-    <ImageView
-        android:id="@+id/btn_back"
-        android:layout_width="42dp"
-        android:layout_height="42dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="14dp"
-        android:background="@drawable/bg_account_back_circle"
-        android:padding="12dp"
-        android:src="@drawable/ic_back"
+    <View
+        android:id="@+id/account_top_accent"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/bright_green_indicator"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <ImageView
+        android:id="@+id/btn_back"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="10dp"
+        android:clickable="true"
+        android:contentDescription="@string/account_back_button"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackgroundBorderless"
+        android:padding="8dp"
+        android:src="@drawable/ic_back"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/account_top_accent"
+        app:tint="#1A1A1A" />
+
     <TextView
-        android:id="@+id/txt_discover"
+        android:id="@+id/text_account_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:fontFamily="sans-serif-medium"
         android:text="@string/account"
         android:textColor="@color/bright_green"
-        android:textSize="24sp"
+        android:textSize="20sp"
+        android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="@id/btn_back"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@id/btn_back" />
 
+    <ImageView
+        android:id="@+id/btn_notifications"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="20dp"
+        android:clickable="true"
+        android:contentDescription="@string/account_notifications_button"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackgroundBorderless"
+        android:padding="8dp"
+        android:src="@drawable/ic_bell"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/account_top_accent"
+        app:tint="@color/bright_green" />
+
+    <View
+        android:id="@+id/header_divider"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:layout_marginTop="18dp"
+        android:background="#E9EDF2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btn_back" />
+
     <ScrollView
-        android:id="@+id/accountScroll"
+        android:id="@+id/account_scroll"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="14dp"
         android:clipToPadding="false"
         android:fillViewport="true"
-        android:paddingBottom="32dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btn_back">
+        app:layout_constraintTop_toBottomOf="@id/header_divider">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingHorizontal="16dp">
+            android:paddingBottom="32dp">
 
-            <com.google.android.material.card.MaterialCardView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardBackgroundColor="@android:color/white"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="0dp"
-                app:strokeColor="#E8ECF2"
-                app:strokeWidth="1dp">
+                android:background="@android:color/white"
+                android:orientation="vertical">
 
                 <LinearLayout
+                    android:id="@+id/layout_orders"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="62dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:padding="16dp">
+                    android:paddingHorizontal="20dp">
 
-                    <de.hdodenhof.circleimageview.CircleImageView
-                        android:id="@+id/image_profile"
-                        android:layout_width="62dp"
-                        android:layout_height="62dp"
-                        android:src="@drawable/ic_user"
-                        app:civ_border_color="#E8ECF2"
-                        app:civ_border_width="1dp" />
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_order"
+                        app:tint="@color/bright_green" />
 
-                    <LinearLayout
+                    <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
+                        android:layout_marginStart="16dp"
                         android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:text="@string/account_my_orders"
+                        android:textColor="#1A1A1A"
+                        android:textSize="16sp" />
 
-                        <TextView
-                            android:id="@+id/text_profile_name"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/account_guest_user"
-                            android:textColor="#0F172A"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/text_profile_email"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="@string/account_signed_in_as"
-                            android:textColor="#64748B"
-                            android:textSize="13sp" />
-                    </LinearLayout>
+                    <ImageView
+                        android:layout_width="12dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_arrow_right" />
                 </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="@string/account_general"
-                android:textColor="#475569"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                app:cardBackgroundColor="@android:color/white"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="0dp"
-                app:strokeColor="#E8ECF2"
-                app:strokeWidth="1dp">
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="58dp"
+                    android:layout_marginEnd="20dp"
+                    android:background="#ECEFF3" />
 
                 <LinearLayout
+                    android:id="@+id/layout_details"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:layout_height="62dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="20dp">
 
-                    <LinearLayout
-                        android:id="@+id/layout_orders"
-                        android:layout_width="match_parent"
-                        android:layout_height="56dp"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?attr/selectableItemBackground"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:paddingHorizontal="16dp">
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_user"
+                        app:tint="@color/bright_green" />
 
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:src="@drawable/ic_order"
-                            app:tint="#0F172A" />
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_weight="1"
+                        android:text="@string/account_my_details"
+                        android:textColor="#1A1A1A"
+                        android:textSize="16sp" />
 
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
-                            android:layout_weight="1"
-                            android:text="@string/account_my_orders"
-                            android:textColor="#111827"
-                            android:textSize="15sp" />
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:alpha="0.45"
-                            android:src="@drawable/ic_arrow_right" />
-                    </LinearLayout>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:layout_marginHorizontal="16dp"
-                        android:background="#EEF2F7" />
-
-                    <LinearLayout
-                        android:id="@+id/layout_details"
-                        android:layout_width="match_parent"
-                        android:layout_height="56dp"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?attr/selectableItemBackground"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:paddingHorizontal="16dp">
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:src="@drawable/ic_user"
-                            app:tint="#0F172A" />
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
-                            android:layout_weight="1"
-                            android:text="@string/account_my_details"
-                            android:textColor="#111827"
-                            android:textSize="15sp" />
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:alpha="0.45"
-                            android:src="@drawable/ic_arrow_right" />
-                    </LinearLayout>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:layout_marginHorizontal="16dp"
-                        android:background="#EEF2F7" />
-
-                    <LinearLayout
-                        android:id="@+id/layout_address_book"
-                        android:layout_width="match_parent"
-                        android:layout_height="56dp"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?attr/selectableItemBackground"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:paddingHorizontal="16dp">
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:src="@drawable/ic_home"
-                            app:tint="#0F172A" />
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
-                            android:layout_weight="1"
-                            android:text="@string/account_address_book"
-                            android:textColor="#111827"
-                            android:textSize="15sp" />
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:alpha="0.45"
-                            android:src="@drawable/ic_arrow_right" />
-                    </LinearLayout>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:layout_marginHorizontal="16dp"
-                        android:background="#EEF2F7" />
-
-                    <LinearLayout
-                        android:id="@+id/layout_payment_methods"
-                        android:layout_width="match_parent"
-                        android:layout_height="56dp"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?attr/selectableItemBackground"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:paddingHorizontal="16dp">
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:src="@drawable/ic_visa"
-                            app:tint="#0F172A"
-                            tools:ignore="UseAppTint" />
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
-                            android:layout_weight="1"
-                            android:text="@string/account_payment_methods"
-                            android:textColor="#111827"
-                            android:textSize="15sp" />
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:alpha="0.45"
-                            android:src="@drawable/ic_arrow_right" />
-                    </LinearLayout>
+                    <ImageView
+                        android:layout_width="12dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_arrow_right" />
                 </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="@string/account_support"
-                android:textColor="#475569"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                app:cardBackgroundColor="@android:color/white"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="0dp"
-                app:strokeColor="#E8ECF2"
-                app:strokeWidth="1dp">
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="58dp"
+                    android:layout_marginEnd="20dp"
+                    android:background="#ECEFF3" />
 
                 <LinearLayout
+                    android:id="@+id/layout_address_book"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:layout_height="62dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="20dp">
 
-                    <LinearLayout
-                        android:id="@+id/layout_faqs"
-                        android:layout_width="match_parent"
-                        android:layout_height="56dp"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?attr/selectableItemBackground"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:paddingHorizontal="16dp">
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_home"
+                        app:tint="@color/bright_green" />
 
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:src="@drawable/ic_info2"
-                            app:tint="#0F172A" />
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_weight="1"
+                        android:text="@string/account_address_book"
+                        android:textColor="#1A1A1A"
+                        android:textSize="16sp" />
 
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
-                            android:layout_weight="1"
-                            android:text="@string/account_faqs"
-                            android:textColor="#111827"
-                            android:textSize="15sp" />
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:alpha="0.45"
-                            android:src="@drawable/ic_arrow_right" />
-                    </LinearLayout>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:layout_marginHorizontal="16dp"
-                        android:background="#EEF2F7" />
-
-                    <LinearLayout
-                        android:id="@+id/layout_help_center"
-                        android:layout_width="match_parent"
-                        android:layout_height="56dp"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?attr/selectableItemBackground"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:paddingHorizontal="16dp">
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:src="@drawable/ic_help"
-                            app:tint="#0F172A" />
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
-                            android:layout_weight="1"
-                            android:text="@string/account_help_center"
-                            android:textColor="#111827"
-                            android:textSize="15sp" />
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:alpha="0.45"
-                            android:src="@drawable/ic_arrow_right" />
-                    </LinearLayout>
+                    <ImageView
+                        android:layout_width="12dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_arrow_right" />
                 </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="58dp"
+                    android:layout_marginEnd="20dp"
+                    android:background="#ECEFF3" />
+
+                <LinearLayout
+                    android:id="@+id/layout_payment_methods"
+                    android:layout_width="match_parent"
+                    android:layout_height="62dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="20dp">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_visa"
+                        app:tint="@color/bright_green"
+                        tools:ignore="UseAppTint" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_weight="1"
+                        android:text="@string/account_payment_methods"
+                        android:textColor="#1A1A1A"
+                        android:textSize="16sp" />
+
+                    <ImageView
+                        android:layout_width="12dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_arrow_right" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="58dp"
+                    android:layout_marginEnd="20dp"
+                    android:background="#ECEFF3" />
+
+                <LinearLayout
+                    android:id="@+id/layout_notifications"
+                    android:layout_width="match_parent"
+                    android:layout_height="62dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="20dp">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_notification"
+                        app:tint="@color/bright_green" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="18dp"
+                        android:layout_weight="1"
+                        android:text="@string/account_notifications"
+                        android:textColor="#1A1A1A"
+                        android:textSize="16sp" />
+
+                    <ImageView
+                        android:layout_width="12dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_arrow_right" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="8dp"
+                android:background="#F4F6F8" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@android:color/white"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:id="@+id/layout_faqs"
+                    android:layout_width="match_parent"
+                    android:layout_height="62dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="20dp">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_info2"
+                        app:tint="@color/bright_green" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_weight="1"
+                        android:text="@string/account_faqs"
+                        android:textColor="#1A1A1A"
+                        android:textSize="16sp" />
+
+                    <ImageView
+                        android:layout_width="12dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_arrow_right" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="58dp"
+                    android:layout_marginEnd="20dp"
+                    android:background="#ECEFF3" />
+
+                <LinearLayout
+                    android:id="@+id/layout_help_center"
+                    android:layout_width="match_parent"
+                    android:layout_height="62dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="20dp">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_help"
+                        app:tint="@color/bright_green" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_weight="1"
+                        android:text="@string/account_help_center"
+                        android:textColor="#1A1A1A"
+                        android:textSize="16sp" />
+
+                    <ImageView
+                        android:layout_width="12dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_arrow_right" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="8dp"
+                android:background="#F4F6F8" />
 
             <LinearLayout
                 android:id="@+id/layout_logout"
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginTop="14dp"
-                android:background="@drawable/bg_account_logout"
+                android:layout_height="62dp"
+                android:background="@android:color/white"
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackground"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingHorizontal="16dp">
+                android:paddingHorizontal="20dp">
 
                 <ImageView
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:src="@drawable/ic_logout"
-                    app:tint="#DC2626" />
+                    app:tint="#ED1010" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
+                    android:layout_marginStart="16dp"
                     android:text="@string/account_logout"
-                    android:textColor="#DC2626"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
+                    android:textColor="#ED1010"
+                    android:textSize="16sp" />
             </LinearLayout>
         </LinearLayout>
     </ScrollView>

@@ -1,19 +1,23 @@
 package com.example.shopsphere.CleanArchitecture.ui.views
 
+import android.app.DatePickerDialog
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
 import com.example.shopsphere.CleanArchitecture.utils.showSuccessDialog
-import com.bumptech.glide.Glide
 import com.example.shopsphere.R
 import com.example.shopsphere.databinding.FragmentMyDetailsBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
 import dagger.hilt.android.AndroidEntryPoint
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -39,10 +43,31 @@ class MyDetailsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        setupGenderField()
         bindUserData()
         binding.btnBack.setOnClickListener { findNavController().navigateUp() }
-        binding.btnSaveDetails.setOnClickListener {
+        binding.btnNotifications.setOnClickListener {
+            findNavController().navigate(R.id.notificationsFragment)
+        }
+        binding.buttonOpenDatePicker.setOnClickListener { openDatePicker() }
+        binding.editBirthDate.setOnClickListener { openDatePicker() }
+        binding.buttonSubmit.setOnClickListener {
             saveProfileChanges()
+        }
+    }
+
+    private fun setupGenderField() {
+        val options = listOf(
+            getString(R.string.my_details_gender_male),
+            getString(R.string.my_details_gender_female),
+            getString(R.string.my_details_gender_other)
+        )
+        binding.editGender.setAdapter(
+            ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, options)
+        )
+        binding.editGender.setOnClickListener { binding.editGender.showDropDown() }
+        binding.editGender.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) binding.editGender.showDropDown()
         }
     }
 
@@ -51,35 +76,42 @@ class MyDetailsFragment : Fragment() {
         val localName = sharedPreference.getProfileName()
         val localEmail = sharedPreference.getProfileEmail()
         val localPhone = sharedPreference.getProfilePhone()
+        val localBirthDate = sharedPreference.getProfileBirthDate()
+        val localGender = sharedPreference.getProfileGender()
 
         binding.editFullName.setText(localName.ifBlank { user?.displayName.orEmpty() })
         binding.editEmail.setText(localEmail.ifBlank { user?.email.orEmpty() })
         binding.editPhone.setText(localPhone)
-
-        user?.photoUrl?.let { uri ->
-            Glide.with(this)
-                .load(uri)
-                .placeholder(R.drawable.ic_user)
-                .error(R.drawable.ic_user)
-                .into(binding.imageProfile)
-        }
+        binding.editBirthDate.setText(localBirthDate)
+        binding.editGender.setText(localGender, false)
     }
 
     private fun saveProfileChanges() {
         val name = binding.editFullName.text.toString().trim()
         val email = binding.editEmail.text.toString().trim()
         val phone = binding.editPhone.text.toString().trim()
+        val birthDate = binding.editBirthDate.text.toString().trim()
+        val gender = binding.editGender.text.toString().trim()
 
         if (name.isBlank()) {
-            binding.editFullName.error = getString(R.string.account_full_name)
+            binding.editFullName.error = getString(R.string.my_details_full_name)
             return
         }
         if (email.isBlank()) {
-            binding.editEmail.error = getString(R.string.account_email)
+            binding.editEmail.error = getString(R.string.my_details_email)
+            return
+        }
+        if (birthDate.isBlank()) {
+            binding.editBirthDate.error = getString(R.string.my_details_birth_date)
+            return
+        }
+        if (gender.isBlank()) {
+            binding.editGender.error = getString(R.string.my_details_gender)
             return
         }
 
         sharedPreference.saveProfile(name = name, email = email, phone = phone)
+        sharedPreference.saveProfileExtras(birthDate = birthDate, gender = gender)
 
         val user = firebaseAuth.currentUser
         if (user != null && name != user.displayName) {
@@ -93,6 +125,29 @@ class MyDetailsFragment : Fragment() {
         ) {
             findNavController().navigateUp()
         }
+    }
+
+    private fun openDatePicker() {
+        val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH)
+        val calendar = Calendar.getInstance()
+        runCatching {
+            formatter.parse(binding.editBirthDate.text.toString())?.let { parsedDate ->
+                calendar.time = parsedDate
+            }
+        }
+
+        DatePickerDialog(
+            requireContext(),
+            { _, year, month, dayOfMonth ->
+                val selected = Calendar.getInstance().apply {
+                    set(year, month, dayOfMonth)
+                }
+                binding.editBirthDate.setText(formatter.format(selected.time))
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        ).show()
     }
 
     override fun onDestroyView() {

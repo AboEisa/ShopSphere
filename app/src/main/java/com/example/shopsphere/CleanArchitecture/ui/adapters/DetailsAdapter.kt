@@ -14,9 +14,9 @@ import com.example.shopsphere.databinding.ItemDetailsBinding
 class DetailsAdapter(
     private val onFavoriteClick: (Int) -> Unit,
     private val isFavorite: (Int) -> Boolean,
-    private val onAddToCartClick: (Int) -> Unit,
-    private val removeFromCart: (Int) -> Unit,
-    private val isInCart: (Int) -> Boolean,
+    private val onAddToCartClick: (Int, String) -> Unit,
+    private val removeFromCart: (Int, String) -> Unit,
+    private val isInCart: (Int, String) -> Boolean,
     private val onViewReviews: (Int) -> Unit,
     private val onOutOfStockClick: (String) -> Unit
 ) : RecyclerView.Adapter<DetailsAdapter.Holder>() {
@@ -56,29 +56,32 @@ class DetailsAdapter(
                     .into(productImage)
 
                 updateFavoriteIcon(product.id)
-                updateCartButton(product)
                 val showSizeSelector = shouldShowSizeSelector(product.category)
                 textSizeLabel.isVisible = showSizeSelector
                 layoutSizeOptions.isVisible = showSizeSelector
+                if (!showSizeSelector) {
+                    selectedSizes.remove(product.id)
+                }
+                updateCartButton(product, showSizeSelector)
 
                 favoriteButton.setOnClickListener {
                     onFavoriteClick(product.id)
                     updateFavoriteIcon(product.id)
                 }
 
-
                 addToCartButton.setOnClickListener {
+                    val size = resolveCartSize(product, showSizeSelector)
                     val stock = product.rating.count.coerceAtLeast(0)
-                    if (isInCart(product.id)) {
-                        removeFromCart(product.id)
-                        itemView.post { updateCartButton(product) }
+                    if (isInCart(product.id, size)) {
+                        removeFromCart(product.id, size)
+                        itemView.post { updateCartButton(product, showSizeSelector) }
                     } else {
                         if (stock <= 0) {
                             onOutOfStockClick(product.title)
                             return@setOnClickListener
                         }
-                        onAddToCartClick(product.id)
-                        itemView.post { updateCartButton(product) }
+                        onAddToCartClick(product.id, size)
+                        itemView.post { updateCartButton(product, showSizeSelector) }
                     }
                 }
 
@@ -102,32 +105,31 @@ class DetailsAdapter(
         }
 
         private fun setupSizeSelector(productId: Int) {
-            val selectedSize = selectedSizes[productId] ?: "M"
-            selectedSizes[productId] = selectedSize
+            selectedSizes[productId] = currentSelectedSize(productId)
 
             val options = mapOf(
                 "S" to binding.sizeS,
                 "M" to binding.sizeM,
-                "L" to binding.sizeL,
-                "XL" to binding.sizeXL
+                "L" to binding.sizeL
             )
 
             options.forEach { (size, view) ->
                 view.setOnClickListener {
                     selectedSizes[productId] = size
                     renderSelectedSize(productId)
+                    val product = products.getOrNull(bindingAdapterPosition) ?: return@setOnClickListener
+                    updateCartButton(product, showSizeSelector = true)
                 }
             }
             renderSelectedSize(productId)
         }
 
         private fun renderSelectedSize(productId: Int) {
-            val selected = selectedSizes[productId] ?: "M"
+            val selected = currentSelectedSize(productId)
             val options = mapOf(
                 "S" to binding.sizeS,
                 "M" to binding.sizeM,
-                "L" to binding.sizeL,
-                "XL" to binding.sizeXL
+                "L" to binding.sizeL
             )
 
             options.forEach { (size, view) ->
@@ -145,6 +147,17 @@ class DetailsAdapter(
             }
         }
 
+        private fun currentSelectedSize(productId: Int): String {
+            return selectedSizes[productId] ?: "M"
+        }
+
+        private fun resolveCartSize(
+            product: PresentationProductResult,
+            showSizeSelector: Boolean
+        ): String {
+            return if (showSizeSelector) currentSelectedSize(product.id) else ""
+        }
+
         private fun updateFavoriteIcon(productId: Int) {
             if (isFavorite(productId)) {
                 binding.favoriteButton.setColorFilter(
@@ -158,12 +171,9 @@ class DetailsAdapter(
                 )
             }
         }
-
-
-
-        private fun updateCartButton(product: PresentationProductResult) {
+        private fun updateCartButton(product: PresentationProductResult, showSizeSelector: Boolean) {
             val button = binding.addToCartButton
-            val inCart = isInCart(product.id)
+            val inCart = isInCart(product.id, resolveCartSize(product, showSizeSelector))
             val stock = product.rating.count.coerceAtLeast(0)
 
             if (inCart) {

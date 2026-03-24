@@ -11,6 +11,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
+import com.example.shopsphere.R
 import com.example.shopsphere.CleanArchitecture.ui.adapters.DetailsAdapter
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.CartViewModel
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.DetailsViewModel
@@ -49,13 +50,13 @@ class DetailsFragment : Fragment() {
                 if (!isAdded || _binding == null) return@DetailsAdapter false
                 favoriteViewModel.isFavoriteSync(productId)
             },
-            onAddToCartClick = { productId ->
+            onAddToCartClick = { productId, size ->
                 if (!isAdded || _binding == null) return@DetailsAdapter
                 try {
                     val product = detailsViewModel.productLiveData.value
                     product?.let {
                         val stock = it.rating.count.coerceAtLeast(0)
-                        val added = cartViewModel.addProductToCart(productId, stock)
+                        val added = cartViewModel.addProductToCart(productId, size, stock)
                         sharedCartViewModel.refreshCartCount()
                         if (isAdded && _binding != null && added) {
                             context?.let { ctx ->
@@ -69,18 +70,18 @@ class DetailsFragment : Fragment() {
                     }
                 }
             },
-            isInCart = { productId ->
+            isInCart = { productId, size ->
                 if (!isAdded || _binding == null) return@DetailsAdapter false
                 try {
-                    cartViewModel.isInCart(productId)
+                    cartViewModel.isInCart(productId, size)
                 } catch (e: Exception) {
                     false
                 }
             },
-            removeFromCart = { productId ->
+            removeFromCart = { productId, size ->
                 if (!isAdded || _binding == null) return@DetailsAdapter
                 try {
-                    cartViewModel.removeFromCart(productId)
+                    cartViewModel.removeFromCart(productId, size)
                     sharedCartViewModel.refreshCartCount()
                     if (isAdded && _binding != null) {
                         context?.let { ctx ->
@@ -103,7 +104,7 @@ class DetailsFragment : Fragment() {
                 context?.let { ctx ->
                     Toast.makeText(
                         ctx,
-                        ctx.getString(com.example.shopsphere.R.string.validation_product_out_of_stock, title),
+                        ctx.getString(R.string.validation_product_out_of_stock, title),
                         Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -148,6 +149,10 @@ class DetailsFragment : Fragment() {
         binding.btnBack.setOnClickListener {
             if (!isAdded || _binding == null) return@setOnClickListener
             findNavController().navigateUp()
+        }
+        binding.btnNotifications.setOnClickListener {
+            if (!isAdded || _binding == null) return@setOnClickListener
+            findNavController().navigate(R.id.notificationsFragment)
         }
     }
 

@@ -59,7 +59,7 @@
 
 
     <color name="bright_green_ripple">#2023a36e</color> <!-- 12% opacity -->
-    <color name="bright_green_indicator">#1A23a36e</color> <!-- 10% opacity -->
+    <color name="bright_green_indicator">#23a36e</color>
 
 
 

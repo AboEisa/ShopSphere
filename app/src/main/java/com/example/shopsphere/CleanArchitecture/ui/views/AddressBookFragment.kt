@@ -10,7 +10,6 @@ import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.example.shopsphere.CleanArchitecture.ui.adapters.AddressBookAdapter
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.CheckoutSharedViewModel
-import com.example.shopsphere.CleanArchitecture.utils.showSuccessDialog
 import com.example.shopsphere.R
 import com.example.shopsphere.databinding.FragmentAddressBookBinding
 import dagger.hilt.android.AndroidEntryPoint
@@ -40,11 +39,17 @@ class AddressBookFragment : Fragment() {
         binding.recyclerAddresses.adapter = addressAdapter
 
         binding.btnBack.setOnClickListener { findNavController().navigateUp() }
+        binding.btnNotifications.setOnClickListener {
+            findNavController().navigate(R.id.notificationsFragment)
+        }
         binding.btnUseAddress.setOnClickListener {
-            showSuccessDialog(
-                title = getString(R.string.dialog_address_selected_title),
-                message = getString(R.string.dialog_address_selected_message)
-            ) {
+            if (sharedViewModel.selectedAddress.value == null) {
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.validation_address_invalid),
+                    Toast.LENGTH_SHORT
+                ).show()
+            } else {
                 findNavController().navigateUp()
             }
         }
@@ -57,14 +62,10 @@ class AddressBookFragment : Fragment() {
             val fullAddress = bundle.getString("fullname").orEmpty()
             val lat = bundle.getDouble("lat")
             val lng = bundle.getDouble("lng")
+            val isDefault = bundle.getBoolean("is_default", false)
             if (title.isNotBlank() && fullAddress.isNotBlank()) {
-                val wasSaved = sharedViewModel.setAddress(title, fullAddress, lat, lng)
-                if (wasSaved) {
-                    showSuccessDialog(
-                        title = getString(R.string.dialog_address_success_title),
-                        message = getString(R.string.dialog_address_success_message)
-                    )
-                } else {
+                val wasSaved = sharedViewModel.setAddress(title, fullAddress, lat, lng, isDefault)
+                if (!wasSaved) {
                     Toast.makeText(
                         requireContext(),
                         getString(R.string.validation_address_invalid),

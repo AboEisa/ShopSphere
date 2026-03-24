@@ -4,73 +4,166 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F8FAFC"
+    android:background="@android:color/white"
     tools:context=".CleanArchitecture.ui.views.OrdersFragment">
 
-    <ImageView
-        android:id="@+id/btn_back"
-        android:layout_width="42dp"
-        android:layout_height="42dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="14dp"
-        android:background="@drawable/bg_account_back_circle"
-        android:padding="12dp"
-        android:src="@drawable/ic_back"
+    <View
+        android:id="@+id/topAccent"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/bright_green_indicator"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <ImageView
+        android:id="@+id/btnBack"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="10dp"
+        android:clickable="true"
+        android:contentDescription="@string/account_back_button"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackgroundBorderless"
+        android:padding="8dp"
+        android:src="@drawable/ic_back"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/topAccent"
+        app:tint="#1A1A1A" />
+
     <TextView
-        android:id="@+id/txt_title"
+        android:id="@+id/textTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:fontFamily="sans-serif-medium"
         android:text="@string/account_my_orders"
         android:textColor="@color/bright_green"
-        android:textSize="24sp"
-        app:layout_constraintBottom_toBottomOf="@id/btn_back"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@id/btnBack"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@id/btn_back" />
+        app:layout_constraintTop_toTopOf="@id/btnBack" />
+
+    <ImageView
+        android:id="@+id/btnNotifications"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="20dp"
+        android:clickable="true"
+        android:contentDescription="@string/account_notifications_button"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackgroundBorderless"
+        android:padding="8dp"
+        android:src="@drawable/ic_bell"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/topAccent"
+        app:tint="@color/bright_green" />
+
+    <View
+        android:id="@+id/headerDivider"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:layout_marginTop="18dp"
+        android:background="#E9EDF2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btnBack" />
+
+    <LinearLayout
+        android:id="@+id/tabContainer"
+        android:layout_width="0dp"
+        android:layout_height="52dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="18dp"
+        android:layout_marginEnd="20dp"
+        android:background="@drawable/bg_segmented_container"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:padding="6dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/headerDivider">
+
+        <TextView
+            android:id="@+id/tabOngoing"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@drawable/bg_segmented_selected"
+            android:gravity="center"
+            android:text="@string/orders_ongoing"
+            android:textColor="#1A1A1A"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tabCompleted"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="@string/orders_completed"
+            android:textColor="#9B9B9B"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerOrders"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:clipToPadding="false"
-        android:paddingHorizontal="16dp"
-        android:paddingTop="14dp"
-        android:paddingBottom="20dp"
+        android:paddingStart="20dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="16dp"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btn_back"
+        app:layout_constraintTop_toBottomOf="@id/tabContainer"
         tools:listitem="@layout/item_order" />
 
     <LinearLayout
         android:id="@+id/emptyState"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:gravity="center"
         android:orientation="vertical"
+        android:paddingHorizontal="36dp"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/tabContainer">
 
         <ImageView
-            android:layout_width="80dp"
-            android:layout_height="80dp"
+            android:layout_width="68dp"
+            android:layout_height="68dp"
             android:src="@drawable/ic_order"
-            android:tint="#CBD5E1" />
+            android:tint="#C8C8C8" />
 
         <TextView
+            android:id="@+id/textEmptyTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/account_no_orders"
-            android:textColor="#64748B"
+            android:layout_marginTop="20dp"
+            android:text="@string/orders_no_ongoing_title"
+            android:textColor="#1A1A1A"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/textEmptySubtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center"
+            android:text="@string/orders_no_ongoing_message"
+            android:textColor="#A7A7A7"
             android:textSize="14sp" />
     </LinearLayout>
 

@@ -5,12 +5,8 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.coroutines.CleanArchitecture.domain.GetFavoriteProductsUseCase
 import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
-import com.example.shopsphere.CleanArchitecture.domain.AddToCartUseCase
 import com.example.shopsphere.CleanArchitecture.domain.GetCardProductsUseCase
-import com.example.shopsphere.CleanArchitecture.domain.IRepository
-
 import com.example.shopsphere.CleanArchitecture.ui.models.PresentationProductResult
 import com.example.shopsphere.CleanArchitecture.ui.models.mapToPresentation
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,12 +14,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
 class CartViewModel @Inject constructor(
-    private val repository: IRepository,
     private val getCardProductsUseCase: GetCardProductsUseCase,
     private val sharedPreference: SharedPreference
 ) : ViewModel() {
@@ -79,24 +73,34 @@ class CartViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             _loading.postValue(true)
             try {
-                val cartIds = sharedPreference.getCartProducts()
-                if (cartIds.isEmpty()) {
+                val cartLines = sharedPreference.getCartLines()
+                if (cartLines.isEmpty()) {
                     _cartProducts.postValue(emptyList())
                     _emptyState.postValue(true)
-                    _totalPrice.postValue(0.0) // Clear total price if the cart is empty
+                    _totalPrice.postValue(0.0)
                 } else {
-                    val result = getCardProductsUseCase(cartIds.keys.toList())
+                    val result = getCardProductsUseCase(cartLines.map { it.productId }.distinct())
                     if (result.isSuccess) {
-                        val cartProductList = result.getOrNull()?.map { domainProduct ->
-                            val presentationProduct = domainProduct.mapToPresentation()
-                            presentationProduct.copy(quantity = cartIds[domainProduct.id] ?: 1)
+                        val productsById = result.getOrNull().orEmpty().associateBy { it.id }
+                        val cartProductList = cartLines.mapNotNull { line ->
+                            productsById[line.productId]?.mapToPresentation()?.let { product ->
+                                product.copy(
+                                    quantity = line.quantity,
+                                    selectedSize = if (supportsSizeSelection(product.category)) {
+                                        line.size
+                                    } else {
+                                        ""
+                                    },
+                                    cartLineId = line.lineId
+                                )
+                            }
                         }
-                        _cartProducts.postValue(cartProductList.orEmpty())
-                        _emptyState.postValue(cartProductList.isNullOrEmpty())
-                        updateTotalPrice(cartProductList.orEmpty()) // Update total price
+                        _cartProducts.postValue(cartProductList)
+                        _emptyState.postValue(cartProductList.isEmpty())
+                        updateTotalPrice(cartProductList)
                     } else {
                         _emptyState.postValue(true)
-                        _totalPrice.postValue(0.0) // Reset total price in case of error
+                        _totalPrice.postValue(0.0)
                     }
                 }
             } finally {
@@ -107,22 +111,30 @@ class CartViewModel @Inject constructor(
 
     private fun updateTotalPrice(cartProducts: List<PresentationProductResult>) {
         val total = cartProducts.sumOf { product ->
-            (product.price * (product.quantity ?: 1))
+            product.price * product.quantity
         }
         _totalPrice.postValue(total)
     }
 
-    fun addProductToCart(productId: Int, availableStock: Int): Boolean {
+    fun addProductToCart(productId: Int, size: String, availableStock: Int): Boolean {
         return try {
-            val cartMap = sharedPreference.getCartProducts()
-            val currentQuantity = cartMap[productId] ?: 0
+            val normalizedSize = size.trim().uppercase()
+            val currentQuantity = sharedPreference.getCartLines()
+                .firstOrNull {
+                    if (normalizedSize.isBlank()) {
+                        it.productId == productId
+                    } else {
+                        it.productId == productId && it.size == normalizedSize
+                    }
+                }
+                ?.quantity ?: 0
             val stock = availableStock.coerceAtLeast(0)
 
             if (stock <= 0 || currentQuantity >= stock) {
                 return false
             }
 
-            sharedPreference.addCartProduct(productId)
+            sharedPreference.addCartProduct(productId, normalizedSize)
             loadCartItemCount()
             true
         } catch (e: Exception) {
@@ -131,31 +143,48 @@ class CartViewModel @Inject constructor(
         }
     }
 
-    fun removeFromCart(productId: Int) {
+    fun removeFromCart(productId: Int, size: String) {
         try {
-            sharedPreference.removeCartProduct(productId)
+            sharedPreference.removeCartProduct(productId, size)
             loadCartItemCount()
         } catch (e: Exception) {
             Log.e("CartViewModel", "removeFromCart error", e)
         }
     }
 
-    fun updateQuantity(productId: Int, newQuantity: Int) {
-        viewModelScope.launch(Dispatchers.IO) {
-            sharedPreference.updateQuantity(productId, newQuantity)
-            loadCartProducts() // Reload the products to update total price
+    fun removeCartLine(lineId: String) {
+        try {
+            sharedPreference.removeCartProductByLineId(lineId)
+            loadCartItemCount()
+        } catch (e: Exception) {
+            Log.e("CartViewModel", "removeCartLine error", e)
         }
     }
 
-    fun isInCart(productId: Int): Boolean {
+    fun updateQuantity(lineId: String, newQuantity: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            sharedPreference.updateQuantity(lineId, newQuantity)
+            loadCartProducts()
+        }
+    }
+
+    fun isInCart(productId: Int, size: String): Boolean {
         return try {
-            val cart = sharedPreference.getCartProducts()
-            cart.containsKey(productId).also {
-                Log.d("CartViewModel", "isInCart: $productId, result: $it")
+            sharedPreference.isInCart(productId, size).also {
+                Log.d("CartViewModel", "isInCart: $productId, size=$size, result: $it")
             }
         } catch (e: Exception) {
             Log.e("CartViewModel", "isInCart error", e)
             false
         }
+    }
+
+    private fun supportsSizeSelection(category: String): Boolean {
+        val normalized = category.trim().lowercase()
+        val clothingKeywords = listOf(
+            "clothing", "shirt", "dress", "top", "jacket",
+            "jeans", "trouser", "pants", "hoodie", "sweater", "coat"
+        )
+        return clothingKeywords.any { keyword -> normalized.contains(keyword) }
     }
 }

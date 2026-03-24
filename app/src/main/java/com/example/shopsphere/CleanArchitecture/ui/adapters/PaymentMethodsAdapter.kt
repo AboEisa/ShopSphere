@@ -38,6 +38,10 @@ class PaymentMethodsAdapter(
             binding.textCardBrand.text = item.brand
             binding.textCardNumber.text =
                 itemView.context.getString(R.string.account_card_ending_in, item.lastFour)
+            binding.imageBrand.setImageResource(
+                if (item.brand.contains("VISA", ignoreCase = true)) R.drawable.ic_visaa
+                else R.drawable.ic_visa
+            )
             binding.textDefaultBadge.visibility =
                 if (item.isDefault) android.view.View.VISIBLE else android.view.View.GONE
 

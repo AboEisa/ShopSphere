@@ -1,45 +1,81 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@android:color/white"
     tools:context=".CleanArchitecture.ui.views.DetailsFragment">
+
+    <View
+        android:id="@+id/topAccent"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/bright_green_indicator"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <ImageView
         android:id="@+id/btn_back"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="18dp"
+        android:layout_marginTop="12dp"
+        android:padding="8dp"
         android:src="@drawable/ic_back"
-        android:layout_marginTop="@dimen/_24sdp"
-        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginStart="@dimen/_26sdp"
-        />
+        app:layout_constraintTop_toBottomOf="@id/topAccent"
+        app:tint="@color/_1a1a1a"
+        tools:ignore="ContentDescription" />
 
     <TextView
         android:id="@+id/txt_discover"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/_15sdp"
-        android:fontFamily="sans-serif-medium"
         android:text="@string/details"
-        android:textColor="@color/textPrimary"
-        android:textSize="@dimen/_22sdp"
+        android:textColor="@color/bright_green"
+        android:textSize="20sp"
         android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@id/btn_back"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="@id/btn_back" />
 
+    <ImageView
+        android:id="@+id/btn_notifications"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="18dp"
+        android:padding="8dp"
+        android:src="@drawable/ic_bell"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/topAccent"
+        app:tint="@color/bright_green"
+        tools:ignore="ContentDescription" />
 
+    <View
+        android:id="@+id/headerDivider"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:layout_marginTop="14dp"
+        android:background="#EFEFEF"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btn_back" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerDetails"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+        android:clipToPadding="false"
+        android:paddingBottom="24dp"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         app:layout_constraintBottom_toBottomOf="parent"
-        tools:listitem="@layout/item_details"
-        app:layout_constraintTop_toBottomOf="@+id/txt_discover" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/headerDivider"
+        tools:listitem="@layout/item_details" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

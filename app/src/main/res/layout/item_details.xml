@@ -1,150 +1,135 @@
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:shape="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingBottom="12dp">
+    android:paddingBottom="24dp">
 
-    <!-- صورة المنتج + زرار القلب -->
-    <androidx.cardview.widget.CardView
+    <FrameLayout
         android:id="@+id/productImageCard"
         android:layout_width="0dp"
-        android:layout_height="250dp"
-        app:cardCornerRadius="24dp"
-        app:cardElevation="1dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        android:layout_height="360dp"
+        android:layout_marginStart="18dp"
+        android:layout_marginTop="18dp"
+        android:layout_marginEnd="18dp"
+        android:background="@drawable/bg_form_field"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginStart="@dimen/_20sdp"
-        android:layout_marginEnd="@dimen/_20sdp"
-        android:layout_marginTop="16dp">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/productImage"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            tools:src="@drawable/ic_launcher_background" />
 
         <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="top|end"
+            android:layout_margin="14dp"
+            android:background="@drawable/bg_size_chip_unselected">
 
             <ImageView
-                android:id="@+id/productImage"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="centerCrop"
-                android:src="@drawable/ic_launcher_background"
-                android:clipToOutline="true" />
-
-            <androidx.cardview.widget.CardView
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:layout_gravity="top|end"
-                android:layout_margin="12dp"
-                app:cardCornerRadius="18dp"
-                app:cardElevation="4dp">
-
-                <ImageView
-                    android:id="@+id/favoriteButton"
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_heart" />
-            </androidx.cardview.widget.CardView>
-
+                android:id="@+id/favoriteButton"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_heart"
+                tools:ignore="ContentDescription" />
         </FrameLayout>
-    </androidx.cardview.widget.CardView>
+    </FrameLayout>
 
-    <!-- اسم المنتج -->
     <TextView
         android:id="@+id/productTitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="18dp"
-        android:layout_marginStart="@dimen/_20sdp"
-        android:layout_marginEnd="16dp"
-        android:text="@string/regular_fit_slogan"
-        android:textColor="@color/_000000"
-        android:textSize="22sp"
+        android:layout_marginStart="18dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="18dp"
+        android:textColor="@color/_1a1a1a"
+        android:textSize="18sp"
         android:textStyle="bold"
-        app:layout_constraintTop_toBottomOf="@id/productImageCard"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/productImageCard"
+        tools:text="Regular Fit Slogan" />
 
-    <!-- التقييم -->
     <LinearLayout
         android:id="@+id/ratingLayout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:layout_marginStart="@dimen/_20sdp"
-        android:layout_marginEnd="16dp"
-        android:orientation="horizontal"
+        android:layout_marginStart="18dp"
+        android:layout_marginTop="8dp"
         android:gravity="center_vertical"
-        app:layout_constraintTop_toBottomOf="@id/productTitle"
-        app:layout_constraintStart_toStartOf="parent">
+        android:orientation="horizontal"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/productTitle">
 
         <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/_8sdp"
-            android:src="@drawable/ic_star" />
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:src="@drawable/ic_star"
+            tools:ignore="ContentDescription" />
 
         <TextView
             android:id="@+id/rate"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            android:text="4.0/5"
-            android:textColor="@color/_000000"
-            android:textSize="14sp" />
+            android:layout_marginStart="6dp"
+            android:textColor="#111827"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            tools:text="4.0/5" />
 
         <TextView
             android:id="@+id/rateCount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:text="Stock: 20"
-            android:textColor="@color/_808080"
-            android:textSize="14sp" />
+            android:layout_marginStart="4dp"
+            android:textColor="#8F8F8F"
+            android:textSize="14sp"
+            tools:text="(45 reviews)" />
     </LinearLayout>
 
     <TextView
         android:id="@+id/buttonViewReviews"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="18dp"
         android:layout_marginTop="6dp"
-        android:layout_marginEnd="16dp"
-        android:foreground="?attr/selectableItemBackgroundBorderless"
-        android:paddingHorizontal="10dp"
-        android:paddingVertical="4dp"
         android:text="@string/reviews_view_all"
         android:textColor="@color/bright_green"
-        android:textSize="14sp"
+        android:textSize="13sp"
         android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/ratingLayout" />
 
-    <!-- وصف المنتج -->
     <TextView
         android:id="@+id/productDescription"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="18dp"
         android:layout_marginTop="10dp"
-        android:layout_marginStart="@dimen/_20sdp"
-        android:layout_marginEnd="16dp"
-        android:text="@string/the_name_says_it_all_the_right_size_slightly_snugs_the_body_leaving_enough_room_for_comfort_in_the_sleeves_and_waist"
-        android:textColor="#808080"
+        android:layout_marginEnd="18dp"
+        android:lineSpacingExtra="2dp"
+        android:textColor="#7F7F7F"
         android:textSize="15sp"
-        android:maxLines="4"
-        app:layout_constraintTop_toBottomOf="@id/buttonViewReviews"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/buttonViewReviews"
+        tools:text="The name says it all, the right size slightly snugs the body leaving enough room for comfort in the sleeves and waist." />
 
     <TextView
         android:id="@+id/textSizeLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:layout_marginStart="@dimen/_20sdp"
+        android:layout_marginStart="18dp"
+        android:layout_marginTop="16dp"
         android:text="@string/choose_size"
-        android:textColor="#111827"
+        android:textColor="@color/_1a1a1a"
         android:textSize="14sp"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
@@ -154,8 +139,8 @@
         android:id="@+id/layoutSizeOptions"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/_20sdp"
-        android:layout_marginTop="8dp"
+        android:layout_marginStart="18dp"
+        android:layout_marginTop="10dp"
         android:orientation="horizontal"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/textSizeLabel">
@@ -168,61 +153,46 @@
             android:gravity="center"
             android:text="S"
             android:textColor="#111827"
-            android:textSize="14sp"
+            android:textSize="16sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/sizeM"
             android:layout_width="44dp"
             android:layout_height="40dp"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="10dp"
             android:background="@drawable/bg_size_chip_selected"
             android:gravity="center"
             android:text="M"
             android:textColor="@android:color/white"
-            android:textSize="14sp"
+            android:textSize="16sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/sizeL"
             android:layout_width="44dp"
             android:layout_height="40dp"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="10dp"
             android:background="@drawable/bg_size_chip_unselected"
             android:gravity="center"
             android:text="L"
             android:textColor="#111827"
-            android:textSize="14sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/sizeXL"
-            android:layout_width="50dp"
-            android:layout_height="40dp"
-            android:layout_marginStart="8dp"
-            android:background="@drawable/bg_size_chip_unselected"
-            android:gravity="center"
-            android:text="XL"
-            android:textColor="#111827"
-            android:textSize="14sp"
+            android:textSize="16sp"
             android:textStyle="bold" />
     </LinearLayout>
-
 
     <LinearLayout
         android:id="@+id/priceAndButtonLayout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="18dp"
         android:layout_marginTop="18dp"
-        android:layout_marginBottom="24dp"
-        android:layout_marginStart="@dimen/_20sdp"
-        android:layout_marginEnd="@dimen/_20sdp"
-        android:orientation="horizontal"
+        android:layout_marginEnd="18dp"
         android:gravity="center_vertical"
-        app:layout_constraintStart_toStartOf="parent"
+        android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/layoutSizeOptions">
-
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -233,51 +203,39 @@
                 android:id="@+id/priceLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Price"
-                android:layout_marginStart="@dimen/_5sdp"
-                android:textColor="@color/_808080"
+                android:text="@string/price"
+                android:textColor="#9A9A9A"
                 android:textSize="14sp" />
 
             <TextView
                 android:id="@+id/productPrice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/_1_190"
-                android:textColor="#23a36e"
-                android:textSize="24sp"
-                android:layout_marginStart="@dimen/_5sdp"
-                android:textStyle="bold" />
+                android:layout_marginTop="2dp"
+                android:textColor="@color/_1a1a1a"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                tools:text="EGP 1,190" />
         </LinearLayout>
 
-
-        <FrameLayout
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/addToCartButton"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="52dp"
+            android:layout_marginStart="16dp"
             android:layout_weight="1"
-            android:layout_marginStart="16dp">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/addToCartButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/add_to_cart"
-                android:textColor="@android:color/white"
-                app:backgroundTint="@color/bright_green"
-                app:cornerRadius="10dp"
-                app:icon="@drawable/ic_cart"
-                app:iconPadding="8dp"
-                app:iconTint="@android:color/white"
-                app:strokeWidth="0dp" />
-
-
-            <ProgressBar
-                android:id="@+id/buttonProgressBar"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:visibility="gone"
-                android:indeterminate="true"
-                android:layout_gravity="center" />
-        </FrameLayout>
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:backgroundTint="@color/bright_green"
+            android:text="@string/add_to_cart"
+            android:textAllCaps="false"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            app:cornerRadius="10dp"
+            app:icon="@drawable/ic_cart"
+            app:iconGravity="textStart"
+            app:iconTint="@android:color/white"
+            app:iconPadding="10dp" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

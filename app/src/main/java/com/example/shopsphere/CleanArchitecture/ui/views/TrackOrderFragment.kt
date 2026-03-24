@@ -134,6 +134,9 @@ class TrackOrderFragment : Fragment(), OnMapReadyCallback {
         androidCertSha1 = resolveAndroidCertSha1()
 
         binding.btnBack.setOnClickListener { findNavController().navigateUp() }
+        binding.btnNotifications.setOnClickListener {
+            findNavController().navigate(R.id.notificationsFragment)
+        }
         setupCallAction()
         setupBottomSheet()
         animateScreenIntro()
@@ -144,9 +147,10 @@ class TrackOrderFragment : Fragment(), OnMapReadyCallback {
 
         checkoutSharedViewModel.orderHistory.observe(viewLifecycleOwner) { orders ->
             val order = orders.firstOrNull { it.orderId == args.orderId } ?: return@observe
+            val normalizedOrder = normalizeOrderForTracking(order)
             val previousOrder = currentOrder
-            currentOrder = order
-            renderOrder(order, previousOrder)
+            currentOrder = normalizedOrder
+            renderOrder(normalizedOrder, previousOrder)
         }
     }
 
@@ -195,11 +199,16 @@ class TrackOrderFragment : Fragment(), OnMapReadyCallback {
         behavior.isFitToContents = true
         behavior.isDraggable = true
         behavior.peekHeight = dpToPx(SHEET_PEEK_HEIGHT_DP)
-        behavior.state = BottomSheetBehavior.STATE_COLLAPSED
+        behavior.state = BottomSheetBehavior.STATE_EXPANDED
         binding.topOverlay.alpha = OVERLAY_ALPHA_COLLAPSED
         behavior.addBottomSheetCallback(bottomSheetCallback)
 
         binding.sheetHandle.setOnClickListener { toggleBottomSheetState() }
+        binding.buttonCloseSheet.setOnClickListener {
+            if (behavior.state == BottomSheetBehavior.STATE_EXPANDED) {
+                behavior.state = BottomSheetBehavior.STATE_COLLAPSED
+            }
+        }
     }
 
     private fun applyTopPanelInsets() {
@@ -232,33 +241,29 @@ class TrackOrderFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun renderOrder(order: OrderHistoryItem, previousOrder: OrderHistoryItem? = null) {
-        binding.textTitle.text = getString(R.string.track_order_with_id, order.orderId)
+        binding.textTitle.text = getString(R.string.track_order_title)
         binding.textLastUpdated.text = getString(R.string.track_last_updated, getCurrentTimeLabel())
-        binding.textCourierName.text = order.customerName.ifBlank { getString(R.string.track_courier_name) }
+        binding.textCourierName.text = resolveCourierName(order)
         binding.textPackingAddress.text = getString(R.string.track_default_warehouse)
         binding.textPickedAddress.text = getString(R.string.track_default_pickup)
+        binding.textTransitAddress.text = getString(R.string.track_default_transit)
         binding.textDeliveredAddress.text = order.address.ifBlank { getString(R.string.track_unknown_address) }
+        binding.textLiveStatus.visibility = View.GONE
 
         val destination = LatLng(order.destinationLat ?: DEFAULT_LAT, order.destinationLng ?: DEFAULT_LNG)
         val current = LatLng(order.currentLat ?: destination.latitude, order.currentLng ?: destination.longitude)
         val hasArrived = isOrderArrived(order, current, destination)
+        val resolvedStep = if (hasArrived) ORDER_STEP_DELIVERED else resolveStatusStep(order.status, order.statusStep)
+        val resolvedStatus = statusLabelForStep(resolvedStep)
+        syncOrderStateIfNeeded(order, current, resolvedStatus, resolvedStep)
 
-        binding.textLiveStatus.text = if (hasArrived) {
-            getString(R.string.track_status_delivered)
-        } else {
-            order.status.ifBlank { getString(R.string.track_status_packing) }
-        }
-        binding.textTransitAddress.text = if (hasArrived) {
-            getString(R.string.track_arrived_at_destination)
-        } else {
-            getString(R.string.track_live_coordinates, order.currentLat ?: 0.0, order.currentLng ?: 0.0)
-        }
+        binding.textLiveStatus.text = resolvedStatus
 
         showDistanceAndEta(current, destination, hasArrived)
-        updateStatusTimeline(if (hasArrived) ORDER_STEP_DELIVERED else order.statusStep)
+        updateStatusTimeline(resolvedStep)
 
         renderMap(
-            order = order,
+            order = order.copy(status = resolvedStatus, statusStep = resolvedStep),
             previousPosition = previousOrder?.let {
                 LatLng(
                     it.currentLat ?: current.latitude,
@@ -662,12 +667,22 @@ class TrackOrderFragment : Fragment(), OnMapReadyCallback {
         setDot(binding.statusPickedDot, statusStep >= ORDER_STEP_PICKED)
         setDot(binding.statusTransitDot, statusStep >= ORDER_STEP_IN_TRANSIT)
         setDot(binding.statusDeliveredDot, statusStep >= ORDER_STEP_DELIVERED)
+        setLine(binding.linePackingToPicked, statusStep >= ORDER_STEP_PICKED)
+        setLine(binding.linePickedToTransit, statusStep >= ORDER_STEP_IN_TRANSIT)
+        setLine(binding.lineTransitToDelivered, statusStep >= ORDER_STEP_DELIVERED)
     }
 
     private fun setDot(view: View, active: Boolean) {
         view.background = ContextCompat.getDrawable(
             requireContext(),
-            if (active) R.drawable.bg_track_status_active else R.drawable.bg_track_status_inactive
+            if (active) R.drawable.bg_timeline_active else R.drawable.bg_timeline_inactive
+        )
+    }
+
+    private fun setLine(view: View, active: Boolean) {
+        view.background = ContextCompat.getDrawable(
+            requireContext(),
+            if (active) R.drawable.bg_timeline_line else R.drawable.bg_timeline_line_inactive
         )
     }
 
@@ -684,6 +699,73 @@ class TrackOrderFragment : Fragment(), OnMapReadyCallback {
 
         binding.textDistanceMiles.text = getString(R.string.track_distance_miles_away, miles)
         binding.textDistanceMinutes.text = getString(R.string.track_eta_minutes, minutes)
+    }
+
+    private fun syncOrderStateIfNeeded(
+        order: OrderHistoryItem,
+        current: LatLng,
+        resolvedStatus: String,
+        resolvedStep: Int
+    ) {
+        if (
+            order.status.equals(resolvedStatus, ignoreCase = true) &&
+            order.statusStep == resolvedStep
+        ) {
+            return
+        }
+
+        checkoutSharedViewModel.updateOrderTracking(
+            orderId = order.orderId,
+            currentLat = order.currentLat ?: current.latitude,
+            currentLng = order.currentLng ?: current.longitude,
+            status = resolvedStatus,
+            statusStep = resolvedStep
+        )
+    }
+
+    private fun normalizeOrderForTracking(order: OrderHistoryItem): OrderHistoryItem {
+        val resolvedStep = resolveStatusStep(order.status, order.statusStep)
+        return order.copy(
+            status = statusLabelForStep(resolvedStep),
+            statusStep = resolvedStep
+        )
+    }
+
+    private fun resolveCourierName(order: OrderHistoryItem): String {
+        val profileName = sharedPreference.getProfileName().trim()
+        val orderName = order.customerName.trim()
+        return orderName
+            .takeIf { it.isNotBlank() && !it.equals(profileName, ignoreCase = true) }
+            ?: getString(R.string.track_courier_default_name)
+    }
+
+    private fun resolveStatusStep(status: String, storedStep: Int): Int {
+        val normalizedStatus = status
+            .trim()
+            .lowercase(Locale.ENGLISH)
+            .replace("_", " ")
+            .replace("-", " ")
+
+        val derivedStep = when {
+            normalizedStatus.contains("deliver") || normalizedStatus.contains("complete") -> ORDER_STEP_DELIVERED
+            normalizedStatus.contains("transit") ||
+                normalizedStatus.contains("shipping") ||
+                normalizedStatus.contains("shipped") ||
+                normalizedStatus.contains("out for delivery") -> ORDER_STEP_IN_TRANSIT
+            normalizedStatus.contains("pick") || normalizedStatus.contains("dispatch") -> ORDER_STEP_PICKED
+            else -> ORDER_STEP_PACKING
+        }
+
+        return max(storedStep.coerceIn(ORDER_STEP_PACKING, ORDER_STEP_DELIVERED), derivedStep)
+    }
+
+    private fun statusLabelForStep(step: Int): String {
+        return when (step.coerceIn(ORDER_STEP_PACKING, ORDER_STEP_DELIVERED)) {
+            ORDER_STEP_DELIVERED -> getString(R.string.track_status_delivered)
+            ORDER_STEP_IN_TRANSIT -> getString(R.string.track_status_in_transit)
+            ORDER_STEP_PICKED -> getString(R.string.track_status_picked)
+            else -> getString(R.string.track_status_packing)
+        }
     }
 
     private fun isOrderArrived(order: OrderHistoryItem, current: LatLng, destination: LatLng): Boolean {
@@ -866,12 +948,12 @@ class TrackOrderFragment : Fragment(), OnMapReadyCallback {
         private const val ORDER_STEP_IN_TRANSIT = 2
         private const val ORDER_STEP_DELIVERED = 3
 
-        private const val SHEET_PEEK_HEIGHT_DP = 258
-        private const val MAP_TOP_PADDING_MIN_DP = 156
-        private const val MIN_MAP_BOTTOM_PADDING_DP = 210
-        private const val CAMERA_BOUNDS_PADDING_PX = 140
-        private const val OVERLAY_ALPHA_COLLAPSED = 0.66f
-        private const val OVERLAY_ALPHA_EXPANDED = 0.86f
+        private const val SHEET_PEEK_HEIGHT_DP = 336
+        private const val MAP_TOP_PADDING_MIN_DP = 112
+        private const val MIN_MAP_BOTTOM_PADDING_DP = 272
+        private const val CAMERA_BOUNDS_PADDING_PX = 160
+        private const val OVERLAY_ALPHA_COLLAPSED = 0f
+        private const val OVERLAY_ALPHA_EXPANDED = 0f
 
         private const val MIN_ANIMATABLE_DISTANCE_METERS = 3.5f
         private const val ARRIVAL_DISTANCE_THRESHOLD_METERS = 30f

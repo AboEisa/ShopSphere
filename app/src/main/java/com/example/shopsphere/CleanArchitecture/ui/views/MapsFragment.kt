@@ -4,13 +4,18 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResult
 import androidx.navigation.fragment.findNavController
+import com.example.shopsphere.CleanArchitecture.utils.showSuccessDialog
+import com.example.shopsphere.R
 import com.example.shopsphere.databinding.FragmentMapsBinding
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -32,6 +37,10 @@ class MapsFragment : Fragment() {
     private var googleMap: GoogleMap? = null
     private var selectedLatLng: LatLng? = null
 
+    private val nicknameOptions by lazy {
+        listOf("Home", "Office", "Apartment", "Parent's House")
+    }
+
     private val callback = OnMapReadyCallback { map ->
         googleMap = map
         enableMyLocation()
@@ -50,27 +59,61 @@ class MapsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
-        val mapFragment = childFragmentManager.findFragmentById(com.example.shopsphere.R.id.map) as SupportMapFragment?
-        mapFragment?.getMapAsync(callback)
-        mapFragment?.view?.isClickable = true
-        onClicks()
 
-    }
-    fun onClicks(){
-        binding.btnCheckout.setOnClickListener {
-            val nickname = binding.editNickname.text.toString()
-            val fullname = binding.editAddress.text.toString()
-            val latLng = selectedLatLng
-            if (latLng != null && nickname.isNotBlank() && fullname.isNotBlank()) {
-                returnLocationResult(latLng.latitude, latLng.longitude, nickname, fullname)
-            } else {
-                binding.editNickname.error = "Please enter a nickname"
-                binding.editAddress.error = "Please enter a full address"
-            }
+        val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment?
+        mapFragment?.getMapAsync(callback)
+
+        binding.editNickname.setAdapter(
+            ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, nicknameOptions)
+        )
+
+        val watcher = simpleWatcher { updateAddButtonState() }
+        binding.editNickname.addTextChangedListener(watcher)
+        binding.editAddress.addTextChangedListener(watcher)
+
+        binding.btnBack.setOnClickListener { findNavController().navigateUp() }
+        binding.btnNotifications.setOnClickListener {
+            findNavController().navigate(R.id.notificationsFragment)
         }
-        binding.btnBack.setOnClickListener {
+        binding.btnCloseSheet.setOnClickListener { findNavController().navigateUp() }
+        binding.btnCheckout.setOnClickListener { saveAddress() }
+
+        updateAddButtonState()
+    }
+
+    private fun saveAddress() {
+        val nickname = binding.editNickname.text?.toString().orEmpty().trim()
+        val fullAddress = binding.editAddress.text?.toString().orEmpty().trim()
+        val latLng = selectedLatLng
+
+        if (latLng == null || nickname.isBlank() || fullAddress.length < 8) {
+            updateAddButtonState()
+            return
+        }
+
+        showSuccessDialog(
+            title = getString(R.string.dialog_congratulations_title),
+            message = getString(R.string.dialog_address_success_message),
+            primaryText = getString(R.string.dialog_thanks)
+        ) {
+            val result = Bundle().apply {
+                putDouble("lat", latLng.latitude)
+                putDouble("lng", latLng.longitude)
+                putString("nickname", nickname)
+                putString("fullname", fullAddress)
+                putBoolean("is_default", binding.cbDefault.isChecked)
+            }
+            setFragmentResult("location_result", result)
             findNavController().navigateUp()
         }
+    }
+
+    private fun updateAddButtonState() {
+        val isValid = selectedLatLng != null &&
+            binding.editNickname.text?.toString().orEmpty().trim().length >= 2 &&
+            binding.editAddress.text?.toString().orEmpty().trim().length >= 8
+        binding.btnCheckout.isEnabled = isValid
+        binding.btnCheckout.alpha = if (isValid) 1f else 0.45f
     }
 
     private fun enableMyLocation() {
@@ -79,15 +122,13 @@ class MapsFragment : Fragment() {
         ) {
             googleMap?.isMyLocationEnabled = true
             fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
-                location?.let {
-                    val currentLatLng = LatLng(it.latitude, it.longitude)
-                    selectedLatLng = currentLatLng
-                    googleMap?.clear()
-                    googleMap?.addMarker(MarkerOptions().position(currentLatLng).title("Your Location"))
-                    googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 16f))
-                }
+                val target = location?.let { LatLng(it.latitude, it.longitude) } ?: DEFAULT_MAP_LAT_LNG
+                updateSelectedLocation(target)
+                googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(target, 16f))
             }
         } else {
+            updateSelectedLocation(DEFAULT_MAP_LAT_LNG)
+            googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(DEFAULT_MAP_LAT_LNG, 16f))
             requestPermissions(
                 arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
                 LOCATION_PERMISSION_REQUEST_CODE
@@ -97,10 +138,23 @@ class MapsFragment : Fragment() {
 
     private fun setupMapTapListener() {
         googleMap?.setOnMapClickListener { latLng ->
-            selectedLatLng = latLng
-            googleMap?.clear()
-            googleMap?.addMarker(MarkerOptions().position(latLng).title("Selected Location"))
+            updateSelectedLocation(latLng)
             googleMap?.animateCamera(CameraUpdateFactory.newLatLng(latLng))
+        }
+    }
+
+    private fun updateSelectedLocation(latLng: LatLng) {
+        selectedLatLng = latLng
+        googleMap?.clear()
+        googleMap?.addMarker(MarkerOptions().position(latLng))
+        updateAddButtonState()
+    }
+
+    private fun simpleWatcher(onAfter: () -> Unit): TextWatcher {
+        return object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
+            override fun afterTextChanged(s: Editable?) = onAfter.invoke()
         }
     }
 
@@ -111,22 +165,12 @@ class MapsFragment : Fragment() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
-            if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                enableMyLocation()
-            }
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE &&
+            grantResults.isNotEmpty() &&
+            grantResults[0] == PackageManager.PERMISSION_GRANTED
+        ) {
+            enableMyLocation()
         }
-    }
-
-    private fun returnLocationResult(lat: Double, lng: Double, nickname: String, fullname: String) {
-        val result = Bundle().apply {
-            putDouble("lat", lat)
-            putDouble("lng", lng)
-            putString("nickname", nickname)
-            putString("fullname", fullname)
-        }
-        setFragmentResult("location_result", result)
-        findNavController().navigateUp()
     }
 
     override fun onDestroyView() {
@@ -137,5 +181,6 @@ class MapsFragment : Fragment() {
 
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1001
+        private val DEFAULT_MAP_LAT_LNG = LatLng(61.2176, -149.8997)
     }
 }

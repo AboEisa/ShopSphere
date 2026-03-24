@@ -8,17 +8,17 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.navOptions
 import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
-import com.example.shopsphere.R
 import com.example.shopsphere.CleanArchitecture.ui.models.PresentationProductResult
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.CheckoutSharedViewModel
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.SharedCartViewModel
 import com.example.shopsphere.CleanArchitecture.utils.showConfirmDialog
 import com.example.shopsphere.CleanArchitecture.utils.showSuccessDialog
+import com.example.shopsphere.R
 import com.example.shopsphere.databinding.FragmentCheckoutBinding
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
+import java.text.DecimalFormat
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -29,8 +29,11 @@ class CheckoutFragment : Fragment() {
 
     private val sharedViewModel: CheckoutSharedViewModel by activityViewModels()
     private val sharedCartViewModel: SharedCartViewModel by activityViewModels()
+
     private val shippingCost = 80.0
     private var currentCartItems: List<PresentationProductResult> = emptyList()
+    private var promoApplied = false
+    private var promoDiscount = 0.0
 
     @Inject
     lateinit var sharedPreference: SharedPreference
@@ -39,44 +42,33 @@ class CheckoutFragment : Fragment() {
     lateinit var firebaseAuth: FirebaseAuth
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         _binding = FragmentCheckoutBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        if (_binding == null) return
         observeCart()
-        onMapClick()
-        onClicks()
         observeViewModel()
+        onClicks()
     }
 
     private fun observeCart() {
         sharedCartViewModel.cartItems.observe(viewLifecycleOwner) { items ->
             currentCartItems = items
-            val subtotal = items.sumOf { it.price * (it.quantity ?: 1) }
-            val totalWithShipping = subtotal + shippingCost
-            binding.txtOrderTotal.text = "EGP${String.format("%.2f", totalWithShipping)}"
-            binding.textSubTotal.text = "EGP${String.format("%.2f", subtotal)}"
-            binding.textShippingFee.text = "EGP${String.format("%.2f", shippingCost)}"
-
+            if (!promoApplied) {
+                promoDiscount = 0.0
+                binding.textPromoStatus.visibility = View.GONE
+            }
+            updateSummary()
         }
 
-        sharedCartViewModel.totalPrice.observe(viewLifecycleOwner) { total ->
-            val totalWithShipping = total + shippingCost
-            binding.txtOrderTotal.text = "EGP${String.format("%.2f", totalWithShipping)}"
-            binding.textSubTotal.text = "EGP${String.format("%.2f", total)}"
-            binding.textShippingFee.text = "EGP${String.format("%.2f", shippingCost)}"
-        }
-    }
-
-    fun onMapClick() {
-        binding.txtChangeAddress.setOnClickListener {
-            findNavController().navigate(R.id.addressBookFragment)
+        sharedCartViewModel.totalPrice.observe(viewLifecycleOwner) {
+            updateSummary()
         }
     }
 
@@ -87,20 +79,44 @@ class CheckoutFragment : Fragment() {
                 binding.txtAddressDetail.text = selected.address
             }
         }
+
         sharedViewModel.selectedPaymentMethod.observe(viewLifecycleOwner) { selected ->
             if (selected != null) {
                 binding.txtCardNumber.text =
                     getString(R.string.account_card_ending_in, selected.lastFour)
+                binding.textPaymentBrand.text = selected.brand
             }
         }
     }
 
-    fun onClicks() {
+    private fun onClicks() {
+        binding.btnBack.setOnClickListener { findNavController().navigateUp() }
+        binding.btnNotifications.setOnClickListener {
+            findNavController().navigate(R.id.notificationsFragment)
+        }
+        binding.txtChangeAddress.setOnClickListener {
+            findNavController().navigate(R.id.addressBookFragment)
+        }
         binding.btnEditCard.setOnClickListener {
             findNavController().navigate(R.id.paymentMethodsFragment)
         }
-        binding.btnBack.setOnClickListener {
-            findNavController().navigateUp()
+        binding.btnApplyPromo.setOnClickListener { applyPromoCode() }
+        binding.paymentTabCard.setOnClickListener {
+            findNavController().navigate(R.id.paymentMethodsFragment)
+        }
+        binding.paymentTabCash.setOnClickListener {
+            Toast.makeText(
+                requireContext(),
+                getString(R.string.payment_method_coming_soon, getString(R.string.payment_cash)),
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+        binding.paymentTabApple.setOnClickListener {
+            Toast.makeText(
+                requireContext(),
+                getString(R.string.payment_method_coming_soon, getString(R.string.payment_apple_pay)),
+                Toast.LENGTH_SHORT
+            ).show()
         }
 
         binding.btnCheckout.setOnClickListener {
@@ -120,10 +136,9 @@ class CheckoutFragment : Fragment() {
                     user?.displayName?.takeIf { it.isNotBlank() } ?: getString(R.string.account_guest_user)
                 }
                 val phone = sharedPreference.getProfilePhone().ifBlank { "01000000000" }
-                val total = binding.txtOrderTotal.text.toString()
 
                 val placedOrderResult = sharedViewModel.placeOrder(
-                    total = total,
+                    total = binding.txtOrderTotal.text.toString(),
                     customerName = customerName,
                     phone = phone,
                     cartItems = currentCartItems
@@ -139,27 +154,13 @@ class CheckoutFragment : Fragment() {
                     return@showConfirmDialog
                 }
 
-                sharedPreference.saveCartProducts(emptyMap())
+                sharedPreference.clearCartProducts()
                 sharedCartViewModel.setCartItems(emptyList())
 
                 showSuccessDialog(
-                    title = getString(R.string.dialog_order_success_title),
+                    title = getString(R.string.dialog_congratulations_title),
                     message = getString(R.string.dialog_order_success_message),
-                    primaryText = getString(R.string.track_your_order),
-                    secondaryText = getString(R.string.continue_shopping),
-                    onSecondary = {
-                        val navController = findNavController()
-                        navController.navigate(
-                            R.id.homeFragment,
-                            null,
-                            navOptions {
-                                popUpTo(R.id.homeFragment) {
-                                    inclusive = false
-                                }
-                                launchSingleTop = true
-                            }
-                        )
-                    }
+                    primaryText = getString(R.string.track_your_order)
                 ) {
                     val action = CheckoutFragmentDirections
                         .actionCheckoutFragmentToTrackOrderFragment(placedOrder.orderId)
@@ -167,7 +168,52 @@ class CheckoutFragment : Fragment() {
                 }
             }
         }
+    }
 
+    private fun applyPromoCode() {
+        val code = binding.editPromoCode.text?.toString().orEmpty().trim().uppercase()
+        val subtotal = currentCartItems.sumOf { it.price * it.quantity.coerceAtLeast(1) }
+
+        when {
+            code.isBlank() -> {
+                Toast.makeText(requireContext(), getString(R.string.promo_code_empty), Toast.LENGTH_SHORT).show()
+            }
+
+            promoApplied -> {
+                Toast.makeText(requireContext(), getString(R.string.promo_code_already_applied), Toast.LENGTH_SHORT).show()
+            }
+
+            code == PROMO_CODE && subtotal > 0.0 -> {
+                promoApplied = true
+                promoDiscount = subtotal * 0.10
+                binding.textPromoStatus.visibility = View.VISIBLE
+                binding.textPromoStatus.text = getString(R.string.promo_code_applied)
+                updateSummary()
+            }
+
+            else -> {
+                Toast.makeText(requireContext(), getString(R.string.promo_code_invalid), Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun updateSummary() {
+        val subtotal = currentCartItems.sumOf { it.price * it.quantity.coerceAtLeast(1) }
+        if (promoApplied) {
+            promoDiscount = (subtotal * 0.10).coerceAtLeast(0.0)
+        }
+        val adjustedSubtotal = (subtotal - promoDiscount).coerceAtLeast(0.0)
+        val totalWithShipping = adjustedSubtotal + shippingCost
+
+        binding.textSubTotal.text = formatCurrency(subtotal)
+        binding.textShippingFee.text = formatCurrency(shippingCost)
+        binding.txtOrderTotal.text = formatCurrency(totalWithShipping)
+        binding.textVat.text = formatCurrency(0.0)
+        binding.textDiscountValue.text = if (promoApplied) {
+            "-${formatCurrency(promoDiscount)}"
+        } else {
+            formatCurrency(0.0)
+        }
     }
 
     private fun validateCheckout(): String? {
@@ -192,16 +238,23 @@ class CheckoutFragment : Fragment() {
         if (!sharedViewModel.isAddressValid(sharedViewModel.selectedAddress.value)) {
             return getString(R.string.validation_address_invalid)
         }
-
         if (!sharedViewModel.isPaymentMethodValid(sharedViewModel.selectedPaymentMethod.value)) {
             return getString(R.string.validation_payment_invalid)
         }
-
         return null
+    }
+
+    private fun formatCurrency(value: Double): String {
+        val formatter = DecimalFormat("#,##0.00")
+        return "EGP ${formatter.format(value)}"
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    companion object {
+        private const val PROMO_CODE = "SAVE10"
     }
 }

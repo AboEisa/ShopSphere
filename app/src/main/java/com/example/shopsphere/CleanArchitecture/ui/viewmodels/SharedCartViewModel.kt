@@ -14,6 +14,6 @@ class SharedCartViewModel : ViewModel() {
 
     fun setCartItems(items: List<PresentationProductResult>) {
         _cartItems.value = items
-        _totalPrice.value = items.sumOf { it.price * (it.quantity ?: 1) }
+        _totalPrice.value = items.sumOf { it.price * it.quantity }
     }
 }

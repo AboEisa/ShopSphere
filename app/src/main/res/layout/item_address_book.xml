@@ -4,17 +4,19 @@
     android:id="@+id/rootAddress"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="10dp"
+    android:layout_marginBottom="12dp"
     android:background="@drawable/bg_wallet_card"
     android:gravity="center_vertical"
     android:orientation="horizontal"
-    android:padding="12dp">
+    android:padding="14dp">
 
     <ImageView
-        android:id="@+id/selectIndicator"
-        android:layout_width="18dp"
-        android:layout_height="18dp"
-        android:src="@drawable/bg_select_indicator" />
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:src="@drawable/ic_offer"
+        app:tint="#A3A3A3"
+        tools:ignore="ContentDescription"
+        xmlns:app="http://schemas.android.com/apk/res-auto" />
 
     <LinearLayout
         android:layout_width="0dp"
@@ -33,8 +35,8 @@
                 android:id="@+id/textTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="#111827"
-                android:textSize="14sp"
+                android:textColor="#1A1A1A"
+                android:textSize="15sp"
                 android:textStyle="bold"
                 tools:text="Home" />
 
@@ -43,12 +45,14 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:background="@drawable/bg_status_processing"
-                android:paddingHorizontal="8dp"
-                android:paddingVertical="2dp"
+                android:background="@drawable/bg_order_status_neutral"
+                android:paddingStart="8dp"
+                android:paddingTop="3dp"
+                android:paddingEnd="8dp"
+                android:paddingBottom="3dp"
                 android:text="@string/account_default"
-                android:textColor="#92400E"
-                android:textSize="11sp"
+                android:textColor="#909090"
+                android:textSize="10sp"
                 android:textStyle="bold"
                 android:visibility="gone" />
         </LinearLayout>
@@ -57,10 +61,19 @@
             android:id="@+id/textAddress"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:textColor="#64748B"
-            android:textSize="12sp"
+            android:layout_marginTop="4dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="#A0A0A0"
+            android:textSize="13sp"
             tools:text="925 S Chugach St #APT 10, Alaska 99645" />
     </LinearLayout>
+
+    <ImageView
+        android:id="@+id/selectIndicator"
+        android:layout_width="18dp"
+        android:layout_height="18dp"
+        android:src="@drawable/bg_select_indicator"
+        tools:ignore="ContentDescription" />
 
 </LinearLayout>

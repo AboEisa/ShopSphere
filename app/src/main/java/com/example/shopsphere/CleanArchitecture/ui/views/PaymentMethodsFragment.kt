@@ -10,7 +10,6 @@ import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.example.shopsphere.CleanArchitecture.ui.adapters.PaymentMethodsAdapter
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.CheckoutSharedViewModel
-import com.example.shopsphere.CleanArchitecture.utils.showSuccessDialog
 import com.example.shopsphere.R
 import com.example.shopsphere.databinding.FragmentPaymentMethodsBinding
 import dagger.hilt.android.AndroidEntryPoint
@@ -40,11 +39,17 @@ class PaymentMethodsFragment : Fragment() {
         binding.recyclerCards.adapter = paymentAdapter
 
         binding.btnBack.setOnClickListener { findNavController().navigateUp() }
+        binding.btnNotifications.setOnClickListener {
+            findNavController().navigate(R.id.notificationsFragment)
+        }
         binding.btnUseCard.setOnClickListener {
-            showSuccessDialog(
-                title = getString(R.string.dialog_payment_selected_title),
-                message = getString(R.string.dialog_payment_selected_message)
-            ) {
+            if (sharedViewModel.selectedPaymentMethod.value == null) {
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.validation_payment_invalid),
+                    Toast.LENGTH_SHORT
+                ).show()
+            } else {
                 findNavController().navigateUp()
             }
         }
@@ -61,12 +66,7 @@ class PaymentMethodsFragment : Fragment() {
                 holderName = holderName.ifBlank { "ShopSphere User" },
                 brand = brand.ifBlank { "CARD" }
             )
-            if (wasSaved) {
-                showSuccessDialog(
-                    title = getString(R.string.dialog_payment_success_title),
-                    message = getString(R.string.dialog_payment_success_message)
-                )
-            } else {
+            if (!wasSaved) {
                 Toast.makeText(
                     requireContext(),
                     getString(R.string.validation_payment_invalid),

@@ -33,9 +33,17 @@ class HelpCenterFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         binding.btnBack.setOnClickListener { findNavController().navigateUp() }
-        binding.actionEmailSupport.setOnClickListener { openEmailSupport() }
-        binding.actionCallSupport.setOnClickListener { openCallSupport() }
-        binding.actionOpenFaqs.setOnClickListener { findNavController().navigate(R.id.faqsFragment) }
+        binding.btnNotifications.setOnClickListener {
+            findNavController().navigate(R.id.notificationsFragment)
+        }
+        binding.actionCustomerService.setOnClickListener {
+            findNavController().navigate(R.id.customerServiceFragment)
+        }
+        binding.actionWhatsapp.setOnClickListener { openUrl(getString(R.string.help_whatsapp_url)) }
+        binding.actionWebsite.setOnClickListener { openUrl(getString(R.string.help_website_url)) }
+        binding.actionFacebook.setOnClickListener { openUrl(getString(R.string.help_facebook_url)) }
+        binding.actionTwitter.setOnClickListener { openUrl(getString(R.string.help_twitter_url)) }
+        binding.actionInstagram.setOnClickListener { openUrl(getString(R.string.help_instagram_url)) }
     }
 
     private fun openEmailSupport() {
@@ -75,6 +83,11 @@ class HelpCenterFragment : Fragment() {
         val phone = getString(R.string.help_support_phone_raw)
         val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phone"))
         launchExternalIntent(intent, getString(R.string.help_open_dialer_failed))
+    }
+
+    private fun openUrl(url: String) {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        launchExternalIntent(intent, getString(R.string.help_open_browser_failed))
     }
 
     private fun launchExternalIntent(intent: Intent, fallbackMessage: String) {

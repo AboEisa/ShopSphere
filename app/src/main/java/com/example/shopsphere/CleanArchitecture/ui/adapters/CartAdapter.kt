@@ -2,6 +2,7 @@ package com.example.shopsphere.CleanArchitecture.ui.adapters
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.shopsphere.CleanArchitecture.ui.models.PresentationProductResult
@@ -10,8 +11,8 @@ import java.text.DecimalFormat
 
 class CartAdapter(
     private val onItemClick: (Int) -> Unit,
-    private val onRemoveClick: (Int) -> Unit,
-    private val onQuantityChanged: (Int, Int) -> Unit,
+    private val onRemoveClick: (String) -> Unit,
+    private val onQuantityChanged: (String, Int) -> Unit,
     private val onStockLimitReached: (String, Int) -> Unit
 ) : RecyclerView.Adapter<CartAdapter.Holder>() {
 
@@ -23,7 +24,7 @@ class CartAdapter(
         maximumFractionDigits = 2
     }
 
-    private val productQuantities = mutableMapOf<Int, Int>()
+    private val productQuantities = mutableMapOf<String, Int>()
 
     // Function to format price
     private fun formatPrice(price: Double): String {
@@ -33,22 +34,21 @@ class CartAdapter(
     fun submitList(product: List<PresentationProductResult>) {
         products.clear()
         products.addAll(product)
-        // Always sync quantities from the product list
         product.forEach {
-            productQuantities[it.id] = it.quantity ?: 1
+            productQuantities[it.cartLineId] = it.quantity
         }
         notifyDataSetChanged()
     }
 
     fun getItems(): List<PresentationProductResult> {
         return products.map { product ->
-            product.copy(quantity = productQuantities[product.id] ?: product.quantity)
+            product.copy(quantity = productQuantities[product.cartLineId] ?: product.quantity)
         }
     }
 
     fun getTotalPrice(): Double {
         return products.sumOf { product ->
-            val quantity = productQuantities[product.id] ?: 1
+            val quantity = productQuantities[product.cartLineId] ?: 1
             product.price * quantity
         }
     }
@@ -64,7 +64,7 @@ class CartAdapter(
 
     override fun onBindViewHolder(holder: Holder, position: Int) {
         val product = products[position]
-        val quantity = productQuantities[product.id] ?: 1
+        val quantity = productQuantities[product.cartLineId] ?: 1
         holder.bind(product, quantity)
     }
 
@@ -76,8 +76,15 @@ class CartAdapter(
         fun bind(product: PresentationProductResult, quantity: Int) {
             binding.apply {
                 productTitle.text = product.title
+                val hasSize = product.selectedSize.isNotBlank()
+                textProductSize.isVisible = hasSize
+                if (hasSize) {
+                    textProductSize.text = root.context.getString(
+                        com.example.shopsphere.R.string.orders_size_value,
+                        product.selectedSize
+                    )
+                }
 
-                // Fixed: unitPrice is now a Double, not a String
                 val unitPrice = product.price
                 val totalPrice = unitPrice * quantity
 
@@ -89,10 +96,10 @@ class CartAdapter(
                     .into(productImage)
 
                 root.setOnClickListener { onItemClick(product.id) }
-                removeButton.setOnClickListener { onRemoveClick(product.id) }
+                removeButton.setOnClickListener { onRemoveClick(product.cartLineId) }
 
                 btnIncrease.setOnClickListener {
-                    val currentQuantity = productQuantities[product.id] ?: quantity
+                    val currentQuantity = productQuantities[product.cartLineId] ?: quantity
                     val stock = product.rating.count.coerceAtLeast(0)
                     if (stock <= 0) {
                         onStockLimitReached(product.title, 0)
@@ -104,26 +111,26 @@ class CartAdapter(
                     }
 
                     val newQuantity = currentQuantity + 1
-                    productQuantities[product.id] = newQuantity
+                    productQuantities[product.cartLineId] = newQuantity
                     productQuantity.text = newQuantity.toString()
 
                     val newTotalPrice = unitPrice * newQuantity
                     productPrice.text = formatPrice(newTotalPrice)
 
-                    onQuantityChanged(product.id, newQuantity)
+                    onQuantityChanged(product.cartLineId, newQuantity)
                 }
 
                 btnDecrease.setOnClickListener {
-                    val currentQuantity = productQuantities[product.id] ?: quantity
+                    val currentQuantity = productQuantities[product.cartLineId] ?: quantity
                     if (currentQuantity > 1) {
                         val newQuantity = currentQuantity - 1
-                        productQuantities[product.id] = newQuantity
+                        productQuantities[product.cartLineId] = newQuantity
                         productQuantity.text = newQuantity.toString()
 
                         val newTotalPrice = unitPrice * newQuantity
                         productPrice.text = formatPrice(newTotalPrice)
 
-                        onQuantityChanged(product.id, newQuantity)
+                        onQuantityChanged(product.cartLineId, newQuantity)
                     }
                 }
             }

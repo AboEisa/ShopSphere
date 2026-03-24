@@ -7,7 +7,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import com.bumptech.glide.Glide
 import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
 import com.example.shopsphere.R
 import com.example.shopsphere.CleanArchitecture.utils.showConfirmDialog
@@ -39,39 +38,14 @@ class AccountFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        bindProfileInfo()
         setupClicks()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if (_binding != null) {
-            bindProfileInfo()
-        }
-    }
-
-    private fun bindProfileInfo() {
-        val user = firebaseAuth.currentUser
-        val localName = sharedPreference.getProfileName()
-        val localEmail = sharedPreference.getProfileEmail()
-        binding.textProfileName.text =
-            localName.ifBlank {
-                user?.displayName?.takeIf { it.isNotBlank() } ?: getString(R.string.account_guest_user)
-            }
-        binding.textProfileEmail.text =
-            localEmail.ifBlank { user?.email ?: getString(R.string.account_signed_in_as) }
-
-        user?.photoUrl?.let { uri ->
-            Glide.with(this)
-                .load(uri)
-                .placeholder(R.drawable.ic_user)
-                .error(R.drawable.ic_user)
-                .into(binding.imageProfile)
-        }
     }
 
     private fun setupClicks() {
         binding.btnBack.setOnClickListener { findNavController().navigateUp() }
+        binding.btnNotifications.setOnClickListener {
+            findNavController().navigate(R.id.notificationsFragment)
+        }
 
         binding.layoutOrders.setOnClickListener {
             findNavController().navigate(R.id.ordersFragment)
@@ -95,6 +69,10 @@ class AccountFragment : Fragment() {
 
         binding.layoutHelpCenter.setOnClickListener {
             findNavController().navigate(R.id.helpCenterFragment)
+        }
+
+        binding.layoutNotifications.setOnClickListener {
+            findNavController().navigate(R.id.notificationsFragment)
         }
 
         binding.layoutLogout.setOnClickListener {

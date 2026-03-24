@@ -24,7 +24,7 @@ fun Fragment.showSuccessDialog(
         message = message,
         primaryText = primaryText ?: getString(R.string.dialog_ok),
         secondaryText = secondaryText,
-        primaryColor = ContextCompat.getColor(requireContext(), R.color.black),
+        primaryColor = ContextCompat.getColor(requireContext(), R.color.bright_green),
         onPrimary = onOk,
         onSecondary = onSecondary
     )

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp">
+
+    <FrameLayout
+        android:id="@+id/illustrationArea"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        app:layout_constraintBottom_toTopOf="@id/textPageTitle"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_default="percent"
+        app:layout_constraintHeight_percent="0.55"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <View
+            android:id="@+id/heroGlow"
+            android:layout_width="250dp"
+            android:layout_height="250dp"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_onboard_hero_glow" />
+
+        <View
+            android:id="@+id/heroOrb"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_gravity="end|top"
+            android:layout_marginTop="36dp"
+            android:layout_marginEnd="34dp"
+            android:background="@drawable/bg_onboard_hero_orb" />
+
+        <View
+            android:id="@+id/stageShadow"
+            android:layout_width="184dp"
+            android:layout_height="30dp"
+            android:layout_gravity="center_horizontal|bottom"
+            android:layout_marginBottom="14dp"
+            android:background="@drawable/bg_onboard_shadow_soft" />
+
+        <ImageView
+            android:id="@+id/imageHero"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:adjustViewBounds="true"
+            android:paddingStart="8dp"
+            android:paddingTop="18dp"
+            android:paddingEnd="8dp"
+            android:paddingBottom="18dp"
+            android:scaleType="fitCenter"
+            tools:ignore="ContentDescription"
+            tools:src="@drawable/onboard_discover" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/textPageTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="22dp"
+        android:gravity="center"
+        android:textColor="#101828"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/illustrationArea"
+        tools:text="Discover our handpicked selection of top Styles" />
+
+    <TextView
+        android:id="@+id/textPageSubtitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:gravity="center"
+        android:lineSpacingExtra="2dp"
+        android:maxLines="3"
+        android:textColor="#667085"
+        android:textSize="13sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/textPageTitle"
+        tools:text="Choose your styles from the categories where there are multiple options available." />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

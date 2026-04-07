@@ -55,7 +55,7 @@ class DetailsFragment : Fragment() {
                 try {
                     val product = detailsViewModel.productLiveData.value
                     product?.let {
-                        val stock = it.rating.count.coerceAtLeast(0)
+                        val stock = it.stock.coerceAtLeast(0)
                         val added = cartViewModel.addProductToCart(productId, size, stock)
                         sharedCartViewModel.refreshCartCount()
                         if (isAdded && _binding != null && added) {

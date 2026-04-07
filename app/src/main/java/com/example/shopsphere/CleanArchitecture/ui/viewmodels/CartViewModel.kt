@@ -86,6 +86,7 @@ class CartViewModel @Inject constructor(
                             productsById[line.productId]?.mapToPresentation()?.let { product ->
                                 product.copy(
                                     quantity = line.quantity,
+                                    stock = product.stock,
                                     selectedSize = if (supportsSizeSelection(product.category)) {
                                         line.size
                                     } else {

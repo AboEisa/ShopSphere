@@ -12,7 +12,8 @@ data class DomainProductResult(
     val image: String,
     val price: Double,
     val rating: DomainRating,
-    val title: String
+    val title: String,
+    val stock: Int = 0
 )
 
 data class DomainRating(

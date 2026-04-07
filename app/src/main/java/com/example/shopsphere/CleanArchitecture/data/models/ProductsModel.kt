@@ -12,7 +12,8 @@ data class ProductResult(
     val image: String,
     val price: Double,
     val rating: Rating,
-    val title: String
+    val title: String,
+    val stock: Int = 0
 )
 
 data class Rating(

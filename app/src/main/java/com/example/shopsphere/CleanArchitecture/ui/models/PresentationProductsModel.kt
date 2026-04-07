@@ -13,6 +13,7 @@ data class PresentationProductResult(
     val price: Double,
     val rating: PresentationRating,
     val title: String,
+    val stock: Int = 0,
     val quantity: Int,
     val selectedSize: String = "",
     val cartLineId: String = ""

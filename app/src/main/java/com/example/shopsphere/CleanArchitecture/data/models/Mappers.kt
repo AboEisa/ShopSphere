@@ -27,7 +27,8 @@ fun ProductResult.mapToDomain(): DomainProductResult {
         image = image,
         price = price,
         rating = rating.mapToDomain(),
-        title = title
+        title = title,
+        stock = stock
     )
 }
 

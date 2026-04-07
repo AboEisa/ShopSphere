@@ -269,12 +269,12 @@ class CheckoutSharedViewModel : ViewModel() {
         }
 
         val invalidStockItem = cartItems.firstOrNull { item ->
-            val stock = item.rating.count.coerceAtLeast(0)
+            val stock = item.stock.coerceAtLeast(0)
             val quantity = item.quantity.coerceAtLeast(1)
             quantity > stock || stock <= 0
         }
         if (invalidStockItem != null) {
-            val stock = invalidStockItem.rating.count.coerceAtLeast(0)
+            val stock = invalidStockItem.stock.coerceAtLeast(0)
             return Result.failure(
                 IllegalStateException(
                     if (stock <= 0) {

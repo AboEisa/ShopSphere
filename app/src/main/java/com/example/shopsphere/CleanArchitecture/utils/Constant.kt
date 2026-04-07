@@ -3,7 +3,7 @@ package com.example.shopsphere.CleanArchitecture.utils
 class Constant {
 
     companion object{
-        const val BASE_URL = "https://fakestoreapi.com/"
+        const val BASE_URL = "https://shila-unanatomised-mouthily.ngrok-free.dev/api/Graduation_Project/"
         const val DUMMY_BASE_URL = "https://dummyjson.com/"
         const val DIRECTIONS_BASE_URL = "https://maps.googleapis.com/"
 

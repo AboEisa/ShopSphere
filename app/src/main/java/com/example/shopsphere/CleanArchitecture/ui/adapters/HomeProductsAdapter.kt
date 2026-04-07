@@ -32,7 +32,7 @@ class HomeProductsAdapter(private val onFavoriteClick: (Int) -> Unit, private va
             binding.apply {
                 productTitle.text = product.title
                 originalPrice.text = "EGP ${product.price}"
-                discountPercentage.text = "${product.rating.rate}%"
+                discountPercentage.text = "\u2605 ${String.format("%.1f", product.rating.rate)}"
 
                 Glide.with(binding.root)
                     .load(product.image)
@@ -67,4 +67,3 @@ class HomeProductsAdapter(private val onFavoriteClick: (Int) -> Unit, private va
 
     }
 }
-

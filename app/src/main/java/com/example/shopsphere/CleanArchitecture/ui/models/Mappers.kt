@@ -22,6 +22,7 @@ fun DomainProductResult.mapToPresentation(): PresentationProductResult {
         price = price,
         rating = rating.mapToPresentation(), // تحويل التقييم
         title = title,
+        stock = stock,
         quantity =  1
     )
 }

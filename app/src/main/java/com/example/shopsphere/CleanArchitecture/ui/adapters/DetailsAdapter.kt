@@ -71,7 +71,7 @@ class DetailsAdapter(
 
                 addToCartButton.setOnClickListener {
                     val size = resolveCartSize(product, showSizeSelector)
-                    val stock = product.rating.count.coerceAtLeast(0)
+                    val stock = product.stock.coerceAtLeast(0)
                     if (isInCart(product.id, size)) {
                         removeFromCart(product.id, size)
                         itemView.post { updateCartButton(product, showSizeSelector) }
@@ -174,7 +174,7 @@ class DetailsAdapter(
         private fun updateCartButton(product: PresentationProductResult, showSizeSelector: Boolean) {
             val button = binding.addToCartButton
             val inCart = isInCart(product.id, resolveCartSize(product, showSizeSelector))
-            val stock = product.rating.count.coerceAtLeast(0)
+            val stock = product.stock.coerceAtLeast(0)
 
             if (inCart) {
                 button.text = button.context.getString(R.string.remove_from_cart)

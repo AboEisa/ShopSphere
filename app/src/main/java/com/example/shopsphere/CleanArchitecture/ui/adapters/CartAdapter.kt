@@ -100,7 +100,7 @@ class CartAdapter(
 
                 btnIncrease.setOnClickListener {
                     val currentQuantity = productQuantities[product.cartLineId] ?: quantity
-                    val stock = product.rating.count.coerceAtLeast(0)
+                    val stock = product.stock.coerceAtLeast(0)
                     if (stock <= 0) {
                         onStockLimitReached(product.title, 0)
                         return@setOnClickListener

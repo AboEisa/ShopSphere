@@ -109,10 +109,9 @@ object Module {
     @Singleton
     @Provides
     fun getRemoteDataSource(
-        firestore: FirebaseFirestore,
-        dummyApiService: DummyApiServices
+        apiServices: ApiServices
     ): IRemoteDataSource{
-        return RemoteDataSource(firestore, dummyApiService)
+        return RemoteDataSource(apiServices)
     }
 
 

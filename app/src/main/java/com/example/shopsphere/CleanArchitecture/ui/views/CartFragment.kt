@@ -74,12 +74,12 @@ class CartFragment : Fragment() {
             }
 
             val invalidStockItem = items.firstOrNull { item ->
-                val stock = item.rating.count.coerceAtLeast(0)
+                val stock = item.stock.coerceAtLeast(0)
                 val quantity = item.quantity.coerceAtLeast(1)
                 quantity > stock || stock <= 0
             }
             if (invalidStockItem != null) {
-                val stock = invalidStockItem.rating.count.coerceAtLeast(0)
+                val stock = invalidStockItem.stock.coerceAtLeast(0)
                 val message = if (stock <= 0) {
                     getString(
                         com.example.shopsphere.R.string.validation_product_out_of_stock,
@@ -161,7 +161,7 @@ class CartFragment : Fragment() {
         products: List<PresentationProductResult>
     ): List<PresentationProductResult> {
         return products.mapNotNull { product ->
-            val stock = product.rating.count.coerceAtLeast(0)
+            val stock = product.stock.coerceAtLeast(0)
             val quantity = product.quantity.coerceAtLeast(1)
             when {
                 stock <= 0 -> {

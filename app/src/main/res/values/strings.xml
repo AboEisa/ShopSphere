@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">ShopSphere</string>
+    <string name="app_name">YALAASHOP</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="details">Details</string>
@@ -10,7 +10,7 @@
     <string name="title_activity_maps">MapsActivity</string>
     <string name="account">Account</string>
     <string name="account_guest_user">Guest User</string>
-    <string name="account_signed_in_as">Signed in to ShopSphere</string>
+    <string name="account_signed_in_as">Signed in to YALAASHOP</string>
     <string name="account_general">GENERAL</string>
     <string name="account_support">SUPPORT</string>
     <string name="account_my_orders">My Orders</string>
@@ -149,7 +149,7 @@
     <string name="help_support_email">omarncc00@gmail.com</string>
     <string name="help_support_phone_display">01018613426</string>
     <string name="help_support_phone_raw">01018613426</string>
-    <string name="help_email_subject">ShopSphere Support Request</string>
+    <string name="help_email_subject">YALAASHOP Support Request</string>
     <string name="help_email_body_template">Hello Support,\n\nI need help with:\n- \n\nOrder ID (optional): \n\nThanks.</string>
     <string name="help_email_chooser_title">Send support email</string>
     <string name="help_open_mail_failed">No email app found. Support email copied to clipboard.</string>
@@ -327,26 +327,26 @@
     <string name="track_route_unavailable">Route unavailable</string>
     <string name="track_close_sheet">Close status sheet</string>
     <string name="onboard_badge">Online shopping in motion</string>
-    <string name="onboard_title">Discover looks, add to cart, and shop online in seconds</string>
-    <string name="onboard_subtitle">A 3D shopping scene with real people, fashion picks, fast checkout, and smooth delivery from one place.</string>
+    <string name="onboard_title">Discover your style, add to cart, and shop in seconds</string>
+    <string name="onboard_subtitle">Real fashion, real people — curated picks all in one place.</string>
     <string name="onboard_get_started">Get Started</string>
     <string name="onboard_next">Next</string>
     <string name="onboard_skip">Skip</string>
     <string name="onboard_clock">9:41</string>
-    <string name="onboard_page_one_title">Discover our handpicked selection of top styles</string>
-    <string name="onboard_page_one_subtitle">Choose your styles from the categories where there are multiple options available.</string>
+    <string name="onboard_page_one_title">Explore curated fashion for every style</string>
+    <string name="onboard_page_one_subtitle">From streetwear to everyday essentials — handpicked looks just for you.</string>
     <string name="onboard_page_one_chip_primary">New Styles</string>
     <string name="onboard_page_one_chip_secondary">30% Off</string>
     <string name="onboard_page_one_detail_title">Handpicked Looks</string>
     <string name="onboard_page_one_detail_subtitle">Fashion picks curated for you</string>
-    <string name="onboard_page_two_title">Secure and convenient online payments</string>
-    <string name="onboard_page_two_subtitle">Hassle-free online payments with all major card options available.</string>
+    <string name="onboard_page_two_title">Shop accessories, fashion &amp; more in one tap</string>
+    <string name="onboard_page_two_subtitle">Headphones, apparel, shoes — everything curated for your lifestyle.</string>
     <string name="onboard_page_two_chip_primary">Secure Pay</string>
     <string name="onboard_page_two_chip_secondary">Card + Cash</string>
     <string name="onboard_page_two_detail_title">Easy Checkout</string>
     <string name="onboard_page_two_detail_subtitle">Pay online in seconds</string>
-    <string name="onboard_page_three_title">Enjoy fast, reliable delivery straight to your doorstep</string>
-    <string name="onboard_page_three_subtitle">Goods delivered safely and faster right at your doorstep.</string>
+    <string name="onboard_page_three_title">Fast delivery, right to your door</string>
+    <string name="onboard_page_three_subtitle">Your order packed and delivered with care — every single time.</string>
     <string name="onboard_page_three_chip_primary">24h Delivery</string>
     <string name="onboard_page_three_chip_secondary">Track Live</string>
     <string name="onboard_page_three_detail_title">Doorstep Delivery</string>
@@ -358,7 +358,7 @@
     <string name="onboard_saved_title">Beauty &amp; fashion picks</string>
     <string name="onboard_saved_subtitle">Curated products ready for your cart</string>
     <string name="onboard_saved_rating">4.9 top rated</string>
-    <string name="onboard_brand_chip">SHOPSPHERE</string>
+    <string name="onboard_brand_chip">YALAASHOP</string>
     <string name="onboard_tracking_chip">LIVE TRACKING</string>
     <string name="onboard_price_chip">EGP 129</string>
     <string name="onboard_front_title">Cart, checkout, and delivery in one flow</string>
@@ -378,7 +378,7 @@
     <string name="onboard_phone_title">Shop the look</string>
     <string name="onboard_phone_subtitle">Online checkout in seconds</string>
     <string name="onboard_add_to_cart">Add to Cart</string>
-    <string name="onboard_bag_chip">SHOPSPHERE</string>
+    <string name="onboard_bag_chip">YALAASHOP</string>
     <string name="onboard_bag_title">Everything in one bag</string>
     <string name="onboard_bag_subtitle">Deals, wishlist, checkout, and delivery all moving together.</string>
     <string name="onboard_card_deal_title">Flash Sale</string>

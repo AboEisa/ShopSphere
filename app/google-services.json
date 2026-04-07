@@ -22,6 +22,22 @@
           }
         },
         {
+          "client_id": "340654695612-d3jt80ph55lb9vo4fmaookdc4363a9rq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.shopsphere",
+            "certificate_hash": "c7f779d8239c47f50adb77e777eae72759283bc9"
+          }
+        },
+        {
+          "client_id": "340654695612-d8vgfba92sqectfnh7i8lfihgku5vrsg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.shopsphere",
+            "certificate_hash": "4570bdd3a8e537b7b2ea6aafb13500ba34b7737a"
+          }
+        },
+        {
           "client_id": "340654695612-h2522lb905an0m5feu5ib9q91kauq87s.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -37,6 +53,13 @@
             {
               "client_id": "340654695612-h2522lb905an0m5feu5ib9q91kauq87s.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "340654695612-cdqck9mpfeq0v55gq475pkrka2menhsm.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.shopsphere.app"
+              }
             }
           ]
         }

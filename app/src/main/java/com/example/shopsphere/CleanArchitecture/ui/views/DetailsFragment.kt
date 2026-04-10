@@ -56,11 +56,13 @@ class DetailsFragment : Fragment() {
                     val product = detailsViewModel.productLiveData.value
                     product?.let {
                         val stock = it.stock.coerceAtLeast(0)
-                        val added = cartViewModel.addProductToCart(productId, size, stock)
-                        sharedCartViewModel.refreshCartCount()
-                        if (isAdded && _binding != null && added) {
-                            context?.let { ctx ->
-                                Toast.makeText(ctx, "Product added to cart", Toast.LENGTH_SHORT).show()
+                        lifecycleScope.launch {
+                            val added = cartViewModel.addProductToCart(productId, size, stock)
+                            sharedCartViewModel.refreshCartCount()
+                            if (isAdded && _binding != null && added) {
+                                context?.let { ctx ->
+                                    Toast.makeText(ctx, "Product added to cart", Toast.LENGTH_SHORT).show()
+                                }
                             }
                         }
                     }

@@ -24,11 +24,6 @@ import com.example.shopsphere.CleanArchitecture.ui.viewmodels.AuthUiState
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.RegisterViewModel
 import com.example.shopsphere.R
 import com.example.shopsphere.databinding.FragmentRegisterBinding
-import com.facebook.CallbackManager
-import com.facebook.FacebookCallback
-import com.facebook.FacebookException
-import com.facebook.login.LoginManager
-import com.facebook.login.LoginResult
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
@@ -47,7 +42,6 @@ class RegisterFragment : Fragment() {
     private val binding get() = _binding!!
 
     private lateinit var credentialManager: CredentialManager
-    private lateinit var callbackManager: CallbackManager
     private val viewModel: RegisterViewModel by viewModels()
     private var googleSignInJob: Job? = null
 
@@ -58,8 +52,6 @@ class RegisterFragment : Fragment() {
     ): View {
         _binding = FragmentRegisterBinding.inflate(inflater, container, false)
         credentialManager = CredentialManager.create(requireContext())
-        callbackManager = CallbackManager.Factory.create()
-        registerFacebookCallback()
         return binding.root
     }
 
@@ -108,10 +100,6 @@ class RegisterFragment : Fragment() {
 
         binding.btnRegisterGoogle.setOnClickListener {
             signInWithGoogle()
-        }
-
-        binding.btnRegisterFacebook.setOnClickListener {
-            signInWithFacebook()
         }
 
         binding.tvLogin.setOnClickListener {
@@ -180,7 +168,6 @@ class RegisterFragment : Fragment() {
         binding.btnCreateAccount.isEnabled = true
         binding.btnCreateAccount.text = "Create Account"
         binding.btnRegisterGoogle.isEnabled = true
-        binding.btnRegisterFacebook.isEnabled = true
         binding.tvLogin.isEnabled = true
         binding.progressBar.visibility = View.GONE
     }
@@ -188,7 +175,6 @@ class RegisterFragment : Fragment() {
     private fun showLoadingState() {
         binding.btnCreateAccount.isEnabled = false
         binding.btnRegisterGoogle.isEnabled = false
-        binding.btnRegisterFacebook.isEnabled = false
         binding.tvLogin.isEnabled = false
         binding.progressBar.visibility = View.VISIBLE
     }
@@ -238,37 +224,6 @@ class RegisterFragment : Fragment() {
                 toast(getString(R.string.google_sign_in_failed))
             }
         }
-    }
-
-    private fun signInWithFacebook() {
-        if (!isAdded) return
-        showLoadingState()
-        LoginManager.getInstance().logInWithReadPermissions(
-            this,
-            listOf("email", "public_profile")
-        )
-    }
-
-    private fun registerFacebookCallback() {
-        LoginManager.getInstance().registerCallback(
-            callbackManager,
-            object : FacebookCallback<LoginResult> {
-                override fun onCancel() {
-                    showIdleState()
-                    toast(getString(R.string.facebook_sign_in_cancelled))
-                }
-
-                override fun onError(error: FacebookException) {
-                    Log.e(TAG, "Facebook sign-in failed", error)
-                    showIdleState()
-                    toast(getString(R.string.facebook_sign_in_failed))
-                }
-
-                override fun onSuccess(result: LoginResult) {
-                    viewModel.continueWithFacebook(result.accessToken.token)
-                }
-            }
-        )
     }
 
     private suspend fun tryGetGoogleCredential(webClientId: String): androidx.credentials.Credential {
@@ -359,13 +314,11 @@ class RegisterFragment : Fragment() {
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        callbackManager.onActivityResult(requestCode, resultCode, data)
     }
 
     override fun onDestroyView() {
         googleSignInJob?.cancel()
         googleSignInJob = null
-        LoginManager.getInstance().unregisterCallback(callbackManager)
         super.onDestroyView()
         _binding = null
     }

@@ -3,20 +3,14 @@ package com.example.shopsphere.CleanArchitecture.data
 import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
 import com.example.shopsphere.CleanArchitecture.data.models.mapToDomain
 import com.example.shopsphere.CleanArchitecture.data.network.IRemoteDataSource
+import com.example.shopsphere.CleanArchitecture.domain.DomainCartItem
 import com.example.shopsphere.CleanArchitecture.domain.DomainProductResult
 import com.example.shopsphere.CleanArchitecture.domain.IRepository
-import com.google.firebase.auth.FacebookAuthProvider
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseAuthException
-import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.auth.GoogleAuthProvider
-import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class Repository @Inject constructor(
     private val remoteDataSource: IRemoteDataSource,
-    private val sharedPreferencesHelper: SharedPreference,
-    private val firebaseAuth: FirebaseAuth
+    private val sharedPreferencesHelper: SharedPreference
 ) : IRepository {
 
 
@@ -86,44 +80,62 @@ class Repository @Inject constructor(
         }
     }
 
+    override suspend fun getCartItems(): Result<List<DomainCartItem>> {
+        val customerId = currentUserId()?.toIntOrNull()
+            ?: return Result.failure(Exception("Missing customer id"))
+        return remoteDataSource.getCartItems(customerId).map { response ->
+            response.cartItems.map {
+                DomainCartItem(
+                    cartId = it.cartId,
+                    productId = it.productId,
+                    quantity = it.quantity
+                )
+            }
+        }
+    }
+
+    override suspend fun addToCart(productId: Int, quantity: Int): Result<Unit> {
+        val customerId = currentUserId()?.toIntOrNull()
+            ?: return Result.failure(Exception("Missing customer id"))
+        return remoteDataSource.addToCart(customerId, productId, quantity).map { Unit }
+    }
+
+    override suspend fun updateCartItemQuantity(cartId: Int, newQuantity: Int): Result<Unit> {
+        return remoteDataSource.updateQuantity(cartId, newQuantity).map { Unit }
+    }
+
+    override suspend fun removeCartItem(cartId: Int): Result<Unit> {
+        return remoteDataSource.removeItem(cartId).map { Unit }
+    }
+
+    override suspend fun clearCart(): Result<Unit> {
+        val customerId = currentUserId()?.toIntOrNull()
+            ?: return Result.failure(Exception("Missing customer id"))
+        return remoteDataSource.clearCart(customerId).map { Unit }
+    }
+
 
 
 
     override suspend fun login(email: String, password: String): Result<Unit> =
-        try {
-            firebaseAuth.signInWithEmailAndPassword(email, password).await()
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
+        remoteDataSource.login(email, password).fold(
+            onSuccess = { response ->
+                val userId = response.resolvedUserId()
+                if (userId.isNullOrBlank()) {
+                    Result.failure(Exception(response.message ?: "Login succeeded but missing user ID"))
+                } else {
+                    sharedPreferencesHelper.saveUid(userId)
+                    Result.success(Unit)
+                }
+            },
+            onFailure = { Result.failure(it) }
+        )
 
     override suspend fun loginWithGoogle(idToken: String): Result<Unit> =
-        try {
-            val credential = GoogleAuthProvider.getCredential(idToken, null)
-            firebaseAuth.signInWithCredential(credential).await()
-            Result.success(Unit)
-        } catch (e: Exception) {
-            val readableException = if (e is FirebaseAuthException) {
-                Exception("${e.errorCode}: ${e.localizedMessage.orEmpty()}".trim(), e)
-            } else {
-                e
-            }
-            Result.failure(readableException)
-        }
+        Result.failure(Exception("Google login is not supported by backend API yet"))
 
     override suspend fun loginWithFacebook(accessToken: String): Result<Unit> =
-        try {
-            val credential = FacebookAuthProvider.getCredential(accessToken)
-            firebaseAuth.signInWithCredential(credential).await()
-            Result.success(Unit)
-        } catch (e: Exception) {
-            val readableException = if (e is FirebaseAuthException) {
-                Exception("${e.errorCode}: ${e.localizedMessage.orEmpty()}".trim(), e)
-            } else {
-                e
-            }
-            Result.failure(readableException)
-        }
+        Result.failure(Exception("Facebook login is not supported by backend API yet"))
 
 
 
@@ -132,36 +144,28 @@ class Repository @Inject constructor(
         email: String,
         password: String
     ): Result<Boolean> {
-        return try {
-            val authResult = firebaseAuth.createUserWithEmailAndPassword(
-                email,
-                password
-            ).await()
-
-            val user = authResult.user
-
-            if (user != null) {
-                val profileUpdates = com.google.firebase.auth.UserProfileChangeRequest.Builder()
-                    .setDisplayName(name)
-                    .build()
-
-                user.updateProfile(profileUpdates).await()
-                Result.success(true)
-            } else {
-                Result.failure(Exception("User creation failed"))
-            }
-
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
+        return remoteDataSource.register(name, email, password).fold(
+            onSuccess = { response ->
+                val userId = response.resolvedUserId()
+                if (userId.isNullOrBlank()) {
+                    Result.failure(Exception(response.message ?: "Registration succeeded but missing user ID"))
+                } else {
+                    sharedPreferencesHelper.saveUid(userId)
+                    Result.success(true)
+                }
+            },
+            onFailure = { Result.failure(it) }
+        )
     }
 
     override suspend fun getCartItemCount(): Int {
-        return sharedPreferencesHelper.getCartItemCount()
+        return getCartItems().getOrNull()?.sumOf { it.quantity } ?: sharedPreferencesHelper.getCartItemCount()
     }
 
-    override fun logout() = firebaseAuth.signOut()
+    override fun logout() {
+        sharedPreferencesHelper.clearUid()
+    }
 
-    override fun currentUserId(): String? = firebaseAuth.currentUser?.uid
+    override fun currentUserId(): String? = sharedPreferencesHelper.getUid().ifBlank { null }
 
 }

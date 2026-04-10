@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
 import com.example.shopsphere.CleanArchitecture.domain.GetCardProductsUseCase
+import com.example.shopsphere.CleanArchitecture.domain.IRepository
 import com.example.shopsphere.CleanArchitecture.ui.models.PresentationProductResult
 import com.example.shopsphere.CleanArchitecture.ui.models.mapToPresentation
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,6 +20,7 @@ import javax.inject.Inject
 @HiltViewModel
 class CartViewModel @Inject constructor(
     private val getCardProductsUseCase: GetCardProductsUseCase,
+    private val repository: IRepository,
     private val sharedPreference: SharedPreference
 ) : ViewModel() {
     private val _cartItemCount = MutableStateFlow(0)
@@ -31,7 +33,7 @@ class CartViewModel @Inject constructor(
     private fun loadCartItemCount() {
         viewModelScope.launch {
             try {
-                val count = sharedPreference.getCartItemCount()
+                val count = repository.getCartItemCount()
                 _cartItemCount.value = count
             } catch (e: Exception) {
                 Log.e("CartViewModel", "loadCartItemCount error", e)
@@ -73,26 +75,22 @@ class CartViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             _loading.postValue(true)
             try {
-                val cartLines = sharedPreference.getCartLines()
-                if (cartLines.isEmpty()) {
+                val remoteItems = repository.getCartItems().getOrNull().orEmpty()
+                if (remoteItems.isEmpty()) {
                     _cartProducts.postValue(emptyList())
                     _emptyState.postValue(true)
                     _totalPrice.postValue(0.0)
                 } else {
-                    val result = getCardProductsUseCase(cartLines.map { it.productId }.distinct())
+                    val result = getCardProductsUseCase(remoteItems.map { it.productId }.distinct())
                     if (result.isSuccess) {
                         val productsById = result.getOrNull().orEmpty().associateBy { it.id }
-                        val cartProductList = cartLines.mapNotNull { line ->
-                            productsById[line.productId]?.mapToPresentation()?.let { product ->
+                        val cartProductList = remoteItems.mapNotNull { item ->
+                            productsById[item.productId]?.mapToPresentation()?.let { product ->
                                 product.copy(
-                                    quantity = line.quantity,
+                                    quantity = item.quantity,
                                     stock = product.stock,
-                                    selectedSize = if (supportsSizeSelection(product.category)) {
-                                        line.size
-                                    } else {
-                                        ""
-                                    },
-                                    cartLineId = line.lineId
+                                    selectedSize = "",
+                                    cartLineId = item.cartId.toString()
                                 )
                             }
                         }
@@ -117,17 +115,12 @@ class CartViewModel @Inject constructor(
         _totalPrice.postValue(total)
     }
 
-    fun addProductToCart(productId: Int, size: String, availableStock: Int): Boolean {
+    suspend fun addProductToCart(productId: Int, size: String, availableStock: Int): Boolean {
         return try {
             val normalizedSize = size.trim().uppercase()
-            val currentQuantity = sharedPreference.getCartLines()
-                .firstOrNull {
-                    if (normalizedSize.isBlank()) {
-                        it.productId == productId
-                    } else {
-                        it.productId == productId && it.size == normalizedSize
-                    }
-                }
+            val currentQuantity = cartProducts.value
+                .orEmpty()
+                .firstOrNull { it.id == productId }
                 ?.quantity ?: 0
             val stock = availableStock.coerceAtLeast(0)
 
@@ -135,8 +128,13 @@ class CartViewModel @Inject constructor(
                 return false
             }
 
+            val remoteResult = repository.addToCart(productId, 1)
+            if (remoteResult.isFailure) {
+                return false
+            }
             sharedPreference.addCartProduct(productId, normalizedSize)
             loadCartItemCount()
+            loadCartProducts()
             true
         } catch (e: Exception) {
             Log.e("CartViewModel", "addProductToCart error", e)
@@ -154,17 +152,26 @@ class CartViewModel @Inject constructor(
     }
 
     fun removeCartLine(lineId: String) {
-        try {
-            sharedPreference.removeCartProductByLineId(lineId)
-            loadCartItemCount()
-        } catch (e: Exception) {
-            Log.e("CartViewModel", "removeCartLine error", e)
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val cartId = lineId.toIntOrNull()
+                if (cartId != null) {
+                    repository.removeCartItem(cartId)
+                }
+                loadCartItemCount()
+                loadCartProducts()
+            } catch (e: Exception) {
+                Log.e("CartViewModel", "removeCartLine error", e)
+            }
         }
     }
 
     fun updateQuantity(lineId: String, newQuantity: Int) {
         viewModelScope.launch(Dispatchers.IO) {
-            sharedPreference.updateQuantity(lineId, newQuantity)
+            val cartId = lineId.toIntOrNull()
+            if (cartId != null) {
+                repository.updateCartItemQuantity(cartId, newQuantity)
+            }
             loadCartProducts()
         }
     }

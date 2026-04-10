@@ -118,8 +118,8 @@ object Module {
 
     @Singleton
     @Provides
-    fun getRepository(remoteDataSource: IRemoteDataSource,sharedPreferencesHelper: SharedPreference, firebaseAuth: FirebaseAuth): IRepository {
-        return Repository(remoteDataSource,sharedPreferencesHelper,firebaseAuth)
+    fun getRepository(remoteDataSource: IRemoteDataSource,sharedPreferencesHelper: SharedPreference): IRepository {
+        return Repository(remoteDataSource,sharedPreferencesHelper)
     }
 
     @Provides

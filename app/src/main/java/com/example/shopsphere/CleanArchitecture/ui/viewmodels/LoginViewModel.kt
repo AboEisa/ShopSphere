@@ -6,7 +6,6 @@ import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
 import com.example.shopsphere.CleanArchitecture.domain.auth.FacebookLoginUseCase
 import com.example.shopsphere.CleanArchitecture.domain.auth.GoogleLoginUseCase
 import com.example.shopsphere.CleanArchitecture.domain.auth.LoginUseCase
-import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -16,8 +15,7 @@ class LoginViewModel @Inject constructor(
     private val loginUseCase: LoginUseCase,
     private val googleLoginUseCase: GoogleLoginUseCase,
     private val facebookLoginUseCase: FacebookLoginUseCase,
-    private val prefs: SharedPreference,
-    private val firebaseAuth: FirebaseAuth
+    private val prefs: SharedPreference
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Idle)
@@ -84,7 +82,7 @@ class LoginViewModel @Inject constructor(
     }
 
     private fun markLoggedIn() {
-        val uid = firebaseAuth.currentUser?.uid.orEmpty()
+        val uid = prefs.getUid()
         if (uid.isNotBlank()) {
             prefs.saveUid(uid)
             prefs.saveIsLoggedIn(true)

@@ -45,6 +45,70 @@ class RemoteDataSource @Inject constructor(
         }
     }
 
+    override suspend fun register(
+        name: String,
+        email: String,
+        password: String
+    ): Result<AuthResponseDto> = runCatching {
+        apiService.signUp(
+            AuthRequestDto(
+                name = name,
+                email = email,
+                password = password
+            )
+        )
+    }
+
+    override suspend fun login(
+        email: String,
+        password: String
+    ): Result<AuthResponseDto> = runCatching {
+        apiService.login(
+            AuthRequestDto(
+                email = email,
+                password = password
+            )
+        )
+    }
+
+    override suspend fun addToCart(
+        userId: Int,
+        productId: Int,
+        quantity: Int
+    ): Result<CartMutationResponseDto> = runCatching {
+        apiService.addToCart(
+            AddToCartRequestDto(
+                userId = userId,
+                productId = productId,
+                quantity = quantity
+            )
+        )
+    }
+
+    override suspend fun getCartItems(customerId: Int): Result<GetCartItemsResponseDto> = runCatching {
+        apiService.getCartItems(customerId)
+    }
+
+    override suspend fun updateQuantity(
+        cartId: Int,
+        newQuantity: Int
+    ): Result<CartMutationResponseDto> = runCatching {
+        apiService.updateQuantity(
+            UpdateQuantityRequestDto(
+                cartId = cartId,
+                newQuantity = newQuantity
+            )
+        )
+    }
+
+    override suspend fun removeItem(cartId: Int): Result<CartMutationResponseDto> = runCatching {
+        apiService.removeItem(cartId)
+    }
+
+    override suspend fun clearCart(customerId: Int): Result<CartMutationResponseDto> = runCatching {
+        apiService.clearCart(customerId)
+    }
+
     private suspend fun fetchProductsFromBackend(): List<ProductResult> = coroutineScope {
         val categorizedResults = CATEGORY_ENDPOINTS.map { endpoint ->
             async {

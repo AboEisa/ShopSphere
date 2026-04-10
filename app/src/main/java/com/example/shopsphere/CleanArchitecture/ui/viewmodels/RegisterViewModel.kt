@@ -7,7 +7,6 @@ import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
 import com.example.shopsphere.CleanArchitecture.domain.auth.FacebookLoginUseCase
 import com.example.shopsphere.CleanArchitecture.domain.auth.GoogleLoginUseCase
 import com.example.shopsphere.CleanArchitecture.domain.auth.RegisterUseCase
-import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,8 +25,7 @@ class RegisterViewModel @Inject constructor(
     private val registerUseCase: RegisterUseCase,
     private val googleLoginUseCase: GoogleLoginUseCase,
     private val facebookLoginUseCase: FacebookLoginUseCase,
-    private val prefs: SharedPreference,
-    private val firebaseAuth: FirebaseAuth
+    private val prefs: SharedPreference
 ) : ViewModel() {
 
     companion object {
@@ -77,7 +75,7 @@ class RegisterViewModel @Inject constructor(
             _state.value = AuthUiState.Loading
             val result = googleLoginUseCase(idToken)
             _state.value = if (result.isSuccess) {
-                markLoggedIn(firebaseAuth.currentUser?.uid.orEmpty())
+                markLoggedIn(prefs.getUid())
                 AuthUiState.Success("Signed in successfully!")
             } else {
                 AuthUiState.Error(result.exceptionOrNull()?.message ?: "Google sign-in failed")
@@ -90,7 +88,7 @@ class RegisterViewModel @Inject constructor(
             _state.value = AuthUiState.Loading
             val result = facebookLoginUseCase(accessToken)
             _state.value = if (result.isSuccess) {
-                markLoggedIn(firebaseAuth.currentUser?.uid.orEmpty())
+                markLoggedIn(prefs.getUid())
                 AuthUiState.Success("Signed in successfully!")
             } else {
                 AuthUiState.Error(result.exceptionOrNull()?.message ?: "Facebook sign-in failed")

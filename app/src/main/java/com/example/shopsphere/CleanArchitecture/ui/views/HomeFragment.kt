@@ -24,7 +24,6 @@ import com.example.shopsphere.databinding.FragmentHomeBinding
 import com.example.yourpackage.viewmodels.HomeViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlin.math.abs
 
 @AndroidEntryPoint
@@ -53,16 +52,10 @@ class HomeFragment : Fragment() {
     private val productsAdapter by lazy {
         HomeProductsAdapter(
             onFavoriteClick = { productId ->
-                lifecycleScope.launch {
-                    if (favoriteViewModel.isFavorite(productId)) {
-                        favoriteViewModel.removeFavoriteProduct(productId)
-                    } else {
-                        favoriteViewModel.addFavoriteProduct(productId)
-                    }
-                }
+                favoriteViewModel.toggleFavorite(productId)
             },
             isFavorite = { productId ->
-                runBlocking { favoriteViewModel.isFavorite(productId) }
+                favoriteViewModel.isFavoriteSync(productId)
             },
             onItemClick = { productId ->
                 val action = HomeFragmentDirections.actionHomeFragmentToDetailsFragment(productId)

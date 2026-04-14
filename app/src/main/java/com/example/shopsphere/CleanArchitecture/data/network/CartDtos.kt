@@ -3,9 +3,8 @@ package com.example.shopsphere.CleanArchitecture.data.network
 import com.google.gson.annotations.SerializedName
 
 data class AddToCartRequestDto(
-    @SerializedName("userId") val userId: Int,
     @SerializedName("productId") val productId: Int,
-    @SerializedName("quantity") val quantity: Int
+    @SerializedName("Quantity") val quantity: String
 )
 
 data class UpdateQuantityRequestDto(
@@ -14,7 +13,7 @@ data class UpdateQuantityRequestDto(
 )
 
 data class CartMutationResponseDto(
-    @SerializedName("status") val status: String? = null,
+    @SerializedName("status") val status: Boolean? = null,
     @SerializedName("message") val message: String? = null
 )
 
@@ -24,8 +23,10 @@ data class GetCartItemsResponseDto(
 )
 
 data class CartItemDto(
-    @SerializedName("cartId") val cartId: Int,
-    @SerializedName("productId") val productId: Int,
-    @SerializedName("quantity") val quantity: Int,
-    @SerializedName("addedDate") val addedDate: String? = null
+    @SerializedName("cartID") val cartId: Int = 0,
+    @SerializedName("productName") val productName: String? = null,
+    @SerializedName("price") val price: Double = 0.0,
+    @SerializedName("quantity") val quantity: Int = 0,
+    @SerializedName("image") val image: String? = null,
+    @SerializedName("totalPrice") val totalPrice: Double = 0.0
 )

@@ -82,10 +82,6 @@ class LoginViewModel @Inject constructor(
     }
 
     private fun markLoggedIn() {
-        val uid = prefs.getUid()
-        if (uid.isNotBlank()) {
-            prefs.saveUid(uid)
-            prefs.saveIsLoggedIn(true)
-        }
+        prefs.saveIsLoggedIn(true)
     }
 }

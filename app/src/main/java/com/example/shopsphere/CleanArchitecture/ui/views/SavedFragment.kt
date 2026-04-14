@@ -12,7 +12,7 @@ import com.example.shopsphere.CleanArchitecture.ui.adapters.SavedAdapter
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.SavedViewModel
 import com.example.shopsphere.databinding.FragmentSavedBinding
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.runBlocking
+
 
 @AndroidEntryPoint
 class SavedFragment : Fragment() {
@@ -60,7 +60,7 @@ class SavedFragment : Fragment() {
             },
             isFavorite = { productId ->
                 if (!isAdded || _binding == null) return@SavedAdapter false
-                runBlocking { viewModel.isFavorite(productId) }
+                viewModel.isFavoriteSync(productId)
             }
         )
         binding.recyclerView.layoutManager = GridLayoutManager(requireContext(),2)

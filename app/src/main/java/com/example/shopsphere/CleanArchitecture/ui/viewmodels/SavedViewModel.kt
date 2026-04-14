@@ -52,8 +52,7 @@ class SavedViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             _loading.postValue(true)
             try {
-                val favoriteIds = sharedPreference.getFavoriteProducts()
-                val favorites = getFavoriteProductsUseCase(favoriteIds)
+                val favorites = getFavoriteProductsUseCase(emptyList())
                 val mappedFavorites = favorites.getOrNull()?.mapToPresentation().orEmpty()
                 _favoriteProducts.postValue(mappedFavorites)
                 _emptyState.postValue(mappedFavorites.isEmpty())
@@ -80,17 +79,22 @@ class SavedViewModel @Inject constructor(
         return isFavoriteUseCase(productId)
     }
 
-    /** Synchronous check for adapter/binding; avoids runBlocking. */
+    /** Synchronous check — uses cached list from last load. */
     fun isFavoriteSync(productId: Int): Boolean {
-        return sharedPreference.getFavoriteProducts().contains(productId)
+        return _favoriteProducts.value.orEmpty().any { it.id == productId }
     }
 
     fun addFavoriteProduct(productId: Int) {
-        sharedPreference.addFavoriteProduct(productId)
-        loadFavoriteProducts()
+        viewModelScope.launch(Dispatchers.IO) {
+            toggleFavoriteUseCase(productId)
+            loadFavoriteProducts()
+        }
     }
 
     fun removeFavoriteProduct(productId: Int) {
-        sharedPreference.removeFavoriteProduct(productId)
+        viewModelScope.launch(Dispatchers.IO) {
+            toggleFavoriteUseCase(productId)
+            loadFavoriteProducts()
+        }
     }
 }

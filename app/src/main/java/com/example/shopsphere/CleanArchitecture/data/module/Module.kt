@@ -21,106 +21,174 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import okhttp3.OkHttpClient
 import okhttp3.Dns
+import okhttp3.Interceptor
+import okhttp3.OkHttpClient
+import okhttp3.Response
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.net.Inet6Address
 import java.util.concurrent.TimeUnit
-import javax.inject.Singleton
 import javax.inject.Named
+import javax.inject.Singleton
 
 @InstallIn(SingletonComponent::class)
 @Module
 object Module {
 
+    /**
+     * Bypass the ngrok "You are about to visit…" browser interstitial.
+     * Without this header ngrok returns a 403 HTML page instead of the API response.
+     */
+    private class NgrokInterceptor : Interceptor {
+        override fun intercept(chain: Interceptor.Chain): Response {
+            val request = chain.request().newBuilder()
+                .addHeader("ngrok-skip-browser-warning", "true")
+                .build()
+            return chain.proceed(request)
+        }
+    }
+
+    /**
+     * Attaches the saved JWT token as a Bearer Authorization header
+     * to every request (when a token is available).
+     */
+    private class AuthInterceptor(private val prefs: SharedPreference) : Interceptor {
+        override fun intercept(chain: Interceptor.Chain): Response {
+            val token = prefs.getToken()
+            val requestBuilder = chain.request().newBuilder()
+            if (token.isNotBlank()) {
+                requestBuilder.addHeader("Authorization", "Bearer $token")
+            }
+            return chain.proceed(requestBuilder.build())
+        }
+    }
+
+    /**
+     * Retry up to [maxRetries] times on genuine network failures (SocketTimeoutException,
+     * non-cancel IOExceptions) before giving up.
+     *
+     * IMPORTANT: deliberately cancelled requests (scope cancellation on back-press / VM cleared)
+     * throw IOException with message "Canceled" or "Socket closed". We MUST NOT retry those —
+     * retrying a cancelled coroutine's request causes a cascade of duplicate API calls and
+     * saturates the connection pool.
+     */
+    private class RetryInterceptor(private val maxRetries: Int = 2) : Interceptor {
+        override fun intercept(chain: Interceptor.Chain): Response {
+            var attempt = 0
+            var lastException: Exception? = null
+            while (attempt <= maxRetries) {
+                try {
+                    return chain.proceed(chain.request())
+                } catch (e: java.net.SocketTimeoutException) {
+                    lastException = e
+                    attempt++
+                } catch (e: java.io.IOException) {
+                    // FIX: Do NOT retry deliberate cancellations. When a ViewModel is
+                    // cleared (back press, navigation) its coroutine scope is cancelled,
+                    // which causes OkHttp to throw IOException("Canceled") or
+                    // IOException("Socket closed"). Retrying those creates duplicate POSTs
+                    // (observed: 6 spurious AddToCart calls on back press in Logcat).
+                    val msg = e.message?.lowercase().orEmpty()
+                    if (msg.contains("cancel") || msg.contains("closed") || msg.contains("reset")) {
+                        throw e
+                    }
+                    lastException = e
+                    attempt++
+                }
+            }
+            throw lastException ?: java.io.IOException("Request failed after $maxRetries retries")
+        }
+    }
+
     @Singleton
     @Provides
-    fun provideOkHttpClient(): OkHttpClient {
-        val interceptor = HttpLoggingInterceptor().apply {
-            this.level = HttpLoggingInterceptor.Level.BODY
+    fun provideOkHttpClient(prefs: SharedPreference): OkHttpClient {
+        val loggingInterceptor = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
         }
 
         return OkHttpClient.Builder().apply {
-            this.dns(
-                Dns { hostname ->
-                    Dns.SYSTEM.lookup(hostname).sortedBy { it is Inet6Address }
-                }
-            )
-            this.addInterceptor(interceptor)
-                .connectTimeout(30, TimeUnit.SECONDS)
-                .readTimeout(20, TimeUnit.SECONDS)
-                .writeTimeout(25, TimeUnit.SECONDS)
+            // Prefer IPv4 — avoids ngrok IPv6 resolution failures on some devices/emulators
+            dns(Dns { hostname ->
+                Dns.SYSTEM.lookup(hostname).sortedBy { it is Inet6Address }
+            })
+
+            // Increased timeouts — ngrok free tier is slow
+            connectTimeout(60, TimeUnit.SECONDS)
+            readTimeout(60, TimeUnit.SECONDS)
+            writeTimeout(60, TimeUnit.SECONDS)
+
+            // Add ngrok browser-warning bypass header
+            addInterceptor(NgrokInterceptor())
+
+            // Attach Bearer token for authenticated requests
+            addInterceptor(AuthInterceptor(prefs))
+
+            // Retry on genuine network failures (NOT cancellations — see class javadoc)
+            addInterceptor(RetryInterceptor(maxRetries = 2))
+
+            addInterceptor(loggingInterceptor)
         }.build()
     }
 
     @Singleton
     @Provides
     @Named("primaryRetrofit")
-    fun provideRetrofit(client: OkHttpClient): Retrofit {
-        return Retrofit.Builder()
+    fun provideRetrofit(client: OkHttpClient): Retrofit =
+        Retrofit.Builder()
             .addConverterFactory(GsonConverterFactory.create())
             .client(client)
             .baseUrl(BASE_URL)
             .build()
-    }
 
     @Singleton
     @Provides
     @Named("dummyRetrofit")
-    fun provideDummyRetrofit(client: OkHttpClient): Retrofit {
-        return Retrofit.Builder()
+    fun provideDummyRetrofit(client: OkHttpClient): Retrofit =
+        Retrofit.Builder()
             .addConverterFactory(GsonConverterFactory.create())
             .client(client)
             .baseUrl(DUMMY_BASE_URL)
             .build()
-    }
 
     @Singleton
     @Provides
     @Named("directionsRetrofit")
-    fun provideDirectionsRetrofit(client: OkHttpClient): Retrofit {
-        return Retrofit.Builder()
+    fun provideDirectionsRetrofit(client: OkHttpClient): Retrofit =
+        Retrofit.Builder()
             .addConverterFactory(GsonConverterFactory.create())
             .client(client)
             .baseUrl(DIRECTIONS_BASE_URL)
             .build()
-    }
 
     @Singleton
     @Provides
-    fun getApiServices(@Named("primaryRetrofit") retrofit: Retrofit): ApiServices {
-        return retrofit.create(ApiServices::class.java)
-    }
+    fun getApiServices(@Named("primaryRetrofit") retrofit: Retrofit): ApiServices =
+        retrofit.create(ApiServices::class.java)
 
     @Singleton
     @Provides
-    fun getDummyApiServices(@Named("dummyRetrofit") retrofit: Retrofit): DummyApiServices {
-        return retrofit.create(DummyApiServices::class.java)
-    }
+    fun getDummyApiServices(@Named("dummyRetrofit") retrofit: Retrofit): DummyApiServices =
+        retrofit.create(DummyApiServices::class.java)
 
     @Singleton
     @Provides
-    fun getDirectionsApiServices(@Named("directionsRetrofit") retrofit: Retrofit): DirectionsApiServices {
-        return retrofit.create(DirectionsApiServices::class.java)
-    }
+    fun getDirectionsApiServices(@Named("directionsRetrofit") retrofit: Retrofit): DirectionsApiServices =
+        retrofit.create(DirectionsApiServices::class.java)
 
     @Singleton
     @Provides
-    fun getRemoteDataSource(
-        apiServices: ApiServices
-    ): IRemoteDataSource{
-        return RemoteDataSource(apiServices)
-    }
-
-
+    fun getRemoteDataSource(apiServices: ApiServices): IRemoteDataSource =
+        RemoteDataSource(apiServices)
 
     @Singleton
     @Provides
-    fun getRepository(remoteDataSource: IRemoteDataSource,sharedPreferencesHelper: SharedPreference): IRepository {
-        return Repository(remoteDataSource,sharedPreferencesHelper)
-    }
+    fun getRepository(
+        remoteDataSource: IRemoteDataSource,
+        sharedPreferencesHelper: SharedPreference
+    ): IRepository = Repository(remoteDataSource, sharedPreferencesHelper)
 
     @Provides
     @Singleton
@@ -132,10 +200,13 @@ object Module {
 
     @Provides
     fun provideLoginUseCase(repo: IRepository) = LoginUseCase(repo)
-    @Provides fun provideRegisterUseCase(repo: IRepository) = RegisterUseCase(repo)
+
+    @Provides
+    fun provideRegisterUseCase(repo: IRepository) = RegisterUseCase(repo)
+
     @Provides
     fun provideGoogleLoginUseCase(repo: IRepository) = GoogleLoginUseCase(repo)
+
     @Provides
     fun provideFacebookLoginUseCase(repo: IRepository) = FacebookLoginUseCase(repo)
-
 }

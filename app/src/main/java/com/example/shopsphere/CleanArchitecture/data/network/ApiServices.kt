@@ -32,10 +32,8 @@ interface ApiServices {
         @Body request: AddToCartRequestDto
     ): CartMutationResponseDto
 
-    @GET("GetCartItems/{customerId}")
-    suspend fun getCartItems(
-        @Path("customerId") customerId: Int
-    ): GetCartItemsResponseDto
+    @GET("GetCartItems")
+    suspend fun getCartItems(): GetCartItemsResponseDto
 
     @PUT("UpdateQuantity")
     suspend fun updateQuantity(
@@ -47,8 +45,19 @@ interface ApiServices {
         @Path("cartId") cartId: Int
     ): CartMutationResponseDto
 
-    @DELETE("ClearCart/{customerId}")
-    suspend fun clearCart(
-        @Path("customerId") customerId: Int
-    ): CartMutationResponseDto
+    @DELETE("ClearCart")
+    suspend fun clearCart(): CartMutationResponseDto
+
+    @POST("AddToFavorite")
+    suspend fun addToFavorite(
+        @Body request: FavoriteRequestDto
+    ): FavoriteMutationResponseDto
+
+    @POST("RemoveFromFavorite")
+    suspend fun removeFromFavorite(
+        @Body request: FavoriteRequestDto
+    ): FavoriteMutationResponseDto
+
+    @GET("GetAllFavorites")
+    suspend fun getAllFavorites(): List<FavoriteItemDto>
 }

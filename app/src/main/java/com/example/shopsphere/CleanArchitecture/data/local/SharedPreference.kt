@@ -41,7 +41,23 @@ class SharedPreference @Inject constructor(
     }
 
     fun clearUid() {
-        sharedPref.edit().remove("uid").apply()
+        sharedPref.edit().remove("uid").remove("customer_id").remove("auth_token").apply()
+    }
+
+    fun saveToken(token: String) {
+        sharedPref.edit().putString("auth_token", token).apply()
+    }
+
+    fun getToken(): String {
+        return sharedPref.getString("auth_token", "") ?: ""
+    }
+
+    fun saveCustomerId(customerId: String) {
+        sharedPref.edit().putString("customer_id", customerId).apply()
+    }
+
+    fun getCustomerId(): String {
+        return sharedPref.getString("customer_id", "") ?: ""
     }
 
     fun saveProfile(name: String, email: String, phone: String) {

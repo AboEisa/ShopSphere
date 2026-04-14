@@ -19,7 +19,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.navOptions
+
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.LoginUiEvent
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.LoginUiState
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.LoginViewModel
@@ -244,19 +244,10 @@ class LoginFragment : Fragment() {
 
     private fun navigateToHomeSafely() {
         if (!isAdded) return
-        val navController = findNavController()
-        if (navController.currentDestination?.id != R.id.loginFragment) return
-
-        navController.navigate(
-            R.id.homeFragment,
-            null,
-            navOptions {
-                popUpTo(R.id.loginFragment) {
-                    inclusive = true
-                }
-                launchSingleTop = true
-            }
-        )
+        val intent = Intent(requireContext(), MainActivity::class.java)
+        intent.putExtra(MainActivity.EXTRA_OPEN_HOME, true)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
     }
 
     private fun showToastSafely(message: String) {

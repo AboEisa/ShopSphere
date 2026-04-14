@@ -28,23 +28,18 @@ class DetailsFragment : Fragment() {
 
     private val detailsViewModel: DetailsViewModel by viewModels()
     private val favoriteViewModel: SavedViewModel by viewModels()
-    private val cartViewModel: CartViewModel by viewModels()
     private val args: DetailsFragmentArgs by navArgs()
 
-    private val sharedCartViewModel: CartViewModel by activityViewModels()
-
+    // FIX: Single activity-scoped instance — shares state with HomeFragment badge
+    // and CartFragment list. The old local `by viewModels()` was a separate instance
+    // with empty cartProducts, causing addProductToCart to always use stale state.
+    private val cartViewModel: CartViewModel by activityViewModels()
 
     private val detailsAdapter by lazy {
         DetailsAdapter(
             onFavoriteClick = { productId ->
                 if (!isAdded || _binding == null) return@DetailsAdapter
-                lifecycleScope.launch {
-                    if (favoriteViewModel.isFavorite(productId)) {
-                        favoriteViewModel.removeFavoriteProduct(productId)
-                    } else {
-                        favoriteViewModel.addFavoriteProduct(productId)
-                    }
-                }
+                favoriteViewModel.toggleFavorite(productId)
             },
             isFavorite = { productId ->
                 if (!isAdded || _binding == null) return@DetailsAdapter false
@@ -54,14 +49,22 @@ class DetailsFragment : Fragment() {
                 if (!isAdded || _binding == null) return@DetailsAdapter
                 try {
                     val product = detailsViewModel.productLiveData.value
-                    product?.let {
-                        val stock = it.stock.coerceAtLeast(0)
-                        lifecycleScope.launch {
-                            val added = cartViewModel.addProductToCart(productId, size, stock)
-                            sharedCartViewModel.refreshCartCount()
-                            if (isAdded && _binding != null && added) {
-                                context?.let { ctx ->
+                    if (product == null) {
+                        context?.let { ctx ->
+                            Toast.makeText(ctx, "Product not loaded yet, please try again", Toast.LENGTH_SHORT).show()
+                        }
+                        return@DetailsAdapter
+                    }
+                    val stock = product.stock.coerceAtLeast(0)
+                    lifecycleScope.launch {
+                        val added = cartViewModel.addProductToCart(productId, size, stock)
+                        cartViewModel.refreshCartCount()
+                        if (isAdded && _binding != null) {
+                            context?.let { ctx ->
+                                if (added) {
                                     Toast.makeText(ctx, "Product added to cart", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    Toast.makeText(ctx, "Could not add to cart, please try again", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         }
@@ -84,7 +87,7 @@ class DetailsFragment : Fragment() {
                 if (!isAdded || _binding == null) return@DetailsAdapter
                 try {
                     cartViewModel.removeFromCart(productId, size)
-                    sharedCartViewModel.refreshCartCount()
+                    cartViewModel.refreshCartCount()
                     if (isAdded && _binding != null) {
                         context?.let { ctx ->
                             Toast.makeText(ctx, "Product removed from cart", Toast.LENGTH_SHORT).show()

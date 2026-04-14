@@ -2,7 +2,9 @@ package com.example.shopsphere.CleanArchitecture.data
 
 import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
 import com.example.shopsphere.CleanArchitecture.data.models.mapToDomain
+import com.example.shopsphere.CleanArchitecture.data.network.AuthResponseDto
 import com.example.shopsphere.CleanArchitecture.data.network.IRemoteDataSource
+import com.example.shopsphere.CleanArchitecture.utils.Constant
 import com.example.shopsphere.CleanArchitecture.domain.DomainCartItem
 import com.example.shopsphere.CleanArchitecture.domain.DomainProductResult
 import com.example.shopsphere.CleanArchitecture.domain.IRepository
@@ -35,30 +37,33 @@ class Repository @Inject constructor(
 
     override suspend fun getFavoriteProducts(ids: List<Int>): Result<List<DomainProductResult>> {
         return try {
-            val favoriteIds = sharedPreferencesHelper.getFavoriteProducts()
+            val favoriteItems = remoteDataSource.getAllFavorites().getOrThrow()
             val allProducts = remoteDataSource.getProducts().getOrThrow()
-            val favorites = allProducts.filter { favoriteIds.contains(it.id) }
+            val favoriteIds = favoriteItems.map { it.productId }.toSet()
+            val favorites = allProducts.filter { it.id in favoriteIds }
             Result.success(favorites.map { it.mapToDomain() })
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-
     override suspend fun toggleFavorite(productId: Int) {
-        if (sharedPreferencesHelper.isFavorite(productId)) {
-            sharedPreferencesHelper.removeFavoriteProduct(productId)
+        val currentFavorites = remoteDataSource.getAllFavorites().getOrNull().orEmpty()
+        val isFav = currentFavorites.any { it.productId == productId }
+        if (isFav) {
+            remoteDataSource.removeFromFavorite(productId)
         } else {
-            sharedPreferencesHelper.addFavoriteProduct(productId)
+            remoteDataSource.addToFavorite(productId)
         }
     }
 
     override suspend fun isFavorite(productId: Int): Boolean {
-        return sharedPreferencesHelper.isFavorite(productId)
+        val favorites = remoteDataSource.getAllFavorites().getOrNull().orEmpty()
+        return favorites.any { it.productId == productId }
     }
 
     override suspend fun getFavoriteIds(): List<Int> {
-        return sharedPreferencesHelper.getFavoriteProducts()
+        return remoteDataSource.getAllFavorites().getOrNull().orEmpty().map { it.productId }
     }
 
 //    override suspend fun addToCart(cart: DomainAddToCartRequest): Result<List<DomainCartProduct>> {
@@ -81,23 +86,25 @@ class Repository @Inject constructor(
     }
 
     override suspend fun getCartItems(): Result<List<DomainCartItem>> {
-        val customerId = currentUserId()?.toIntOrNull()
-            ?: return Result.failure(Exception("Missing customer id"))
-        return remoteDataSource.getCartItems(customerId).map { response ->
+        return remoteDataSource.getCartItems().map { response ->
             response.cartItems.map {
+                val imageUrl = if (it.image.isNullOrBlank()) "" else {
+                    if (it.image.startsWith("http")) it.image
+                    else "${Constant.BASE_URL}GetImage/${it.image}"
+                }
                 DomainCartItem(
                     cartId = it.cartId,
-                    productId = it.productId,
-                    quantity = it.quantity
+                    productName = it.productName.orEmpty(),
+                    price = it.price,
+                    quantity = it.quantity,
+                    image = imageUrl
                 )
             }
         }
     }
 
     override suspend fun addToCart(productId: Int, quantity: Int): Result<Unit> {
-        val customerId = currentUserId()?.toIntOrNull()
-            ?: return Result.failure(Exception("Missing customer id"))
-        return remoteDataSource.addToCart(customerId, productId, quantity).map { Unit }
+        return remoteDataSource.addToCart(productId, quantity).map { Unit }
     }
 
     override suspend fun updateCartItemQuantity(cartId: Int, newQuantity: Int): Result<Unit> {
@@ -109,13 +116,28 @@ class Repository @Inject constructor(
     }
 
     override suspend fun clearCart(): Result<Unit> {
-        val customerId = currentUserId()?.toIntOrNull()
-            ?: return Result.failure(Exception("Missing customer id"))
-        return remoteDataSource.clearCart(customerId).map { Unit }
+        return remoteDataSource.clearCart().map { Unit }
     }
 
 
 
+
+    private fun saveAuthIds(response: AuthResponseDto) {
+        val userId = response.resolvedUserId()
+        if (!userId.isNullOrBlank()) {
+            sharedPreferencesHelper.saveUid(userId)
+        }
+        // Save customerId separately for cart operations
+        val custId = response.customerId
+        if (custId != null) {
+            sharedPreferencesHelper.saveCustomerId(custId.toString())
+        }
+        // Save JWT token for Bearer auth
+        val token = response.token
+        if (!token.isNullOrBlank()) {
+            sharedPreferencesHelper.saveToken(token)
+        }
+    }
 
     override suspend fun login(email: String, password: String): Result<Unit> =
         remoteDataSource.login(email, password).fold(
@@ -124,7 +146,7 @@ class Repository @Inject constructor(
                 if (userId.isNullOrBlank()) {
                     Result.failure(Exception(response.message ?: "Login succeeded but missing user ID"))
                 } else {
-                    sharedPreferencesHelper.saveUid(userId)
+                    saveAuthIds(response)
                     Result.success(Unit)
                 }
             },
@@ -132,10 +154,42 @@ class Repository @Inject constructor(
         )
 
     override suspend fun loginWithGoogle(idToken: String): Result<Unit> =
-        Result.failure(Exception("Google login is not supported by backend API yet"))
+        try {
+            val response = remoteDataSource.loginWithGoogle(idToken)
+            response.fold(
+                onSuccess = { authResponse ->
+                    val userId = authResponse.resolvedUserId()
+                    if (userId.isNullOrBlank()) {
+                        Result.failure(Exception(authResponse.message ?: "Google login succeeded but missing user ID"))
+                    } else {
+                        saveAuthIds(authResponse)
+                        Result.success(Unit)
+                    }
+                },
+                onFailure = { Result.failure(it) }
+            )
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
 
     override suspend fun loginWithFacebook(accessToken: String): Result<Unit> =
-        Result.failure(Exception("Facebook login is not supported by backend API yet"))
+        try {
+            val response = remoteDataSource.loginWithFacebook(accessToken)
+            response.fold(
+                onSuccess = { authResponse ->
+                    val userId = authResponse.resolvedUserId()
+                    if (userId.isNullOrBlank()) {
+                        Result.failure(Exception(authResponse.message ?: "Facebook login succeeded but missing user ID"))
+                    } else {
+                        saveAuthIds(authResponse)
+                        Result.success(Unit)
+                    }
+                },
+                onFailure = { Result.failure(it) }
+            )
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
 
 
 
@@ -150,7 +204,7 @@ class Repository @Inject constructor(
                 if (userId.isNullOrBlank()) {
                     Result.failure(Exception(response.message ?: "Registration succeeded but missing user ID"))
                 } else {
-                    sharedPreferencesHelper.saveUid(userId)
+                    saveAuthIds(response)
                     Result.success(true)
                 }
             },

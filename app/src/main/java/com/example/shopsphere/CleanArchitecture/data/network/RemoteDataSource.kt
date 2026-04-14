@@ -52,9 +52,11 @@ class RemoteDataSource @Inject constructor(
     ): Result<AuthResponseDto> = runCatching {
         apiService.signUp(
             AuthRequestDto(
-                name = name,
+                fullName = name,
                 email = email,
-                password = password
+                password = password,
+                phone = "N/A",
+                address = "N/A"
             )
         )
     }
@@ -71,22 +73,46 @@ class RemoteDataSource @Inject constructor(
         )
     }
 
+    override suspend fun loginWithGoogle(idToken: String): Result<AuthResponseDto> =
+        socialLogin(idToken, "Google")
+
+    override suspend fun loginWithFacebook(accessToken: String): Result<AuthResponseDto> =
+        socialLogin(accessToken, "Facebook")
+
+    private suspend fun socialLogin(token: String, provider: String): Result<AuthResponseDto> =
+        runCatching {
+            val email = "${provider.lowercase()}_${token.takeLast(10)}@shopsphere.app"
+            val password = "${provider}_$token"
+
+            // Try login first; if it fails, register then login
+            try {
+                apiService.login(AuthRequestDto(email = email, password = password))
+            } catch (_: Exception) {
+                apiService.signUp(
+                    AuthRequestDto(
+                        fullName = "$provider User",
+                        email = email,
+                        password = password
+                    )
+                )
+                apiService.login(AuthRequestDto(email = email, password = password))
+            }
+        }
+
     override suspend fun addToCart(
-        userId: Int,
         productId: Int,
         quantity: Int
     ): Result<CartMutationResponseDto> = runCatching {
         apiService.addToCart(
             AddToCartRequestDto(
-                userId = userId,
                 productId = productId,
-                quantity = quantity
+                quantity = quantity.toString()
             )
         )
     }
 
-    override suspend fun getCartItems(customerId: Int): Result<GetCartItemsResponseDto> = runCatching {
-        apiService.getCartItems(customerId)
+    override suspend fun getCartItems(): Result<GetCartItemsResponseDto> = runCatching {
+        apiService.getCartItems()
     }
 
     override suspend fun updateQuantity(
@@ -105,8 +131,20 @@ class RemoteDataSource @Inject constructor(
         apiService.removeItem(cartId)
     }
 
-    override suspend fun clearCart(customerId: Int): Result<CartMutationResponseDto> = runCatching {
-        apiService.clearCart(customerId)
+    override suspend fun clearCart(): Result<CartMutationResponseDto> = runCatching {
+        apiService.clearCart()
+    }
+
+    override suspend fun addToFavorite(productId: Int): Result<FavoriteMutationResponseDto> = runCatching {
+        apiService.addToFavorite(FavoriteRequestDto(productId = productId))
+    }
+
+    override suspend fun removeFromFavorite(productId: Int): Result<FavoriteMutationResponseDto> = runCatching {
+        apiService.removeFromFavorite(FavoriteRequestDto(productId = productId))
+    }
+
+    override suspend fun getAllFavorites(): Result<List<FavoriteItemDto>> = runCatching {
+        apiService.getAllFavorites()
     }
 
     private suspend fun fetchProductsFromBackend(): List<ProductResult> = coroutineScope {

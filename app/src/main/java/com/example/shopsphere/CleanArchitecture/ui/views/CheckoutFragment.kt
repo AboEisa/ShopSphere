@@ -10,6 +10,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
 import com.example.shopsphere.CleanArchitecture.ui.models.PresentationProductResult
+import com.example.shopsphere.CleanArchitecture.ui.viewmodels.CartViewModel
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.CheckoutSharedViewModel
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.SharedCartViewModel
 import com.example.shopsphere.CleanArchitecture.utils.showConfirmDialog
@@ -29,6 +30,7 @@ class CheckoutFragment : Fragment() {
 
     private val sharedViewModel: CheckoutSharedViewModel by activityViewModels()
     private val sharedCartViewModel: SharedCartViewModel by activityViewModels()
+    private val cartViewModel: CartViewModel by activityViewModels()
 
     private val shippingCost = 80.0
     private var currentCartItems: List<PresentationProductResult> = emptyList()
@@ -156,6 +158,7 @@ class CheckoutFragment : Fragment() {
 
                 sharedPreference.clearCartProducts()
                 sharedCartViewModel.setCartItems(emptyList())
+                cartViewModel.clearRemoteCart()
 
                 showSuccessDialog(
                     title = getString(R.string.dialog_congratulations_title),

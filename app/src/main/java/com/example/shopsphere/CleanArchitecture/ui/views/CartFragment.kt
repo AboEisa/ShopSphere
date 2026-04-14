@@ -164,16 +164,8 @@ class CartFragment : Fragment() {
             val stock = product.stock.coerceAtLeast(0)
             val quantity = product.quantity.coerceAtLeast(1)
             when {
-                stock <= 0 -> {
-                    cartViewModel.removeCartLine(product.cartLineId)
-                    null
-                }
-
-                quantity > stock -> {
-                    cartViewModel.updateQuantity(product.cartLineId, stock)
-                    product.copy(quantity = stock)
-                }
-
+                stock <= 0 -> null
+                quantity > stock -> product.copy(quantity = stock)
                 else -> product
             }
         }

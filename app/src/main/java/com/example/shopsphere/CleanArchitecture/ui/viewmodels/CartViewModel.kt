@@ -9,6 +9,7 @@ import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
 import com.example.shopsphere.CleanArchitecture.domain.GetCardProductsUseCase
 import com.example.shopsphere.CleanArchitecture.domain.IRepository
 import com.example.shopsphere.CleanArchitecture.ui.models.PresentationProductResult
+import com.example.shopsphere.CleanArchitecture.ui.models.PresentationRating
 import com.example.shopsphere.CleanArchitecture.ui.models.mapToPresentation
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -27,23 +28,22 @@ class CartViewModel @Inject constructor(
     val cartItemCount: StateFlow<Int> = _cartItemCount
 
     init {
-        loadCartItemCount()
+        loadCartProducts()
     }
 
-    private fun loadCartItemCount() {
+    private fun updateCartItemCount(products: List<PresentationProductResult>) {
+        _cartItemCount.value = products.sumOf { it.quantity }
+    }
+
+    fun refreshCartCount() {
         viewModelScope.launch {
             try {
                 val count = repository.getCartItemCount()
                 _cartItemCount.value = count
             } catch (e: Exception) {
-                Log.e("CartViewModel", "loadCartItemCount error", e)
-                _cartItemCount.value = 0
+                Log.e("CartViewModel", "refreshCartCount error", e)
             }
         }
-    }
-
-    fun refreshCartCount() {
-        loadCartItemCount()
     }
 
     private val _cartProducts = MutableLiveData<List<PresentationProductResult>>()
@@ -58,19 +58,6 @@ class CartViewModel @Inject constructor(
     private val _totalPrice = MutableLiveData<Double>()
     val totalPrice: LiveData<Double> = _totalPrice
 
-    init {
-        loadCartProducts()
-        observePreferenceChanges()
-    }
-
-    private fun observePreferenceChanges() {
-        viewModelScope.launch {
-            sharedPreference.changes.collect {
-                loadCartProducts()
-            }
-        }
-    }
-
     fun loadCartProducts() {
         viewModelScope.launch(Dispatchers.IO) {
             _loading.postValue(true)
@@ -80,30 +67,40 @@ class CartViewModel @Inject constructor(
                     _cartProducts.postValue(emptyList())
                     _emptyState.postValue(true)
                     _totalPrice.postValue(0.0)
+                    _cartItemCount.value = 0
                 } else {
-                    val result = getCardProductsUseCase(remoteItems.map { it.productId }.distinct())
-                    if (result.isSuccess) {
-                        val productsById = result.getOrNull().orEmpty().associateBy { it.id }
-                        val cartProductList = remoteItems.mapNotNull { item ->
-                            productsById[item.productId]?.mapToPresentation()?.let { product ->
-                                product.copy(
-                                    quantity = item.quantity,
-                                    stock = product.stock,
-                                    selectedSize = "",
-                                    cartLineId = item.cartId.toString()
-                                )
-                            }
-                        }
-                        _cartProducts.postValue(cartProductList)
-                        _emptyState.postValue(cartProductList.isEmpty())
-                        updateTotalPrice(cartProductList)
-                    } else {
-                        _emptyState.postValue(true)
-                        _totalPrice.postValue(0.0)
+                    val cartProductList = remoteItems.map { item ->
+                        PresentationProductResult(
+                            category = "",
+                            description = "",
+                            id = item.cartId,
+                            image = item.image,
+                            price = item.price,
+                            rating = PresentationRating(count = 0, rate = 0.0),
+                            title = item.productName,
+                            stock = 999,
+                            quantity = item.quantity,
+                            selectedSize = "",
+                            cartLineId = item.cartId.toString()
+                        )
                     }
+                    _cartProducts.postValue(cartProductList)
+                    _emptyState.postValue(cartProductList.isEmpty())
+                    updateTotalPrice(cartProductList)
+                    updateCartItemCount(cartProductList)
+                    syncLocalCart(cartProductList)
                 }
             } finally {
                 _loading.postValue(false)
+            }
+        }
+    }
+
+    private fun syncLocalCart(products: List<PresentationProductResult>) {
+        sharedPreference.clearCartProducts()
+        products.forEach { product ->
+            repeat(product.quantity) {
+                sharedPreference.addCartProduct(product.id, product.selectedSize)
             }
         }
     }
@@ -117,7 +114,6 @@ class CartViewModel @Inject constructor(
 
     suspend fun addProductToCart(productId: Int, size: String, availableStock: Int): Boolean {
         return try {
-            val normalizedSize = size.trim().uppercase()
             val currentQuantity = cartProducts.value
                 .orEmpty()
                 .firstOrNull { it.id == productId }
@@ -130,10 +126,9 @@ class CartViewModel @Inject constructor(
 
             val remoteResult = repository.addToCart(productId, 1)
             if (remoteResult.isFailure) {
+                Log.e("CartViewModel", "addProductToCart: API call failed", remoteResult.exceptionOrNull())
                 return false
             }
-            sharedPreference.addCartProduct(productId, normalizedSize)
-            loadCartItemCount()
             loadCartProducts()
             true
         } catch (e: Exception) {
@@ -143,11 +138,19 @@ class CartViewModel @Inject constructor(
     }
 
     fun removeFromCart(productId: Int, size: String) {
-        try {
-            sharedPreference.removeCartProduct(productId, size)
-            loadCartItemCount()
-        } catch (e: Exception) {
-            Log.e("CartViewModel", "removeFromCart error", e)
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val cartItem = cartProducts.value
+                    .orEmpty()
+                    .firstOrNull { it.id == productId }
+                val cartId = cartItem?.cartLineId?.toIntOrNull()
+                if (cartId != null) {
+                    repository.removeCartItem(cartId)
+                }
+                loadCartProducts()
+            } catch (e: Exception) {
+                Log.e("CartViewModel", "removeFromCart error", e)
+            }
         }
     }
 
@@ -158,7 +161,6 @@ class CartViewModel @Inject constructor(
                 if (cartId != null) {
                     repository.removeCartItem(cartId)
                 }
-                loadCartItemCount()
                 loadCartProducts()
             } catch (e: Exception) {
                 Log.e("CartViewModel", "removeCartLine error", e)
@@ -168,31 +170,35 @@ class CartViewModel @Inject constructor(
 
     fun updateQuantity(lineId: String, newQuantity: Int) {
         viewModelScope.launch(Dispatchers.IO) {
-            val cartId = lineId.toIntOrNull()
-            if (cartId != null) {
-                repository.updateCartItemQuantity(cartId, newQuantity)
+            try {
+                val cartId = lineId.toIntOrNull()
+                if (cartId != null) {
+                    repository.updateCartItemQuantity(cartId, newQuantity)
+                }
+                loadCartProducts()
+            } catch (e: Exception) {
+                Log.e("CartViewModel", "updateQuantity error", e)
             }
-            loadCartProducts()
         }
     }
 
     fun isInCart(productId: Int, size: String): Boolean {
-        return try {
-            sharedPreference.isInCart(productId, size).also {
-                Log.d("CartViewModel", "isInCart: $productId, size=$size, result: $it")
-            }
-        } catch (e: Exception) {
-            Log.e("CartViewModel", "isInCart error", e)
-            false
-        }
+        val inRemoteCart = cartProducts.value.orEmpty().any { it.id == productId }
+        Log.d("CartViewModel", "isInCart: productId=$productId size=$size → $inRemoteCart")
+        return inRemoteCart
     }
 
-    private fun supportsSizeSelection(category: String): Boolean {
-        val normalized = category.trim().lowercase()
-        val clothingKeywords = listOf(
-            "clothing", "shirt", "dress", "top", "jacket",
-            "jeans", "trouser", "pants", "hoodie", "sweater", "coat"
-        )
-        return clothingKeywords.any { keyword -> normalized.contains(keyword) }
+    fun clearRemoteCart() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                repository.clearCart()
+                _cartProducts.postValue(emptyList())
+                _emptyState.postValue(true)
+                _totalPrice.postValue(0.0)
+                _cartItemCount.value = 0
+            } catch (e: Exception) {
+                Log.e("CartViewModel", "clearRemoteCart error", e)
+            }
+        }
     }
 }

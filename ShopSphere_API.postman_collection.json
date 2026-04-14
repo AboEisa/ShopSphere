@@ -1,0 +1,256 @@
+{
+  "info": {
+    "name": "ShopSphere API",
+    "_postman_id": "shopsphere-api-collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://shila-unanatomised-mouthily.ngrok-free.dev/api/Graduation_Project"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.token) {",
+                  "    pm.collectionVariables.set('token', jsonData.token);",
+                  "    console.log('Token saved automatically!');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ooooghhshahh@o.com\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/Login" }
+          }
+        },
+        {
+          "name": "SignUp",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.token) {",
+                  "    pm.collectionVariables.set('token', jsonData.token);",
+                  "    console.log('Token saved automatically!');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"FullName\": \"Test User\",\n  \"Email\": \"test@example.com\",\n  \"Password\": \"123456\",\n  \"Phone\": \"0123456789\",\n  \"Address\": \"Cairo, Egypt\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/SignUp" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "Get All Products",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/All_Products" }
+          }
+        },
+        {
+          "name": "Beauty Products",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/Beauty_Products" }
+          }
+        },
+        {
+          "name": "Fragrances Products",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/Fragrances_Products" }
+          }
+        },
+        {
+          "name": "Furniture Products",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/Furniture_Products" }
+          }
+        },
+        {
+          "name": "Groceries Products",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/Groeries_Products" }
+          }
+        },
+        {
+          "name": "Home Decoration Products",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/HomeDecoration_Products" }
+          }
+        },
+        {
+          "name": "Jewelery Products",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/Jewelery_Products" }
+          }
+        },
+        {
+          "name": "Men's Clothing Products",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/MenIsClothing_Products" }
+          }
+        },
+        {
+          "name": "Women's Clothing Products",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/SwomenIsClothing_Products" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cart",
+      "item": [
+        {
+          "name": "Add To Cart",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": 6,\n  \"Quantity\": \"3\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/AddToCart" }
+          }
+        },
+        {
+          "name": "Get Cart Items",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/GetCartItems" }
+          }
+        },
+        {
+          "name": "Update Quantity",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cartId\": 1,\n  \"newQuantity\": 2\n}"
+            },
+            "url": { "raw": "{{base_url}}/UpdateQuantity" }
+          }
+        },
+        {
+          "name": "Remove Item",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{base_url}}/RemoveItem/1" }
+          }
+        },
+        {
+          "name": "Clear Cart",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{base_url}}/ClearCart" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Favorites",
+      "item": [
+        {
+          "name": "Add To Favorite",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": 3\n}"
+            },
+            "url": { "raw": "{{base_url}}/AddToFavorite" }
+          }
+        },
+        {
+          "name": "Remove From Favorite",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": 3\n}"
+            },
+            "url": { "raw": "{{base_url}}/RemoveFromFavorite" }
+          }
+        },
+        {
+          "name": "Get All Favorites",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/GetAllFavorites" }
+          }
+        }
+      ]
+    }
+  ]
+}

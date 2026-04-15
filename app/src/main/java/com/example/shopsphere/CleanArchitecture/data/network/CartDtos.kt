@@ -2,14 +2,10 @@ package com.example.shopsphere.CleanArchitecture.data.network
 
 import com.google.gson.annotations.SerializedName
 
+// Per Swagger: POST /AddToCart body { "productID": int, "quantity": int }
 data class AddToCartRequestDto(
-    @SerializedName("productId") val productId: Int,
-    @SerializedName("Quantity") val quantity: String
-)
-
-data class UpdateQuantityRequestDto(
-    @SerializedName("cartId") val cartId: Int,
-    @SerializedName("newQuantity") val newQuantity: Int
+    @SerializedName("productID") val productId: Int,
+    @SerializedName("quantity") val quantity: Int
 )
 
 data class CartMutationResponseDto(
@@ -24,6 +20,8 @@ data class GetCartItemsResponseDto(
 
 data class CartItemDto(
     @SerializedName("cartID") val cartId: Int = 0,
+    @SerializedName(value = "productId", alternate = ["iD_Product", "productID", "ProductId"])
+    val productId: Int = 0,
     @SerializedName("productName") val productName: String? = null,
     @SerializedName("price") val price: Double = 0.0,
     @SerializedName("quantity") val quantity: Int = 0,

@@ -7,7 +7,6 @@ import androidx.lifecycle.viewModelScope
 import com.example.coroutines.CleanArchitecture.domain.GetFavoriteProductsUseCase
 import com.example.coroutines.CleanArchitecture.domain.IsProductFavoriteUseCase
 import com.example.coroutines.CleanArchitecture.domain.ToggleFavoriteStatusUseCase
-import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
 import com.example.shopsphere.CleanArchitecture.ui.models.PresentationProductResult
 import com.example.shopsphere.CleanArchitecture.ui.models.mapToPresentation
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,8 +18,7 @@ import javax.inject.Inject
 class SavedViewModel @Inject constructor(
     private val getFavoriteProductsUseCase: GetFavoriteProductsUseCase,
     private val toggleFavoriteUseCase: ToggleFavoriteStatusUseCase,
-    private val isFavoriteUseCase: IsProductFavoriteUseCase,
-    private val sharedPreference: SharedPreference
+    private val isFavoriteUseCase: IsProductFavoriteUseCase
 ) : ViewModel() {
 
     private val _favoriteProducts = MutableLiveData<List<PresentationProductResult>>(emptyList())
@@ -37,15 +35,6 @@ class SavedViewModel @Inject constructor(
 
     init {
         loadFavoriteProducts()
-        observePreferenceChanges()
-    }
-
-    private fun observePreferenceChanges() {
-        viewModelScope.launch {
-            sharedPreference.changes.collect {
-                loadFavoriteProducts()
-            }
-        }
     }
 
     fun loadFavoriteProducts() {

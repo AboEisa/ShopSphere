@@ -6,6 +6,8 @@ import retrofit2.http.GET
 import retrofit2.http.PUT
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Query
+import retrofit2.http.HTTP
 
 interface ApiServices {
 
@@ -27,6 +29,7 @@ interface ApiServices {
         @Body request: AuthRequestDto
     ): AuthResponseDto
 
+    // Per Swagger: POST /AddToCart body { "productID": int, "quantity": int }
     @POST("AddToCart")
     suspend fun addToCart(
         @Body request: AddToCartRequestDto
@@ -35,14 +38,18 @@ interface ApiServices {
     @GET("GetCartItems")
     suspend fun getCartItems(): GetCartItemsResponseDto
 
+    // Per Swagger: PUT /UpdateQuantity?productId=<int>&newQuantity=<int>
+    // (query parameters — no JSON body).
     @PUT("UpdateQuantity")
     suspend fun updateQuantity(
-        @Body request: UpdateQuantityRequestDto
+        @Query("productId") productId: Int,
+        @Query("newQuantity") newQuantity: Int
     ): CartMutationResponseDto
 
-    @DELETE("RemoveItem/{cartId}")
-    suspend fun removeItem(
-        @Path("cartId") cartId: Int
+    // Per Swagger: DELETE /RemoveFromCart?productId=<int>
+    @DELETE("RemoveFromCart")
+    suspend fun removeFromCart(
+        @Query("productId") productId: Int
     ): CartMutationResponseDto
 
     @DELETE("ClearCart")
@@ -53,7 +60,8 @@ interface ApiServices {
         @Body request: FavoriteRequestDto
     ): FavoriteMutationResponseDto
 
-    @POST("RemoveFromFavorite")
+    // Per API docs, RemoveFromFavorite is DELETE with a JSON body.
+    @HTTP(method = "DELETE", path = "RemoveFromFavorite", hasBody = true)
     suspend fun removeFromFavorite(
         @Body request: FavoriteRequestDto
     ): FavoriteMutationResponseDto

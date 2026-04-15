@@ -9,7 +9,6 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.example.shopsphere.CleanArchitecture.ui.adapters.CartAdapter
 import com.example.shopsphere.CleanArchitecture.ui.models.PresentationProductResult
@@ -23,7 +22,7 @@ class CartFragment : Fragment() {
 
     private var _binding: FragmentCartBinding? = null
     private val binding get() = _binding!!
-    private val cartViewModel: CartViewModel by viewModels()
+    private val cartViewModel: CartViewModel by activityViewModels()
     private val sharedCartViewModel: SharedCartViewModel by activityViewModels()
     private lateinit var cartAdapter: CartAdapter
     private val productId = 0

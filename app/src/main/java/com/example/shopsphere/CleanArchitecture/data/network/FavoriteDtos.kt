@@ -12,9 +12,15 @@ data class FavoriteMutationResponseDto(
 )
 
 data class FavoriteItemDto(
-    @SerializedName("iD_Product") val productId: Int = 0,
+    // Backend uses "productId" per docs; keep legacy aliases as fallbacks so we
+    // still work if the server rolls back to the older shapes.
+    @SerializedName(value = "productId", alternate = ["iD_Product", "productID", "ProductId"])
+    val productId: Int = 0,
     @SerializedName("name") val name: String? = null,
     @SerializedName("price") val price: Double = 0.0,
-    @SerializedName("image") val image: String? = null,
+    @SerializedName("description") val description: String? = null,
+    // Docs say "imagePath"; keep "image" as alias for backward compatibility.
+    @SerializedName(value = "imagePath", alternate = ["image"])
+    val image: String? = null,
     @SerializedName("size") val size: Int? = null
 )

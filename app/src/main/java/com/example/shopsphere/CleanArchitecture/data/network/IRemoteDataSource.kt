@@ -13,8 +13,8 @@ interface IRemoteDataSource {
     suspend fun loginWithFacebook(accessToken: String): Result<AuthResponseDto>
     suspend fun addToCart(productId: Int, quantity: Int): Result<CartMutationResponseDto>
     suspend fun getCartItems(): Result<GetCartItemsResponseDto>
-    suspend fun updateQuantity(cartId: Int, newQuantity: Int): Result<CartMutationResponseDto>
-    suspend fun removeItem(cartId: Int): Result<CartMutationResponseDto>
+    suspend fun updateQuantity(productId: Int, newQuantity: Int): Result<CartMutationResponseDto>
+    suspend fun removeFromCart(productId: Int): Result<CartMutationResponseDto>
     suspend fun clearCart(): Result<CartMutationResponseDto>
     suspend fun addToFavorite(productId: Int): Result<FavoriteMutationResponseDto>
     suspend fun removeFromFavorite(productId: Int): Result<FavoriteMutationResponseDto>

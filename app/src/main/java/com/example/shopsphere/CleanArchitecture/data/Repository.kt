@@ -87,16 +87,29 @@ class Repository @Inject constructor(
 
     override suspend fun getCartItems(): Result<List<DomainCartItem>> {
         return remoteDataSource.getCartItems().map { response ->
-            response.cartItems.map {
-                val imageUrl = if (it.image.isNullOrBlank()) "" else {
-                    if (it.image.startsWith("http")) it.image
-                    else "${Constant.BASE_URL}GetImage/${it.image}"
+            // The backend returns cartID values that aren't valid identifiers for
+            // RemoveItem / UpdateQuantity (they return 404 / 400). Those endpoints
+            // actually want the real productId. Resolve it by matching productName
+            // against the products catalog.
+            val allProducts = remoteDataSource.getProducts().getOrNull().orEmpty()
+            val productIdByName = allProducts.associate { it.title.trim() to it.id }
+
+            response.cartItems.map { item ->
+                val imageUrl = if (item.image.isNullOrBlank()) "" else {
+                    if (item.image.startsWith("http")) item.image
+                    else "${Constant.BASE_URL}GetImage/${item.image}"
+                }
+                val resolvedProductId = if (item.productId != 0) {
+                    item.productId
+                } else {
+                    productIdByName[item.productName?.trim().orEmpty()] ?: 0
                 }
                 DomainCartItem(
-                    cartId = it.cartId,
-                    productName = it.productName.orEmpty(),
-                    price = it.price,
-                    quantity = it.quantity,
+                    cartId = item.cartId,
+                    productId = resolvedProductId,
+                    productName = item.productName.orEmpty(),
+                    price = item.price,
+                    quantity = item.quantity,
                     image = imageUrl
                 )
             }
@@ -107,12 +120,16 @@ class Repository @Inject constructor(
         return remoteDataSource.addToCart(productId, quantity).map { Unit }
     }
 
+    // Domain-layer parameter is still named `cartId` for backward compatibility,
+    // but per Swagger the backend actually wants productId here. Callers must
+    // pass the real productId (CartViewModel does via resolveServerItemId).
     override suspend fun updateCartItemQuantity(cartId: Int, newQuantity: Int): Result<Unit> {
-        return remoteDataSource.updateQuantity(cartId, newQuantity).map { Unit }
+        return remoteDataSource.updateQuantity(productId = cartId, newQuantity = newQuantity)
+            .map { Unit }
     }
 
     override suspend fun removeCartItem(cartId: Int): Result<Unit> {
-        return remoteDataSource.removeItem(cartId).map { Unit }
+        return remoteDataSource.removeFromCart(productId = cartId).map { Unit }
     }
 
     override suspend fun clearCart(): Result<Unit> {

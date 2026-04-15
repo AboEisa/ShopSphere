@@ -58,7 +58,6 @@ class DetailsFragment : Fragment() {
                     val stock = product.stock.coerceAtLeast(0)
                     lifecycleScope.launch {
                         val added = cartViewModel.addProductToCart(productId, size, stock)
-                        cartViewModel.refreshCartCount()
                         if (isAdded && _binding != null) {
                             context?.let { ctx ->
                                 if (added) {
@@ -87,7 +86,6 @@ class DetailsFragment : Fragment() {
                 if (!isAdded || _binding == null) return@DetailsAdapter
                 try {
                     cartViewModel.removeFromCart(productId, size)
-                    cartViewModel.refreshCartCount()
                     if (isAdded && _binding != null) {
                         context?.let { ctx ->
                             Toast.makeText(ctx, "Product removed from cart", Toast.LENGTH_SHORT).show()

@@ -73,7 +73,9 @@ class CartViewModel @Inject constructor(
                         PresentationProductResult(
                             category = "",
                             description = "",
-                            id = item.cartId,
+                            // Use productId when backend returns it; fall back to cartId
+                            // so onItemClick navigation still has a non-zero value.
+                            id = if (item.productId != 0) item.productId else item.cartId,
                             image = item.image,
                             price = item.price,
                             rating = PresentationRating(count = 0, rate = 0.0),
@@ -81,7 +83,11 @@ class CartViewModel @Inject constructor(
                             stock = 999,
                             quantity = item.quantity,
                             selectedSize = "",
-                            cartLineId = item.cartId.toString()
+                            // Use resolved productId as the cart-line identifier, because
+                            // RemoveItem and UpdateQuantity actually want productId on this
+                            // backend (cartID returns 404/400). Fall back to cartId if we
+                            // failed to resolve a productId.
+                            cartLineId = (if (item.productId != 0) item.productId else item.cartId).toString()
                         )
                     }
                     _cartProducts.postValue(cartProductList)
@@ -114,16 +120,20 @@ class CartViewModel @Inject constructor(
 
     suspend fun addProductToCart(productId: Int, size: String, availableStock: Int): Boolean {
         return try {
-            val currentQuantity = cartProducts.value
-                .orEmpty()
-                .firstOrNull { it.id == productId }
-                ?.quantity ?: 0
-            val stock = availableStock.coerceAtLeast(0)
-
-            if (stock <= 0 || currentQuantity >= stock) {
-                return false
+            // Enforce stock only when we have a reliable positive stock value.
+            // If availableStock is 0 or unknown, trust the backend to reject.
+            if (availableStock > 0) {
+                val currentQuantity = cartProducts.value
+                    .orEmpty()
+                    .firstOrNull { it.id == productId }
+                    ?.quantity ?: 0
+                if (currentQuantity >= availableStock) {
+                    Log.w("CartViewModel", "addProductToCart: stock limit hit ($currentQuantity/$availableStock)")
+                    return false
+                }
             }
 
+            Log.d("CartViewModel", "addProductToCart: productId=$productId")
             val remoteResult = repository.addToCart(productId, 1)
             if (remoteResult.isFailure) {
                 Log.e("CartViewModel", "addProductToCart: API call failed", remoteResult.exceptionOrNull())
@@ -157,9 +167,23 @@ class CartViewModel @Inject constructor(
     fun removeCartLine(lineId: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val cartId = lineId.toIntOrNull()
-                if (cartId != null) {
-                    repository.removeCartItem(cartId)
+                val serverItemId = resolveServerItemId(lineId)
+                if (serverItemId == null) {
+                    Log.e("CartViewModel", "removeCartLine: invalid lineId=$lineId")
+                    return@launch
+                }
+                Log.d("CartViewModel", "removeCartLine: lineId=$lineId resolvedId=$serverItemId")
+                var result = repository.removeCartItem(serverItemId)
+                val lineIdAsInt = lineId.toIntOrNull()
+                if (result.isFailure && lineIdAsInt != null && lineIdAsInt != serverItemId) {
+                    Log.w(
+                        "CartViewModel",
+                        "removeCartLine: retry with cart line id=$lineIdAsInt after resolved id failed"
+                    )
+                    result = repository.removeCartItem(lineIdAsInt)
+                }
+                if (result.isFailure) {
+                    Log.e("CartViewModel", "removeCartLine failed", result.exceptionOrNull())
                 }
                 loadCartProducts()
             } catch (e: Exception) {
@@ -171,9 +195,26 @@ class CartViewModel @Inject constructor(
     fun updateQuantity(lineId: String, newQuantity: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val cartId = lineId.toIntOrNull()
-                if (cartId != null) {
-                    repository.updateCartItemQuantity(cartId, newQuantity)
+                val serverItemId = resolveServerItemId(lineId)
+                if (serverItemId == null) {
+                    Log.e("CartViewModel", "updateQuantity: invalid lineId=$lineId")
+                    return@launch
+                }
+                Log.d(
+                    "CartViewModel",
+                    "updateQuantity: lineId=$lineId resolvedId=$serverItemId newQuantity=$newQuantity"
+                )
+                var result = repository.updateCartItemQuantity(serverItemId, newQuantity)
+                val lineIdAsInt = lineId.toIntOrNull()
+                if (result.isFailure && lineIdAsInt != null && lineIdAsInt != serverItemId) {
+                    Log.w(
+                        "CartViewModel",
+                        "updateQuantity: retry with cart line id=$lineIdAsInt after resolved id failed"
+                    )
+                    result = repository.updateCartItemQuantity(lineIdAsInt, newQuantity)
+                }
+                if (result.isFailure) {
+                    Log.e("CartViewModel", "updateQuantity failed", result.exceptionOrNull())
                 }
                 loadCartProducts()
             } catch (e: Exception) {
@@ -186,6 +227,21 @@ class CartViewModel @Inject constructor(
         val inRemoteCart = cartProducts.value.orEmpty().any { it.id == productId }
         Log.d("CartViewModel", "isInCart: productId=$productId size=$size → $inRemoteCart")
         return inRemoteCart
+    }
+
+    /**
+     * Backend cart mutation endpoints are inconsistent: some accounts return cartID in GetCartItems,
+     * while RemoveItem/UpdateQuantity may require productId instead.
+     * Prefer mapped product id from current cart list and fall back to line id.
+     */
+    private fun resolveServerItemId(lineId: String): Int? {
+        val mappedProductId = cartProducts.value
+            .orEmpty()
+            .firstOrNull { it.cartLineId == lineId }
+            ?.id
+            ?.takeIf { it > 0 }
+
+        return mappedProductId ?: lineId.toIntOrNull()
     }
 
     fun clearRemoteCart() {

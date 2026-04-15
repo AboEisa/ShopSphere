@@ -1,28 +1,23 @@
 {
   "info": {
     "name": "ShopSphere API",
+    "description": "Complete API collection for the ShopSphere Android app backend.\n\n**Setup:**\n1. Import this file into Postman (drag & drop into the sidebar).\n2. Set the `base_url` collection variable if the ngrok URL changes.\n3. Run **Auth → Login** first — the test script auto-saves `token` for all other requests.\n\nAll endpoints except Auth/Products use Bearer token auth.",
     "_postman_id": "shopsphere-api-collection",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
     "type": "bearer",
     "bearer": [
-      {
-        "key": "token",
-        "value": "{{token}}",
-        "type": "string"
-      }
+      { "key": "token", "value": "{{token}}", "type": "string" }
     ]
   },
   "variable": [
     {
       "key": "base_url",
-      "value": "https://shila-unanatomised-mouthily.ngrok-free.dev/api/Graduation_Project"
+      "value": "https://shila-unanatomised-mouthily.ngrok-free.dev/api/Graduation_Project",
+      "type": "string"
     },
-    {
-      "key": "token",
-      "value": ""
-    }
+    { "key": "token", "value": "", "type": "string" }
   ],
   "item": [
     {
@@ -34,14 +29,14 @@
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "var jsonData = pm.response.json();",
-                  "if (jsonData.token) {",
-                  "    pm.collectionVariables.set('token', jsonData.token);",
-                  "    console.log('Token saved automatically!');",
+                  "const json = pm.response.json();",
+                  "if (json.token) {",
+                  "    pm.collectionVariables.set('token', json.token);",
+                  "    console.log('Token saved:', json.token.substring(0, 20) + '...');",
                   "}"
-                ],
-                "type": "text/javascript"
+                ]
               }
             }
           ],
@@ -55,7 +50,11 @@
               "mode": "raw",
               "raw": "{\n  \"email\": \"ooooghhshahh@o.com\",\n  \"password\": \"123456\"\n}"
             },
-            "url": { "raw": "{{base_url}}/Login" }
+            "url": {
+              "raw": "{{base_url}}/Login",
+              "host": ["{{base_url}}"],
+              "path": ["Login"]
+            }
           }
         },
         {
@@ -64,14 +63,14 @@
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "var jsonData = pm.response.json();",
-                  "if (jsonData.token) {",
-                  "    pm.collectionVariables.set('token', jsonData.token);",
-                  "    console.log('Token saved automatically!');",
+                  "const json = pm.response.json();",
+                  "if (json.token) {",
+                  "    pm.collectionVariables.set('token', json.token);",
+                  "    console.log('Token saved:', json.token.substring(0, 20) + '...');",
                   "}"
-                ],
-                "type": "text/javascript"
+                ]
               }
             }
           ],
@@ -85,7 +84,11 @@
               "mode": "raw",
               "raw": "{\n  \"FullName\": \"Test User\",\n  \"Email\": \"test@example.com\",\n  \"Password\": \"123456\",\n  \"Phone\": \"0123456789\",\n  \"Address\": \"Cairo, Egypt\"\n}"
             },
-            "url": { "raw": "{{base_url}}/SignUp" }
+            "url": {
+              "raw": "{{base_url}}/SignUp",
+              "host": ["{{base_url}}"],
+              "path": ["SignUp"]
+            }
           }
         }
       ]
@@ -97,63 +100,99 @@
           "name": "Get All Products",
           "request": {
             "method": "GET",
-            "url": { "raw": "{{base_url}}/All_Products" }
+            "url": {
+              "raw": "{{base_url}}/All_Products",
+              "host": ["{{base_url}}"],
+              "path": ["All_Products"]
+            }
           }
         },
         {
           "name": "Beauty Products",
           "request": {
             "method": "GET",
-            "url": { "raw": "{{base_url}}/Beauty_Products" }
+            "url": {
+              "raw": "{{base_url}}/Beauty_Products",
+              "host": ["{{base_url}}"],
+              "path": ["Beauty_Products"]
+            }
           }
         },
         {
           "name": "Fragrances Products",
           "request": {
             "method": "GET",
-            "url": { "raw": "{{base_url}}/Fragrances_Products" }
+            "url": {
+              "raw": "{{base_url}}/Fragrances_Products",
+              "host": ["{{base_url}}"],
+              "path": ["Fragrances_Products"]
+            }
           }
         },
         {
           "name": "Furniture Products",
           "request": {
             "method": "GET",
-            "url": { "raw": "{{base_url}}/Furniture_Products" }
+            "url": {
+              "raw": "{{base_url}}/Furniture_Products",
+              "host": ["{{base_url}}"],
+              "path": ["Furniture_Products"]
+            }
           }
         },
         {
           "name": "Groceries Products",
           "request": {
             "method": "GET",
-            "url": { "raw": "{{base_url}}/Groeries_Products" }
+            "url": {
+              "raw": "{{base_url}}/Groeries_Products",
+              "host": ["{{base_url}}"],
+              "path": ["Groeries_Products"]
+            }
           }
         },
         {
           "name": "Home Decoration Products",
           "request": {
             "method": "GET",
-            "url": { "raw": "{{base_url}}/HomeDecoration_Products" }
+            "url": {
+              "raw": "{{base_url}}/HomeDecoration_Products",
+              "host": ["{{base_url}}"],
+              "path": ["HomeDecoration_Products"]
+            }
           }
         },
         {
           "name": "Jewelery Products",
           "request": {
             "method": "GET",
-            "url": { "raw": "{{base_url}}/Jewelery_Products" }
+            "url": {
+              "raw": "{{base_url}}/Jewelery_Products",
+              "host": ["{{base_url}}"],
+              "path": ["Jewelery_Products"]
+            }
           }
         },
         {
           "name": "Men's Clothing Products",
           "request": {
             "method": "GET",
-            "url": { "raw": "{{base_url}}/MenIsClothing_Products" }
+            "url": {
+              "raw": "{{base_url}}/MenIsClothing_Products",
+              "host": ["{{base_url}}"],
+              "path": ["MenIsClothing_Products"]
+            }
           }
         },
         {
           "name": "Women's Clothing Products",
           "request": {
             "method": "GET",
-            "url": { "raw": "{{base_url}}/SwomenIsClothing_Products" }
+            "url": {
+              "raw": "{{base_url}}/SwomenIsClothing_Products",
+              "host": ["{{base_url}}"],
+              "path": ["SwomenIsClothing_Products"]
+            }
           }
         }
       ]
@@ -162,24 +201,33 @@
       "name": "Cart",
       "item": [
         {
+          "name": "Get Cart Items",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/GetCartItems",
+              "host": ["{{base_url}}"],
+              "path": ["GetCartItems"]
+            }
+          }
+        },
+        {
           "name": "Add To Cart",
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "ngrok-skip-browser-warning", "value": "true" }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"productId\": 6,\n  \"Quantity\": \"3\"\n}"
+              "raw": "{\n  \"productID\": 6,\n  \"quantity\": 3\n}"
             },
-            "url": { "raw": "{{base_url}}/AddToCart" }
-          }
-        },
-        {
-          "name": "Get Cart Items",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{base_url}}/GetCartItems" }
+            "url": {
+              "raw": "{{base_url}}/AddToCart",
+              "host": ["{{base_url}}"],
+              "path": ["AddToCart"]
+            }
           }
         },
         {
@@ -187,27 +235,45 @@
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "ngrok-skip-browser-warning", "value": "true" }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"cartId\": 1,\n  \"newQuantity\": 2\n}"
-            },
-            "url": { "raw": "{{base_url}}/UpdateQuantity" }
+            "url": {
+              "raw": "{{base_url}}/UpdateQuantity?productId=1&newQuantity=2",
+              "host": ["{{base_url}}"],
+              "path": ["UpdateQuantity"],
+              "query": [
+                { "key": "productId", "value": "1" },
+                { "key": "newQuantity", "value": "2" }
+              ]
+            }
           }
         },
         {
-          "name": "Remove Item",
+          "name": "Remove From Cart",
           "request": {
             "method": "DELETE",
-            "url": { "raw": "{{base_url}}/RemoveItem/1" }
+            "header": [
+              { "key": "ngrok-skip-browser-warning", "value": "true" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/RemoveFromCart?productId=1",
+              "host": ["{{base_url}}"],
+              "path": ["RemoveFromCart"],
+              "query": [
+                { "key": "productId", "value": "1" }
+              ]
+            }
           }
         },
         {
           "name": "Clear Cart",
           "request": {
             "method": "DELETE",
-            "url": { "raw": "{{base_url}}/ClearCart" }
+            "url": {
+              "raw": "{{base_url}}/ClearCart",
+              "host": ["{{base_url}}"],
+              "path": ["ClearCart"]
+            }
           }
         }
       ]
@@ -215,6 +281,17 @@
     {
       "name": "Favorites",
       "item": [
+        {
+          "name": "Get All Favorites",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/GetAllFavorites",
+              "host": ["{{base_url}}"],
+              "path": ["GetAllFavorites"]
+            }
+          }
+        },
         {
           "name": "Add To Favorite",
           "request": {
@@ -226,28 +303,30 @@
               "mode": "raw",
               "raw": "{\n  \"productId\": 3\n}"
             },
-            "url": { "raw": "{{base_url}}/AddToFavorite" }
+            "url": {
+              "raw": "{{base_url}}/AddToFavorite",
+              "host": ["{{base_url}}"],
+              "path": ["AddToFavorite"]
+            }
           }
         },
         {
           "name": "Remove From Favorite",
           "request": {
-            "method": "POST",
+            "method": "DELETE",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "ngrok-skip-browser-warning", "value": "true" }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"productId\": 3\n}"
             },
-            "url": { "raw": "{{base_url}}/RemoveFromFavorite" }
-          }
-        },
-        {
-          "name": "Get All Favorites",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{base_url}}/GetAllFavorites" }
+            "url": {
+              "raw": "{{base_url}}/RemoveFromFavorite",
+              "host": ["{{base_url}}"],
+              "path": ["RemoveFromFavorite"]
+            }
           }
         }
       ]

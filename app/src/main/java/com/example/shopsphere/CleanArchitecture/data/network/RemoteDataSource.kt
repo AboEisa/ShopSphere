@@ -106,7 +106,7 @@ class RemoteDataSource @Inject constructor(
         apiService.addToCart(
             AddToCartRequestDto(
                 productId = productId,
-                quantity = quantity.toString()
+                quantity = quantity
             )
         )
     }
@@ -116,20 +116,14 @@ class RemoteDataSource @Inject constructor(
     }
 
     override suspend fun updateQuantity(
-        cartId: Int,
+        productId: Int,
         newQuantity: Int
     ): Result<CartMutationResponseDto> = runCatching {
-        apiService.updateQuantity(
-            UpdateQuantityRequestDto(
-                cartId = cartId,
-                newQuantity = newQuantity
-            )
-        )
+        apiService.updateQuantity(productId = productId, newQuantity = newQuantity)
     }
 
-    override suspend fun removeItem(cartId: Int): Result<CartMutationResponseDto> = runCatching {
-        apiService.removeItem(cartId)
-    }
+    override suspend fun removeFromCart(productId: Int): Result<CartMutationResponseDto> =
+        runCatching { apiService.removeFromCart(productId) }
 
     override suspend fun clearCart(): Result<CartMutationResponseDto> = runCatching {
         apiService.clearCart()

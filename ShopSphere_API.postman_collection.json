@@ -17,7 +17,8 @@
       "value": "https://shila-unanatomised-mouthily.ngrok-free.dev/api/Graduation_Project",
       "type": "string"
     },
-    { "key": "token", "value": "", "type": "string" }
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "product_id", "value": "3", "type": "string" }
   ],
   "item": [
     {
@@ -280,11 +281,29 @@
     },
     {
       "name": "Favorites",
+      "description": "Favorites endpoints. Use `{{product_id}}` variable to switch which product you're testing.",
       "item": [
         {
           "name": "Get All Favorites",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Body parses as JSON', function () {",
+                  "    pm.response.json();",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
+            "header": [
+              { "key": "ngrok-skip-browser-warning", "value": "true" }
+            ],
             "url": {
               "raw": "{{base_url}}/GetAllFavorites",
               "host": ["{{base_url}}"],
@@ -294,14 +313,28 @@
         },
         {
           "name": "Add To Favorite",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200/201/204', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "ngrok-skip-browser-warning", "value": "true" }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"productId\": 3\n}"
+              "raw": "{\n  \"productId\": {{product_id}}\n}"
             },
             "url": {
               "raw": "{{base_url}}/AddToFavorite",
@@ -312,6 +345,19 @@
         },
         {
           "name": "Remove From Favorite",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 or 204', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "DELETE",
             "header": [
@@ -320,7 +366,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"productId\": 3\n}"
+              "raw": "{\n  \"productId\": {{product_id}}\n}"
             },
             "url": {
               "raw": "{{base_url}}/RemoveFromFavorite",

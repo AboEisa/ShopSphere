@@ -1,5 +1,6 @@
 package com.example.shopsphere.CleanArchitecture.data.module
 
+import com.example.shopsphere.BuildConfig
 import com.example.shopsphere.CleanArchitecture.data.Repository
 import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
 import com.example.shopsphere.CleanArchitecture.data.network.ApiServices
@@ -105,10 +106,6 @@ object Module {
     @Singleton
     @Provides
     fun provideOkHttpClient(prefs: SharedPreference): OkHttpClient {
-        val loggingInterceptor = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
-        }
-
         return OkHttpClient.Builder().apply {
             // Prefer IPv4 — avoids ngrok IPv6 resolution failures on some devices/emulators
             dns(Dns { hostname ->

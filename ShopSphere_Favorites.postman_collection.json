@@ -1,0 +1,153 @@
+{
+  "info": {
+    "name": "ShopSphere - Favorites",
+    "description": "Favorites endpoints for ShopSphere backend.\n\n**Setup:**\n1. Import this file into Postman.\n2. Run **Login** first to populate `{{token}}` (or paste a token into the collection variable).\n3. Update `product_id` variable to test with different products.\n\nAll endpoints use Bearer auth inherited from the collection.",
+    "_postman_id": "shopsphere-favorites-collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{token}}", "type": "string" }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://shila-unanatomised-mouthily.ngrok-free.dev/api/Graduation_Project",
+      "type": "string"
+    },
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "product_id", "value": "3", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Login (get token)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json.token) {",
+              "    pm.collectionVariables.set('token', json.token);",
+              "    console.log('Token saved:', json.token.substring(0, 20) + '...');",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": { "type": "noauth" },
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "ngrok-skip-browser-warning", "value": "true" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"ooooghhshahh@o.com\",\n  \"password\": \"123456\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/Login",
+          "host": ["{{base_url}}"],
+          "path": ["Login"]
+        }
+      }
+    },
+    {
+      "name": "Add To Favorite",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200 or 201', function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "ngrok-skip-browser-warning", "value": "true" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"productId\": {{product_id}}\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/AddToFavorite",
+          "host": ["{{base_url}}"],
+          "path": ["AddToFavorite"]
+        }
+      }
+    },
+    {
+      "name": "Get All Favorites",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Body is array or wrapped list', function () {",
+              "    const json = pm.response.json();",
+              "    pm.expect(Array.isArray(json) || typeof json === 'object').to.be.true;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "ngrok-skip-browser-warning", "value": "true" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/GetAllFavorites",
+          "host": ["{{base_url}}"],
+          "path": ["GetAllFavorites"]
+        }
+      }
+    },
+    {
+      "name": "Remove From Favorite",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200 or 204', function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "ngrok-skip-browser-warning", "value": "true" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"productId\": {{product_id}}\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/RemoveFromFavorite",
+          "host": ["{{base_url}}"],
+          "path": ["RemoveFromFavorite"]
+        }
+      }
+    }
+  ]
+}

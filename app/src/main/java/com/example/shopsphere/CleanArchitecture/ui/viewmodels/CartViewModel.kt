@@ -83,11 +83,10 @@ class CartViewModel @Inject constructor(
                             stock = 999,
                             quantity = item.quantity,
                             selectedSize = "",
-                            // Use resolved productId as the cart-line identifier, because
-                            // RemoveItem and UpdateQuantity actually want productId on this
-                            // backend (cartID returns 404/400). Fall back to cartId if we
-                            // failed to resolve a productId.
-                            cartLineId = (if (item.productId != 0) item.productId else item.cartId).toString()
+                            // Swagger names the param "productId" but it actually
+                            // expects the cartID from GetCartItems (confirmed via
+                            // Postman: cartID=4019 → 200 OK).
+                            cartLineId = item.cartId.toString()
                         )
                     }
                     _cartProducts.postValue(cartProductList)

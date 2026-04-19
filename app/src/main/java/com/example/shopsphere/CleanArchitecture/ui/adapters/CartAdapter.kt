@@ -3,9 +3,13 @@ package com.example.shopsphere.CleanArchitecture.ui.adapters
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.view.isVisible
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.example.shopsphere.CleanArchitecture.ui.models.PresentationProductResult
+import com.example.shopsphere.R
 import com.example.shopsphere.databinding.ItemCartBinding
 import java.text.DecimalFormat
 
@@ -14,40 +18,39 @@ class CartAdapter(
     private val onRemoveClick: (String) -> Unit,
     private val onQuantityChanged: (String, Int) -> Unit,
     private val onStockLimitReached: (String, Int) -> Unit
-) : RecyclerView.Adapter<CartAdapter.Holder>() {
+) : ListAdapter<PresentationProductResult, CartAdapter.Holder>(DIFF) {
 
-    private var products: MutableList<PresentationProductResult> = mutableListOf()
-
-    // Currency formatter without $ symbol
     private val currencyFormat = DecimalFormat("#,##0.00").apply {
         minimumFractionDigits = 2
         maximumFractionDigits = 2
     }
 
+    /** Locally tracked quantities — decoupled from the list so +/- taps don't rebuild the adapter. */
     private val productQuantities = mutableMapOf<String, Int>()
 
-    // Function to format price
-    private fun formatPrice(price: Double): String {
-        return "EGP ${currencyFormat.format(price)}" // Added space after EGP
+    init {
+        setHasStableIds(true)
     }
 
-    fun submitList(product: List<PresentationProductResult>) {
-        products.clear()
-        products.addAll(product)
-        product.forEach {
-            productQuantities[it.cartLineId] = it.quantity
-        }
-        notifyDataSetChanged()
+    override fun getItemId(position: Int): Long {
+        return getItem(position).cartLineId.hashCode().toLong()
+    }
+
+    private fun formatPrice(price: Double): String = "EGP ${currencyFormat.format(price)}"
+
+    override fun submitList(list: List<PresentationProductResult>?) {
+        list?.forEach { productQuantities[it.cartLineId] = it.quantity }
+        super.submitList(list)
     }
 
     fun getItems(): List<PresentationProductResult> {
-        return products.map { product ->
+        return currentList.map { product ->
             product.copy(quantity = productQuantities[product.cartLineId] ?: product.quantity)
         }
     }
 
     fun getTotalPrice(): Double {
-        return products.sumOf { product ->
+        return currentList.sumOf { product ->
             val quantity = productQuantities[product.cartLineId] ?: 1
             product.price * quantity
         }
@@ -63,12 +66,10 @@ class CartAdapter(
     }
 
     override fun onBindViewHolder(holder: Holder, position: Int) {
-        val product = products[position]
+        val product = getItem(position)
         val quantity = productQuantities[product.cartLineId] ?: 1
         holder.bind(product, quantity)
     }
-
-    override fun getItemCount(): Int = products.size
 
     inner class Holder(private val binding: ItemCartBinding) :
         RecyclerView.ViewHolder(binding.root) {
@@ -80,7 +81,7 @@ class CartAdapter(
                 textProductSize.isVisible = hasSize
                 if (hasSize) {
                     textProductSize.text = root.context.getString(
-                        com.example.shopsphere.R.string.orders_size_value,
+                        R.string.orders_size_value,
                         product.selectedSize
                     )
                 }
@@ -93,6 +94,9 @@ class CartAdapter(
 
                 Glide.with(root)
                     .load(product.image)
+                    .placeholder(R.drawable.ic_image)
+                    .error(R.drawable.ic_image)
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
                     .into(productImage)
 
                 root.setOnClickListener { onItemClick(product.id) }
@@ -113,9 +117,7 @@ class CartAdapter(
                     val newQuantity = currentQuantity + 1
                     productQuantities[product.cartLineId] = newQuantity
                     productQuantity.text = newQuantity.toString()
-
-                    val newTotalPrice = unitPrice * newQuantity
-                    productPrice.text = formatPrice(newTotalPrice)
+                    productPrice.text = formatPrice(unitPrice * newQuantity)
 
                     onQuantityChanged(product.cartLineId, newQuantity)
                 }
@@ -126,14 +128,26 @@ class CartAdapter(
                         val newQuantity = currentQuantity - 1
                         productQuantities[product.cartLineId] = newQuantity
                         productQuantity.text = newQuantity.toString()
-
-                        val newTotalPrice = unitPrice * newQuantity
-                        productPrice.text = formatPrice(newTotalPrice)
+                        productPrice.text = formatPrice(unitPrice * newQuantity)
 
                         onQuantityChanged(product.cartLineId, newQuantity)
                     }
                 }
             }
+        }
+    }
+
+    companion object {
+        private val DIFF = object : DiffUtil.ItemCallback<PresentationProductResult>() {
+            override fun areItemsTheSame(
+                oldItem: PresentationProductResult,
+                newItem: PresentationProductResult
+            ): Boolean = oldItem.cartLineId == newItem.cartLineId
+
+            override fun areContentsTheSame(
+                oldItem: PresentationProductResult,
+                newItem: PresentationProductResult
+            ): Boolean = oldItem == newItem
         }
     }
 }

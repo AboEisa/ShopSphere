@@ -2,32 +2,24 @@ package com.example.shopsphere.CleanArchitecture.ui.adapters
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.example.shopsphere.CleanArchitecture.ui.models.PresentationProductResult
-import com.example.shopsphere.databinding.ItemCartBinding
+import com.example.shopsphere.R
 import com.example.shopsphere.databinding.ItemSearchBinding
-import java.text.NumberFormat
-import java.util.Locale
 
 class SearchAdapter(
     private val onItemClick: (Int) -> Unit
-) : RecyclerView.Adapter<SearchAdapter.Holder>() {
+) : ListAdapter<PresentationProductResult, SearchAdapter.Holder>(DIFF) {
 
-    private var products: MutableList<PresentationProductResult> = mutableListOf()
-    private val currencyFormat = NumberFormat.getCurrencyInstance(Locale.US).apply {
-        maximumFractionDigits = 2
+    init {
+        setHasStableIds(true)
     }
 
-    private val productQuantities = mutableMapOf<Int, Int>()
-
-    fun submitList(product: List<PresentationProductResult>) {
-        products.clear()
-        products.addAll(product)
-        notifyDataSetChanged()
-    }
-
-
+    override fun getItemId(position: Int): Long = getItem(position).id.toLong()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
         val binding = ItemSearchBinding.inflate(
@@ -39,24 +31,37 @@ class SearchAdapter(
     }
 
     override fun onBindViewHolder(holder: Holder, position: Int) {
-        val product = products[position]
-        val quantity = productQuantities[product.id] ?: 1
-        holder.bind(product, quantity)
+        holder.bind(getItem(position))
     }
-
-    override fun getItemCount(): Int = products.size
 
     inner class Holder(private val binding: ItemSearchBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(product: PresentationProductResult, quantity: Int) {
+        fun bind(product: PresentationProductResult) {
             binding.apply {
                 productTitle.text = product.title
                 Glide.with(root)
                     .load(product.image)
+                    .placeholder(R.drawable.ic_image)
+                    .error(R.drawable.ic_image)
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
                     .into(productImage)
                 root.setOnClickListener { onItemClick(product.id) }
             }
+        }
+    }
+
+    companion object {
+        private val DIFF = object : DiffUtil.ItemCallback<PresentationProductResult>() {
+            override fun areItemsTheSame(
+                oldItem: PresentationProductResult,
+                newItem: PresentationProductResult
+            ): Boolean = oldItem.id == newItem.id
+
+            override fun areContentsTheSame(
+                oldItem: PresentationProductResult,
+                newItem: PresentationProductResult
+            ): Boolean = oldItem == newItem
         }
     }
 }

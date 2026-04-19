@@ -42,7 +42,10 @@ class SavedFragment : Fragment() {
         if (_binding == null) return
         binding.btnBack.setOnClickListener {
             if (!isAdded || _binding == null) return@setOnClickListener
-            findNavController().navigateUp()
+            // Saved is a root tab — defer to the activity's back dispatcher so it
+            // lands on Home instead of whatever happens to be under us in the stack
+            // (e.g. OnBoard when the user launched the app fresh).
+            requireActivity().onBackPressedDispatcher.onBackPressed()
         }
     }
 

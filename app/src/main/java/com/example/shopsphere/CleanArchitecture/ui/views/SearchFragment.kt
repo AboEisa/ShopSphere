@@ -90,7 +90,7 @@ class SearchFragment : Fragment() {
 
     private fun onClicks() {
         binding.btnBack.setOnClickListener {
-            findNavController().navigateUp()
+            requireActivity().onBackPressedDispatcher.onBackPressed()
         }
     }
 

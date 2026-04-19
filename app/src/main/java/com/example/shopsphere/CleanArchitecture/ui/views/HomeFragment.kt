@@ -15,6 +15,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
+import com.example.shopsphere.CleanArchitecture.data.local.RecentlyViewedStore
 import com.example.shopsphere.CleanArchitecture.ui.adapters.HomeProductsAdapter
 import com.example.shopsphere.CleanArchitecture.ui.adapters.ShimmerHomeAdapter
 import com.example.shopsphere.CleanArchitecture.ui.adapters.TypesAdapter
@@ -24,6 +25,7 @@ import com.example.shopsphere.databinding.FragmentHomeBinding
 import com.example.yourpackage.viewmodels.HomeViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 import kotlin.math.abs
 
 @AndroidEntryPoint
@@ -40,6 +42,9 @@ class HomeFragment : Fragment() {
     private val adapterTypes: TypesAdapter by lazy { TypesAdapter() }
 
     private val cartViewModel: CartViewModel by activityViewModels()
+
+    @Inject
+    lateinit var recentlyViewedStore: RecentlyViewedStore
 
     // Variables for draggable FAB
     private var dX = 0f
@@ -86,6 +91,7 @@ class HomeFragment : Fragment() {
         observeLoadingState()
         observeCategories()
         observeProducts()
+        observeInterestSignals()
         fetchProductsBasedOnType(selectedType)
 
         //  Initialize badge position
@@ -200,6 +206,28 @@ class HomeFragment : Fragment() {
         binding.recyclerProducts.adapter = productsAdapter
     }
 
+    private fun observeInterestSignals() {
+        favoriteViewModel.favoriteIds.observe(viewLifecycleOwner) {
+            if (!isAdded || _binding == null) return@observe
+            pushInterestsToViewModel()
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                recentlyViewedStore.ids.collect {
+                    if (!isAdded || _binding == null) return@collect
+                    pushInterestsToViewModel()
+                }
+            }
+        }
+    }
+
+    private fun pushInterestsToViewModel() {
+        val favIds = favoriteViewModel.favoriteIds.value.orEmpty()
+        val recentIds = recentlyViewedStore.ids.value
+        productsViewModel.setInterestSignals(favIds, recentIds)
+    }
+
     private fun setupTypeAdapter() {
         adapterTypes.submitTypes(typesList, selectedType)
         binding.recyclerTypes.adapter = adapterTypes
@@ -269,8 +297,7 @@ class HomeFragment : Fragment() {
         productsViewModel.productsLiveData.observe(viewLifecycleOwner) { products ->
             if (!isAdded || _binding == null) return@observe
             val safeProducts = products.orEmpty()
-            productsAdapter.products = safeProducts.toMutableList()
-            productsAdapter.notifyDataSetChanged()
+            productsAdapter.submitList(safeProducts)
 
             val loading = productsViewModel.isLoading.value == true
             val hasLoaded = productsViewModel.hasLoadedOnce.value == true
@@ -289,8 +316,20 @@ class HomeFragment : Fragment() {
 
     private fun setupFloatingCartButton() {
         binding.fabCart.setOnClickListener {
-            val action = HomeFragmentDirections.actionHomeFragmentToCartFragment()
-            findNavController().navigate(action)
+            // Open Cart as a tab destination (not pushed on top of Home), so the
+            // bottom nav's selected state stays in sync and tapping Home later pops
+            // correctly.
+            val navController = findNavController()
+            val options = androidx.navigation.NavOptions.Builder()
+                .setLaunchSingleTop(true)
+                .setRestoreState(true)
+                .setPopUpTo(
+                    navController.graph.startDestinationId,
+                    inclusive = false,
+                    saveState = true
+                )
+                .build()
+            navController.navigate(com.example.shopsphere.R.id.cartFragment, null, options)
         }
     }
 

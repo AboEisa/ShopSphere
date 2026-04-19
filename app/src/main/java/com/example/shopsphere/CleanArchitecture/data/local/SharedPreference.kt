@@ -29,6 +29,14 @@ class SharedPreference @Inject constructor(
     private val _changes = MutableSharedFlow<Unit>(replay = 1)
     val changes = _changes.asSharedFlow()
 
+    // In-memory caches — avoid re-parsing JSON on every call. These are the hot path
+    // for RecyclerView rebinds (isFavorite / isInCart run once per item per scroll).
+    @Volatile
+    private var cachedFavoriteIds: List<Int>? = null
+
+    @Volatile
+    private var cachedCartLines: List<CartLineStorage>? = null
+
     // ----------------------------------------------------------
     // AUTH / UID MANAGEMENT
     // ----------------------------------------------------------
@@ -42,6 +50,8 @@ class SharedPreference @Inject constructor(
 
     fun clearUid() {
         sharedPref.edit().remove("uid").remove("customer_id").remove("auth_token").apply()
+        cachedFavoriteIds = null
+        cachedCartLines = null
     }
 
     fun saveToken(token: String) {
@@ -105,6 +115,8 @@ class SharedPreference @Inject constructor(
     // ----------------------------------------------------------
     fun clear() {
         sharedPref.edit().clear().apply()
+        cachedFavoriteIds = null
+        cachedCartLines = null
         _changes.tryEmit(Unit)
     }
 
@@ -112,19 +124,24 @@ class SharedPreference @Inject constructor(
     // FAVORITE PRODUCTS
     // ----------------------------------------------------------
     fun saveFavoriteProducts(products: List<Int>) {
-        val json = gson.toJson(products)
+        val snapshot = products.toList()
+        cachedFavoriteIds = snapshot
+        val json = gson.toJson(snapshot)
         sharedPref.edit().putString("favorite_products", json).apply()
         _changes.tryEmit(Unit)
     }
 
     fun getFavoriteProducts(): List<Int> {
+        cachedFavoriteIds?.let { return it }
         val json = sharedPref.getString("favorite_products", null)
-        return if (json != null) {
+        val parsed = if (json != null) {
             val type = object : TypeToken<List<Int>>() {}.type
-            gson.fromJson(json, type) ?: emptyList()
+            gson.fromJson<List<Int>>(json, type) ?: emptyList()
         } else {
             emptyList()
         }
+        cachedFavoriteIds = parsed
+        return parsed
     }
 
     fun addFavoriteProduct(productId: Int) {
@@ -162,6 +179,7 @@ class SharedPreference @Inject constructor(
                 )
             }
 
+        cachedCartLines = normalized
         val json = gson.toJson(normalized)
         sharedPref.edit()
             .putString(KEY_CART_LINES, json)
@@ -171,9 +189,10 @@ class SharedPreference @Inject constructor(
     }
 
     fun getCartLines(): List<CartLineStorage> {
+        cachedCartLines?.let { return it }
         val json = sharedPref.getString(KEY_CART_LINES, null)
         if (!json.isNullOrBlank()) {
-            return try {
+            val parsed = try {
                 val type = object : TypeToken<List<CartLineStorage>>() {}.type
                 gson.fromJson<List<CartLineStorage>>(json, type).orEmpty()
                     .filter { it.productId > 0 && it.quantity > 0 }
@@ -188,9 +207,11 @@ class SharedPreference @Inject constructor(
             } catch (_: Exception) {
                 emptyList()
             }
+            cachedCartLines = parsed
+            return parsed
         }
 
-        return getLegacyCartProducts().map { (productId, quantity) ->
+        val legacy = getLegacyCartProducts().map { (productId, quantity) ->
             CartLineStorage(
                 lineId = buildCartLineId(productId, ""),
                 productId = productId,
@@ -198,6 +219,8 @@ class SharedPreference @Inject constructor(
                 quantity = quantity.coerceAtLeast(1)
             )
         }
+        cachedCartLines = legacy
+        return legacy
     }
 
     fun saveCartProducts(products: Map<Int, Int>) {
@@ -301,6 +324,7 @@ class SharedPreference @Inject constructor(
             .remove(KEY_CART_LINES)
             .remove(KEY_LEGACY_CART_PRODUCTS)
             .apply()
+        cachedCartLines = emptyList()
         _changes.tryEmit(Unit)
     }
 

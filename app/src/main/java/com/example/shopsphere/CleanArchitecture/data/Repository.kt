@@ -15,6 +15,29 @@ class Repository @Inject constructor(
     private val sharedPreferencesHelper: SharedPreference
 ) : IRepository {
 
+    @Volatile
+    private var cachedFavoriteIds: Set<Int>? = null
+    private var favoritesCacheAt: Long = 0L
+
+    private suspend fun favoriteIds(forceRefresh: Boolean = false): Set<Int> {
+        val now = System.currentTimeMillis()
+        val cached = cachedFavoriteIds
+        if (!forceRefresh && cached != null && now - favoritesCacheAt < FAVORITES_TTL_MILLIS) {
+            return cached
+        }
+        val ids = remoteDataSource.getAllFavorites().getOrNull()
+            .orEmpty()
+            .map { it.productId }
+            .toSet()
+        cachedFavoriteIds = ids
+        favoritesCacheAt = now
+        return ids
+    }
+
+    private fun invalidateFavoritesCache() {
+        cachedFavoriteIds = null
+    }
+
 
     override suspend fun getProducts(): Result<List<DomainProductResult>> {
         return try {
@@ -37,10 +60,11 @@ class Repository @Inject constructor(
 
     override suspend fun getFavoriteProducts(ids: List<Int>): Result<List<DomainProductResult>> {
         return try {
-            val favoriteItems = remoteDataSource.getAllFavorites().getOrThrow()
-            val allProducts = remoteDataSource.getProducts().getOrThrow()
-            val favoriteIds = favoriteItems.map { it.productId }.toSet()
-            val favorites = allProducts.filter { it.id in favoriteIds }
+            val favIds = favoriteIds(forceRefresh = true)
+            if (favIds.isEmpty()) return Result.success(emptyList())
+
+            val allProducts = remoteDataSource.getProducts().getOrNull().orEmpty()
+            val favorites = allProducts.filter { it.id in favIds }
             Result.success(favorites.map { it.mapToDomain() })
         } catch (e: Exception) {
             Result.failure(e)
@@ -48,22 +72,27 @@ class Repository @Inject constructor(
     }
 
     override suspend fun toggleFavorite(productId: Int) {
-        val currentFavorites = remoteDataSource.getAllFavorites().getOrNull().orEmpty()
-        val isFav = currentFavorites.any { it.productId == productId }
-        if (isFav) {
+        val currentIds = favoriteIds()
+        val isFav = productId in currentIds
+        // Optimistic cache update — UI reads reflect the change immediately.
+        cachedFavoriteIds = if (isFav) currentIds - productId else currentIds + productId
+        val result = if (isFav) {
             remoteDataSource.removeFromFavorite(productId)
         } else {
             remoteDataSource.addToFavorite(productId)
         }
+        if (result.isFailure) {
+            // Roll back on failure.
+            cachedFavoriteIds = currentIds
+        }
     }
 
     override suspend fun isFavorite(productId: Int): Boolean {
-        val favorites = remoteDataSource.getAllFavorites().getOrNull().orEmpty()
-        return favorites.any { it.productId == productId }
+        return productId in favoriteIds()
     }
 
     override suspend fun getFavoriteIds(): List<Int> {
-        return remoteDataSource.getAllFavorites().getOrNull().orEmpty().map { it.productId }
+        return favoriteIds().toList()
     }
 
 //    override suspend fun addToCart(cart: DomainAddToCartRequest): Result<List<DomainCartProduct>> {
@@ -77,8 +106,9 @@ class Repository @Inject constructor(
 
     override suspend fun getCartProducts(ids: List<Int>): Result<List<DomainProductResult>> {
         return try {
-            val allProducts = remoteDataSource.getProducts().getOrThrow()
-            val cartProducts = allProducts.filter { ids.contains(it.id) }
+            val allProducts = remoteDataSource.getProducts().getOrNull().orEmpty()
+            val idSet = ids.toSet()
+            val cartProducts = allProducts.filter { it.id in idSet }
             Result.success(cartProducts.map { it.mapToDomain() })
         } catch (e: Exception) {
             Result.failure(e)
@@ -235,8 +265,12 @@ class Repository @Inject constructor(
 
     override fun logout() {
         sharedPreferencesHelper.clearUid()
+        invalidateFavoritesCache()
     }
 
     override fun currentUserId(): String? = sharedPreferencesHelper.getUid().ifBlank { null }
 
+    companion object {
+        private const val FAVORITES_TTL_MILLIS = 30_000L
+    }
 }

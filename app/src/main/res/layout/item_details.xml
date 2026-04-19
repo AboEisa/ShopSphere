@@ -218,24 +218,73 @@
                 tools:text="EGP 1,190" />
         </LinearLayout>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/addToCartButton"
+        <FrameLayout
             android:layout_width="0dp"
-            android:layout_height="52dp"
+            android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:layout_weight="1"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            android:backgroundTint="@color/bright_green"
-            android:text="@string/add_to_cart"
-            android:textAllCaps="false"
-            android:textColor="@android:color/white"
-            android:textStyle="bold"
-            app:cornerRadius="10dp"
-            app:icon="@drawable/ic_cart"
-            app:iconGravity="textStart"
-            app:iconTint="@android:color/white"
-            app:iconPadding="10dp" />
+            android:layout_weight="1">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/addToCartButton"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:backgroundTint="@color/bright_green"
+                android:elevation="4dp"
+                android:text="@string/add_to_cart"
+                android:textAllCaps="false"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
+                app:cornerRadius="14dp"
+                app:icon="@drawable/ic_cart"
+                app:iconGravity="textStart"
+                app:iconTint="@android:color/white"
+                app:iconPadding="10dp" />
+
+            <LinearLayout
+                android:id="@+id/layoutQuantityStepper"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="@drawable/bg_quantity_selector"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:visibility="gone"
+                android:elevation="3dp">
+
+                <ImageButton
+                    android:id="@+id/btnDecreaseDetails"
+                    android:layout_width="52dp"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_quantity_button_left"
+                    android:padding="14dp"
+                    android:src="@drawable/ic_minus"
+                    app:tint="@color/bright_green"
+                    tools:ignore="ContentDescription" />
+
+                <TextView
+                    android:id="@+id/textQuantityDetails"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="#FFFFFF"
+                    android:gravity="center"
+                    android:textColor="@color/_1a1a1a"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    tools:text="2" />
+
+                <ImageButton
+                    android:id="@+id/btnIncreaseDetails"
+                    android:layout_width="52dp"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_quantity_button_right"
+                    android:padding="14dp"
+                    android:src="@drawable/ic_plus"
+                    app:tint="@color/bright_green"
+                    tools:ignore="ContentDescription" />
+            </LinearLayout>
+        </FrameLayout>
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

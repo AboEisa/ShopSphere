@@ -6,8 +6,11 @@ import android.widget.ImageView
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.example.shopsphere.CleanArchitecture.ui.models.OrderHistoryItem
 import com.example.shopsphere.R
 import com.example.shopsphere.databinding.ItemOrderBinding
@@ -16,16 +19,19 @@ import java.util.Locale
 class OrdersAdapter(
     private val onTrackClicked: (OrderHistoryItem) -> Unit,
     private val onReviewClicked: (OrderHistoryItem) -> Unit
-) : RecyclerView.Adapter<OrdersAdapter.OrderViewHolder>() {
+) : ListAdapter<OrderHistoryItem, OrdersAdapter.OrderViewHolder>(DIFF) {
 
-    private val orders = mutableListOf<OrderHistoryItem>()
     private var completedMode = false
 
+    init {
+        setHasStableIds(true)
+    }
+
+    override fun getItemId(position: Int): Long = getItem(position).orderId.hashCode().toLong()
+
     fun submitList(items: List<OrderHistoryItem>, completedMode: Boolean) {
-        orders.clear()
-        orders.addAll(items)
         this.completedMode = completedMode
-        notifyDataSetChanged()
+        super.submitList(items)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): OrderViewHolder {
@@ -34,10 +40,8 @@ class OrdersAdapter(
     }
 
     override fun onBindViewHolder(holder: OrderViewHolder, position: Int) {
-        holder.bind(orders[position])
+        holder.bind(getItem(position))
     }
-
-    override fun getItemCount(): Int = orders.size
 
     inner class OrderViewHolder(private val binding: ItemOrderBinding) :
         RecyclerView.ViewHolder(binding.root) {
@@ -61,6 +65,7 @@ class OrdersAdapter(
                 .load(item.itemImageUrl)
                 .placeholder(R.drawable.ic_order)
                 .error(R.drawable.ic_order)
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
                 .into(binding.imageOrderProduct)
 
             if (completedMode) {
@@ -131,6 +136,16 @@ class OrdersAdapter(
 
         private fun styleBlackButton(button: com.google.android.material.button.MaterialButton) {
             button.background = ContextCompat.getDrawable(itemView.context, R.drawable.bg_black_action)
+        }
+    }
+
+    companion object {
+        private val DIFF = object : DiffUtil.ItemCallback<OrderHistoryItem>() {
+            override fun areItemsTheSame(oldItem: OrderHistoryItem, newItem: OrderHistoryItem): Boolean =
+                oldItem.orderId == newItem.orderId
+
+            override fun areContentsTheSame(oldItem: OrderHistoryItem, newItem: OrderHistoryItem): Boolean =
+                oldItem == newItem
         }
     }
 }

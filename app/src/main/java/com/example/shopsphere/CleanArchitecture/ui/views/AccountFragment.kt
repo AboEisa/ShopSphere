@@ -42,7 +42,7 @@ class AccountFragment : Fragment() {
     }
 
     private fun setupClicks() {
-        binding.btnBack.setOnClickListener { findNavController().navigateUp() }
+        binding.btnBack.setOnClickListener { requireActivity().onBackPressedDispatcher.onBackPressed() }
         binding.btnNotifications.setOnClickListener {
             findNavController().navigate(R.id.notificationsFragment)
         }

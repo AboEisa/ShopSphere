@@ -126,7 +126,11 @@ object Module {
             // Retry on genuine network failures (NOT cancellations — see class javadoc)
             addInterceptor(RetryInterceptor(maxRetries = 2))
 
-            addInterceptor(loggingInterceptor)
+            if (BuildConfig.DEBUG) {
+                addInterceptor(HttpLoggingInterceptor().apply {
+                    level = HttpLoggingInterceptor.Level.BODY
+                })
+            }
         }.build()
     }
 

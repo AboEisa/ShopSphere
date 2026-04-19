@@ -36,6 +36,8 @@ class HomeViewModel @Inject constructor(
     private var allProductsCache: List<PresentationProductResult> = emptyList()
     private var selectedCategory: String = ALL_CATEGORY
     private var activePriceRange: Pair<Float, Float>? = null
+    private var favoriteIds: Set<Int> = emptySet()
+    private var recentIds: List<Int> = emptyList()
 
     init {
         fetchProducts()
@@ -64,6 +66,15 @@ class HomeViewModel @Inject constructor(
     fun clearPriceFilter() {
         activePriceRange = null
         publishVisibleProducts()
+    }
+
+    fun setInterestSignals(favoriteIds: Set<Int>, recentIds: List<Int>) {
+        val favChanged = favoriteIds != this.favoriteIds
+        val recentChanged = recentIds != this.recentIds
+        if (!favChanged && !recentChanged) return
+        this.favoriteIds = favoriteIds
+        this.recentIds = recentIds
+        if (allProductsCache.isNotEmpty()) publishVisibleProducts()
     }
 
     private fun loadAllProducts() {
@@ -118,10 +129,45 @@ class HomeViewModel @Inject constructor(
                 }
             } ?: categoryFiltered
 
-            _productsLiveData.postValue(priceFiltered)
-            _filteredProductsLiveData.postValue(priceFiltered)
+            val ranked = rankByInterests(priceFiltered)
+
+            _productsLiveData.postValue(ranked)
+            _filteredProductsLiveData.postValue(ranked)
             _hasLoadedOnce.postValue(true)
         }
+    }
+
+    /**
+     * Reranks products so items matching the user's interest signals surface first.
+     * Only applies when viewing the "All" category — category-filtered views keep
+     * their natural order so the user sees everything in that category.
+     */
+    private fun rankByInterests(
+        products: List<PresentationProductResult>
+    ): List<PresentationProductResult> {
+        if (!selectedCategory.equals(ALL_CATEGORY, ignoreCase = true)) return products
+        if (favoriteIds.isEmpty() && recentIds.isEmpty()) return products
+
+        val byId = allProductsCache.associateBy { it.id }
+        val favCategories = favoriteIds
+            .mapNotNull { byId[it]?.category?.trim()?.lowercase()?.takeIf { c -> c.isNotBlank() } }
+            .toSet()
+        val recentCategories = recentIds
+            .mapNotNull { byId[it]?.category?.trim()?.lowercase()?.takeIf { c -> c.isNotBlank() } }
+            .toSet()
+        return products
+            .withIndex()
+            .sortedWith(
+                compareByDescending<IndexedValue<PresentationProductResult>> { (_, p) ->
+                    var score = 0
+                    val cat = p.category.trim().lowercase()
+                    if (cat in favCategories) score += 2
+                    if (cat in recentCategories) score += 1
+                    if (p.id in favoriteIds) score += 3
+                    score
+                }.thenBy { it.index }
+            )
+            .map { it.value }
     }
 
     companion object {

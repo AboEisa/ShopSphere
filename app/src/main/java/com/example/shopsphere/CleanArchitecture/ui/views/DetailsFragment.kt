@@ -12,6 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.example.shopsphere.R
+import com.example.shopsphere.CleanArchitecture.data.local.RecentlyViewedStore
 import com.example.shopsphere.CleanArchitecture.ui.adapters.DetailsAdapter
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.CartViewModel
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.DetailsViewModel
@@ -19,6 +20,7 @@ import com.example.shopsphere.CleanArchitecture.ui.viewmodels.SavedViewModel
 import com.example.shopsphere.databinding.FragmentDetailsBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class DetailsFragment : Fragment() {
@@ -34,6 +36,9 @@ class DetailsFragment : Fragment() {
     // and CartFragment list. The old local `by viewModels()` was a separate instance
     // with empty cartProducts, causing addProductToCart to always use stale state.
     private val cartViewModel: CartViewModel by activityViewModels()
+
+    @Inject
+    lateinit var recentlyViewedStore: RecentlyViewedStore
 
     private val detailsAdapter by lazy {
         DetailsAdapter(
@@ -82,6 +87,29 @@ class DetailsFragment : Fragment() {
                     false
                 }
             },
+            getCartQuantity = { productId, _ ->
+                cartViewModel.cartProducts.value
+                    .orEmpty()
+                    .firstOrNull { it.id == productId }
+                    ?.quantity
+                    ?: 0
+            },
+            onIncreaseQuantity = { productId, size ->
+                if (!isAdded || _binding == null) return@DetailsAdapter
+                val product = detailsViewModel.productLiveData.value ?: return@DetailsAdapter
+                val stock = product.stock.coerceAtLeast(0)
+                lifecycleScope.launch {
+                    cartViewModel.addProductToCart(productId, size, stock)
+                }
+            },
+            onDecreaseQuantity = { productId, _ ->
+                if (!isAdded || _binding == null) return@DetailsAdapter
+                val cartItem = cartViewModel.cartProducts.value
+                    .orEmpty()
+                    .firstOrNull { it.id == productId } ?: return@DetailsAdapter
+                val newQty = (cartItem.quantity - 1).coerceAtLeast(1)
+                cartViewModel.updateQuantity(cartItem.cartLineId, newQty)
+            },
             removeFromCart = { productId, size ->
                 if (!isAdded || _binding == null) return@DetailsAdapter
                 try {
@@ -128,8 +156,17 @@ class DetailsFragment : Fragment() {
         if (_binding == null) return
         setupRecyclerView()
         detailsViewModel.fetchProductById(args.productId)
+        recentlyViewedStore.record(args.productId)
         observeProduct()
+        observeCart()
         onClicks()
+    }
+
+    private fun observeCart() {
+        cartViewModel.cartProducts.observe(viewLifecycleOwner) {
+            if (!isAdded || _binding == null) return@observe
+            detailsAdapter.syncFromRealCart()
+        }
     }
 
     private fun setupRecyclerView() {

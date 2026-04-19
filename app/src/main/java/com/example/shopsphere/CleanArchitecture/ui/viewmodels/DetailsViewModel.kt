@@ -22,11 +22,15 @@ class DetailsViewModel @Inject constructor(
     val productLiveData: LiveData<PresentationProductResult?> = _productLiveData
 
     fun fetchProductById(productId: Int) {
+        // Skip work if we already have this product loaded.
+        if (_productLiveData.value?.id == productId) return
+
         viewModelScope.launch(Dispatchers.IO) {
             val result = getProductsUseCase.getProducts()
             if (result.isSuccess) {
-                val products = result.getOrNull()?.mapToPresentation()
-                val product = products?.find { it.id == productId }
+                val product = result.getOrNull()
+                    ?.firstOrNull { it.id == productId }
+                    ?.let { listOf(it).mapToPresentation().firstOrNull() }
                 _productLiveData.postValue(product)
             } else {
                 Log.e("DetailsViewModel", "Error fetching product: ${result.exceptionOrNull()?.message}")

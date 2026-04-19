@@ -5,6 +5,7 @@ import android.view.View
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.NavController
+import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.example.shopsphere.R
@@ -92,17 +93,30 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
+        if (currentId == R.id.homeFragment) {
+            finish()
+            return
+        }
+
         if (currentId in rootDestinations) {
-            if (currentId != R.id.homeFragment) {
-                binding.bottomNav.selectedItemId = R.id.homeFragment
-            } else {
-                finish()
-            }
+            // On a tab other than Home: go to Home via the nav controller directly
+            // so it works even if BottomNavigationView.setSelectedItemId is a no-op
+            // (e.g. when the item is already marked selected).
+            navigateToHomeTab()
             return
         }
 
         if (!navController.popBackStack()) {
-            finish()
+            navigateToHomeTab()
         }
+    }
+
+    private fun navigateToHomeTab() {
+        val options = NavOptions.Builder()
+            .setLaunchSingleTop(true)
+            .setRestoreState(true)
+            .setPopUpTo(navController.graph.startDestinationId, inclusive = false, saveState = true)
+            .build()
+        navController.navigate(R.id.homeFragment, null, options)
     }
 }

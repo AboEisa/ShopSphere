@@ -49,15 +49,15 @@ class CartFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
+        // loadCartProducts() also updates the badge count — no need to double-fetch.
         cartViewModel.loadCartProducts()
-        cartViewModel.refreshCartCount()
     }
 
     fun onClicks() {
         if (_binding == null) return
         binding.btnBack.setOnClickListener {
             if (!isAdded || _binding == null) return@setOnClickListener
-            findNavController().navigateUp()
+            requireActivity().onBackPressedDispatcher.onBackPressed()
         }
         binding.btnCheckout.setOnClickListener {
             if (!isAdded || _binding == null) return@setOnClickListener

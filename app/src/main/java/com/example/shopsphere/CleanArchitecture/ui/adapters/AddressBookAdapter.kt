@@ -37,6 +37,13 @@ class AddressBookAdapter(
         fun bind(item: AddressBookItem) {
             binding.textTitle.text = item.title
             binding.textAddress.text = item.address
+            // Show phone if present so the user can confirm the right number is saved
+            if (item.phone.isNotBlank()) {
+                binding.textPhone.text = item.phone
+                binding.textPhone.visibility = android.view.View.VISIBLE
+            } else {
+                binding.textPhone.visibility = android.view.View.GONE
+            }
             binding.textDefaultBadge.visibility = if (item.isDefault) android.view.View.VISIBLE else android.view.View.GONE
 
             val rootBackground = if (item.isSelected) {

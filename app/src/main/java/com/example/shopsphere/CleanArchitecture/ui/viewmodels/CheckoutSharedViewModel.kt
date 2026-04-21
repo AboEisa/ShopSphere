@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
+import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
 import com.example.shopsphere.CleanArchitecture.domain.IRepository
 import com.example.shopsphere.CleanArchitecture.ui.models.AddressBookItem
 import com.example.shopsphere.CleanArchitecture.ui.models.OrderHistoryItem
@@ -21,42 +22,11 @@ import javax.inject.Inject
 
 @HiltViewModel
 class CheckoutSharedViewModel @Inject constructor(
-    private val repository: IRepository
+    private val repository: IRepository,
+    private val sharedPreference: SharedPreference
 ) : ViewModel() {
 
-    private val initialAddresses = listOf(
-        AddressBookItem(
-            id = "address_home",
-            title = "Home",
-            address = "925 S Chugach St #APT 10, Alaska 99645",
-            latitude = 61.2176,
-            longitude = -149.8997,
-            isDefault = true,
-            isSelected = true
-        ),
-        AddressBookItem(
-            id = "address_office",
-            title = "Office",
-            address = "2438 6th Ave, Ketchikan, Alaska 99901",
-            latitude = 55.3422,
-            longitude = -131.6461
-        ),
-        AddressBookItem(
-            id = "address_apartment",
-            title = "Apartment",
-            address = "2551 Vista Dr #B301, Juneau, Alaska 99801",
-            latitude = 58.3019,
-            longitude = -134.4197
-        ),
-        AddressBookItem(
-            id = "address_parents",
-            title = "Parent's House",
-            address = "4821 Ridge Top Cir, Anchorage, Alaska 99502",
-            latitude = 61.1349,
-            longitude = -149.9594
-        )
-    )
-
+    // ─── Mock payment methods (no backend endpoint yet) ───────────────────────
     private val initialPaymentMethods = listOf(
         PaymentMethodItem(
             id = "card_visa_2512_default",
@@ -80,7 +50,9 @@ class CheckoutSharedViewModel @Inject constructor(
         )
     )
 
-    private val _addressBook = MutableLiveData<List<AddressBookItem>>(initialAddresses)
+    // Address book starts empty; populated from SharedPreference or user input.
+    // No mock/hardcoded addresses — the user must add their own.
+    private val _addressBook = MutableLiveData<List<AddressBookItem>>(emptyList())
     val addressBook: LiveData<List<AddressBookItem>> = _addressBook
 
     private val _paymentMethods = MutableLiveData<List<PaymentMethodItem>>(initialPaymentMethods)
@@ -104,9 +76,21 @@ class CheckoutSharedViewModel @Inject constructor(
     private val _isLoadingOrders = MutableLiveData(false)
     val isLoadingOrders: LiveData<Boolean> = _isLoadingOrders
 
-
-
     init {
+        // Pre-populate address from the last address the user saved
+        val savedAddress = sharedPreference.getDeliveryAddress()
+        if (savedAddress.isNotBlank()) {
+            val savedItem = AddressBookItem(
+                id = "address_saved",
+                title = "Delivery Address",
+                address = savedAddress,
+                latitude = null,
+                longitude = null,
+                isDefault = true,
+                isSelected = true
+            )
+            _addressBook.value = listOf(savedItem)
+        }
         fetchOrders()
     }
 
@@ -124,7 +108,12 @@ class CheckoutSharedViewModel @Inject constructor(
                             date = formatApiDate(domain.date),
                             status = normalizeOrderStatusLabel(domain.orderStatus, statusStep),
                             total = formatApiTotal(domain.totalAmount),
-                            statusStep = statusStep
+                            statusStep = statusStep,
+                            // Real courier location from the backend (null until dispatched)
+                            currentLat = domain.currentLat,
+                            currentLng = domain.currentLng,
+                            // Real driver name from the backend
+                            driverName = domain.driverName
                         )
                     }
                     _orderHistory.postValue(fromApi)
@@ -145,7 +134,6 @@ class CheckoutSharedViewModel @Inject constructor(
         cartItems: List<PresentationProductResult>
     ): Result<OrderHistoryItem> {
         val sanitizedName = customerName.trim()
-        val digitsPhone = phone.filter { it.isDigit() }
         val address = selectedAddress.value
         val paymentMethod = selectedPaymentMethod.value
 
@@ -157,8 +145,14 @@ class CheckoutSharedViewModel @Inject constructor(
             return Result.failure(IllegalStateException("Please select a valid payment method"))
         if (sanitizedName.isBlank())
             return Result.failure(IllegalStateException("Please enter a valid customer name"))
+
+        // Phone comes from the delivery address (entered in MapsFragment).
+        // The passed-in `phone` param is kept as a fallback for callers that
+        // still supply it, but the address phone takes priority.
+        val digitsPhone = address!!.phone.filter { it.isDigit() }
+            .ifBlank { phone.filter { it.isDigit() } }
         if (digitsPhone.length < 8)
-            return Result.failure(IllegalStateException("Please enter a valid phone number"))
+            return Result.failure(IllegalStateException("Please add a phone number to your delivery address"))
 
         val invalidStockItem = cartItems.firstOrNull { item ->
             val stock = item.stock.coerceAtLeast(0)
@@ -176,12 +170,15 @@ class CheckoutSharedViewModel @Inject constructor(
         }
 
         val validAddress = address!!
-        val destinationLat = validAddress.latitude ?: 30.0444
-        val destinationLng = validAddress.longitude ?: 31.2357
+        // Use real coordinates from the address if available; no fallback to
+        // a hardcoded city — the map simply won't show a pin if coords are missing.
+        val destinationLat = validAddress.latitude
+        val destinationLng = validAddress.longitude
         val primaryItem = cartItems.first()
 
         // Placeholder used only so CheckoutFragment can navigate to TrackOrder immediately.
-        // It is never added to _orderHistory — the real order comes from fetchOrders() below.
+        // currentLat/currentLng are left null — no fake offset.
+        // The real courier position will come from fetchOrders() once the backend responds.
         val placeholderOrder = OrderHistoryItem(
             orderId = "PENDING",
             date = SimpleDateFormat("MMM dd, yyyy", Locale.ENGLISH).format(Date()),
@@ -196,16 +193,16 @@ class CheckoutSharedViewModel @Inject constructor(
             phone = digitsPhone,
             destinationLat = destinationLat,
             destinationLng = destinationLng,
-            currentLat = destinationLat + 0.02,
-            currentLng = destinationLng - 0.02,
-            statusStep = 0
+            currentLat = null,   // real position comes from backend via fetchOrders()
+            currentLng = null,
+            statusStep = 0,
+            driverName = null    // assigned by backend after dispatch
         )
 
         // Call the real checkout endpoint, then refresh orders from the backend
         viewModelScope.launch {
             repository.checkout()
-                .onSuccess { result ->
-                    // Replace placeholder orderId with the real one from the backend if available
+                .onSuccess {
                     fetchOrders()
                 }
         }
@@ -258,14 +255,18 @@ class CheckoutSharedViewModel @Inject constructor(
         full: String,
         latitude: Double? = null,
         longitude: Double? = null,
-        isDefault: Boolean = false
+        isDefault: Boolean = false,
+        phone: String = ""
     ): Boolean {
         val sanitizedTitle = nick.trim()
         val sanitizedAddress = full.trim()
+        val sanitizedPhone = phone.filter { it.isDigit() }
         if (sanitizedTitle.length < 2 || sanitizedAddress.length < 8) return false
-        if (!isValidCoordinates(latitude, longitude)) return false
+        if (sanitizedPhone.length < 8) return false
+        // Coordinates are optional — they improve the map but are not required
+        if (latitude != null && longitude != null && !isValidCoordinates(latitude, longitude)) return false
 
-        val current = _addressBook.value.orEmpty().ifEmpty { initialAddresses }
+        val current = _addressBook.value.orEmpty()
         val existing = current.firstOrNull {
             it.title.equals(sanitizedTitle, ignoreCase = true) &&
                     it.address.equals(sanitizedAddress, ignoreCase = true)
@@ -280,7 +281,8 @@ class CheckoutSharedViewModel @Inject constructor(
                         latitude = latitude ?: item.latitude,
                         longitude = longitude ?: item.longitude,
                         isDefault = isDefault || item.isDefault,
-                        isSelected = true
+                        isSelected = true,
+                        phone = sanitizedPhone.ifBlank { item.phone }
                     )
                     isDefault -> item.copy(isDefault = false, isSelected = false)
                     else -> item.copy(isSelected = false)
@@ -294,7 +296,8 @@ class CheckoutSharedViewModel @Inject constructor(
                 latitude = latitude,
                 longitude = longitude,
                 isDefault = isDefault || current.none { it.isDefault },
-                isSelected = true
+                isSelected = true,
+                phone = sanitizedPhone
             )
             current.map { item ->
                 if (isDefault) item.copy(isDefault = false, isSelected = false)
@@ -303,15 +306,19 @@ class CheckoutSharedViewModel @Inject constructor(
         }
 
         _addressBook.value = normalizeAddresses(updated)
+        sharedPreference.saveDeliveryAddress(sanitizedAddress)
         return true
     }
 
     fun selectAddress(addressId: String) {
-        _addressBook.value = normalizeAddresses(
+        val normalized = normalizeAddresses(
             _addressBook.value.orEmpty().map { item ->
                 item.copy(isSelected = item.id == addressId)
             }
         )
+        _addressBook.value = normalized
+        normalized.firstOrNull { it.isSelected }?.address
+            ?.let { sharedPreference.saveDeliveryAddress(it) }
     }
 
     // ─── Payment methods ──────────────────────────────────────────────────────
@@ -369,8 +376,9 @@ class CheckoutSharedViewModel @Inject constructor(
     fun isAddressValid(address: AddressBookItem?): Boolean {
         if (address == null) return false
         if (address.title.trim().length < 2) return false
-        if (address.address.trim().length < 8) return false
-        return isValidCoordinates(address.latitude, address.longitude)
+        if (address.address.trim().length < 5) return false
+        if (address.phone.filter { it.isDigit() }.length < 8) return false
+        return true  // coordinates are optional — backend only needs the address string
     }
 
     fun isPaymentMethodValid(paymentMethod: PaymentMethodItem?): Boolean {
@@ -380,33 +388,43 @@ class CheckoutSharedViewModel @Inject constructor(
         return paymentMethod.lastFour.length == 4 && paymentMethod.lastFour.all { it.isDigit() }
     }
 
-    // ─── Private helpers ──────────────────────────────────────────────────────
+    // ─── Shared status resolution (single source of truth used by both
+    //     CheckoutSharedViewModel and TrackOrderFragment) ────────────────────
 
-    private fun resolveOrderStatusStep(status: String, storedStep: Int?): Int {
+    /**
+     * Converts a raw status string from the backend into a 0–3 step index.
+     * [storedStep] is the previously resolved step (may be null or from the DTO);
+     * we always take the maximum so the timeline never goes backwards.
+     */
+    fun resolveOrderStatusStep(status: String, storedStep: Int?): Int {
         val normalized = status.trim().lowercase(Locale.ENGLISH)
             .replace("_", " ").replace("-", " ")
         val derived = when {
-            normalized.contains("deliver") || normalized.contains("complete") -> 3
+            normalized.contains("deliver") || normalized.contains("complete") -> STEP_DELIVERED
             normalized.contains("transit") || normalized.contains("shipping") ||
-                    normalized.contains("shipped") || normalized.contains("out for delivery") -> 2
-            normalized.contains("pick") || normalized.contains("dispatch") -> 1
-            else -> 0
+                    normalized.contains("shipped") || normalized.contains("out for delivery") -> STEP_IN_TRANSIT
+            normalized.contains("pick") || normalized.contains("dispatch") -> STEP_PICKED
+            else -> STEP_PACKING
         }
-        return maxOf(storedStep?.coerceIn(0, 3) ?: 0, derived)
+        return maxOf(storedStep?.coerceIn(STEP_PACKING, STEP_DELIVERED) ?: STEP_PACKING, derived)
     }
 
-    private fun normalizeOrderStatusLabel(status: String, resolvedStep: Int): String {
-        return when (resolvedStep.coerceIn(0, 3)) {
-            3 -> "Delivered"
-            2 -> "In Transit"
-            1 -> "Picked"
+    /**
+     * Returns a human-readable status label for a resolved step index.
+     */
+    fun normalizeOrderStatusLabel(status: String, resolvedStep: Int): String {
+        return when (resolvedStep.coerceIn(STEP_PACKING, STEP_DELIVERED)) {
+            STEP_DELIVERED -> "Delivered"
+            STEP_IN_TRANSIT -> "In Transit"
+            STEP_PICKED -> "Picked"
             else -> "Packing"
         }
     }
 
+    // ─── Private helpers ──────────────────────────────────────────────────────
+
     private fun formatApiDate(raw: String): String {
         return runCatching {
-            // Backend sends "yyyy-MM-dd"; convert to "MMM dd, yyyy"
             val parsed = SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).parse(raw)!!
             SimpleDateFormat("MMM dd, yyyy", Locale.ENGLISH).format(parsed)
         }.getOrDefault(raw)
@@ -424,7 +442,7 @@ class CheckoutSharedViewModel @Inject constructor(
 
     private fun normalizeAddresses(items: List<AddressBookItem>): List<AddressBookItem> {
         val valid = items.filter { isAddressValid(it) }
-        if (valid.isEmpty()) return initialAddresses
+        if (valid.isEmpty()) return emptyList()
         val defaultId = valid.firstOrNull { it.isDefault }?.id ?: valid.first().id
         val selectedId = valid.firstOrNull { it.isSelected }?.id ?: defaultId
         return valid.map { it.copy(isDefault = it.id == defaultId, isSelected = it.id == selectedId) }
@@ -441,5 +459,12 @@ class CheckoutSharedViewModel @Inject constructor(
     private fun isValidCoordinates(latitude: Double?, longitude: Double?): Boolean {
         if (latitude == null || longitude == null) return false
         return latitude in -90.0..90.0 && longitude in -180.0..180.0
+    }
+
+    companion object {
+        const val STEP_PACKING = 0
+        const val STEP_PICKED = 1
+        const val STEP_IN_TRANSIT = 2
+        const val STEP_DELIVERED = 3
     }
 }

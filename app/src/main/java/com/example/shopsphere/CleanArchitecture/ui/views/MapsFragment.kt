@@ -70,6 +70,7 @@ class MapsFragment : Fragment() {
         val watcher = simpleWatcher { updateAddButtonState() }
         binding.editNickname.addTextChangedListener(watcher)
         binding.editAddress.addTextChangedListener(watcher)
+        binding.editPhone.addTextChangedListener(watcher)
 
         binding.btnBack.setOnClickListener { findNavController().navigateUp() }
         binding.btnNotifications.setOnClickListener {
@@ -84,9 +85,10 @@ class MapsFragment : Fragment() {
     private fun saveAddress() {
         val nickname = binding.editNickname.text?.toString().orEmpty().trim()
         val fullAddress = binding.editAddress.text?.toString().orEmpty().trim()
+        val phone = binding.editPhone.text?.toString().orEmpty().filter { it.isDigit() }
         val latLng = selectedLatLng
 
-        if (latLng == null || nickname.isBlank() || fullAddress.length < 8) {
+        if (latLng == null || nickname.isBlank() || fullAddress.length < 8 || phone.length < 8) {
             updateAddButtonState()
             return
         }
@@ -101,6 +103,7 @@ class MapsFragment : Fragment() {
                 putDouble("lng", latLng.longitude)
                 putString("nickname", nickname)
                 putString("fullname", fullAddress)
+                putString("phone", phone)
                 putBoolean("is_default", binding.cbDefault.isChecked)
             }
             setFragmentResult("location_result", result)
@@ -111,7 +114,8 @@ class MapsFragment : Fragment() {
     private fun updateAddButtonState() {
         val isValid = selectedLatLng != null &&
             binding.editNickname.text?.toString().orEmpty().trim().length >= 2 &&
-            binding.editAddress.text?.toString().orEmpty().trim().length >= 8
+            binding.editAddress.text?.toString().orEmpty().trim().length >= 8 &&
+            binding.editPhone.text?.toString().orEmpty().filter { it.isDigit() }.length >= 8
         binding.btnCheckout.isEnabled = isValid
         binding.btnCheckout.alpha = if (isValid) 1f else 0.45f
     }
@@ -181,6 +185,6 @@ class MapsFragment : Fragment() {
 
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1001
-        private val DEFAULT_MAP_LAT_LNG = LatLng(61.2176, -149.8997)
+        private val DEFAULT_MAP_LAT_LNG = LatLng(30.0444, 31.2357) // Cairo
     }
 }

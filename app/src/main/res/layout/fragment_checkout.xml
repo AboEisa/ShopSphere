@@ -141,6 +141,16 @@
                         android:textColor="#9B9B9B"
                         android:textSize="13sp"
                         tools:text="925 S Chugach St #APT 10, Alaska 99645" />
+
+                    <TextView
+                        android:id="@+id/txtAddressPhone"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:textColor="#9B9B9B"
+                        android:textSize="12sp"
+                        android:visibility="gone"
+                        tools:text="+1 555 000 0000" />
                 </LinearLayout>
             </LinearLayout>
 

@@ -1,6 +1,9 @@
 package com.example.shopsphere.CleanArchitecture.ui.views
 
 import android.os.Bundle
+import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -79,6 +82,13 @@ class CheckoutFragment : Fragment() {
             if (selected != null) {
                 binding.txtHome.text = selected.title
                 binding.txtAddressDetail.text = selected.address
+                // Show the delivery phone directly under the address
+                if (selected.phone.isNotBlank()) {
+                    binding.txtAddressPhone.text = selected.phone
+                    binding.txtAddressPhone.visibility = android.view.View.VISIBLE
+                } else {
+                    binding.txtAddressPhone.visibility = android.view.View.GONE
+                }
             }
         }
 
@@ -137,12 +147,11 @@ class CheckoutFragment : Fragment() {
                 val customerName = sharedPreference.getProfileName().ifBlank {
                     user?.displayName?.takeIf { it.isNotBlank() } ?: getString(R.string.account_guest_user)
                 }
-                val phone = sharedPreference.getProfilePhone().ifBlank { "01000000000" }
-
+                // Phone is now taken from the delivery address inside placeOrder.
                 val placedOrderResult = sharedViewModel.placeOrder(
                     total = binding.txtOrderTotal.text.toString(),
                     customerName = customerName,
-                    phone = phone,
+                    phone = "",
                     cartItems = currentCartItems
                 )
                 val placedOrder = placedOrderResult.getOrNull()
@@ -165,9 +174,22 @@ class CheckoutFragment : Fragment() {
                     message = getString(R.string.dialog_order_success_message),
                     primaryText = getString(R.string.track_your_order)
                 ) {
-                    val action = CheckoutFragmentDirections
-                        .actionCheckoutFragmentToTrackOrderFragment(placedOrder.orderId)
-                    findNavController().navigate(action)
+                    // Wait for fetchOrders() to return the real order from the backend,
+                    // then navigate with the real orderId (not "PENDING")
+                    val observer = object : Observer<List<com.example.shopsphere.CleanArchitecture.ui.models.OrderHistoryItem>> {
+                        override fun onChanged(orders: List<com.example.shopsphere.CleanArchitecture.ui.models.OrderHistoryItem>) {
+                            val realOrder = orders.firstOrNull { it.orderId != "PENDING" }
+                            if (realOrder != null) {
+                                sharedViewModel.orderHistory.removeObserver(this)
+                                if (findNavController().currentDestination?.id == R.id.checkoutFragment) {
+                                    val action = CheckoutFragmentDirections
+                                        .actionCheckoutFragmentToTrackOrderFragment(realOrder.orderId)
+                                    findNavController().navigate(action)
+                                }
+                            }
+                        }
+                    }
+                    sharedViewModel.orderHistory.observe(viewLifecycleOwner, observer)
                 }
             }
         }
@@ -244,6 +266,9 @@ class CheckoutFragment : Fragment() {
         if (!sharedViewModel.isPaymentMethodValid(sharedViewModel.selectedPaymentMethod.value)) {
             return getString(R.string.validation_payment_invalid)
         }
+
+        // Phone is validated as part of the delivery address (see isAddressValid).
+        // No separate profile-phone check needed here.
         return null
     }
 

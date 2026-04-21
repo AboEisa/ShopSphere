@@ -290,7 +290,10 @@ class Repository @Inject constructor(
                     totalAmount = dto.totalAmount,
                     date = dto.date.orEmpty(),
                     paymentStatus = dto.paymentStatus.orEmpty(),
-                    orderStatus = dto.orderStatus.orEmpty()
+                    orderStatus = dto.orderStatus.orEmpty(),
+                    currentLat = dto.currentLat,
+                    currentLng = dto.currentLng,
+                    driverName = dto.driverName?.trim()?.takeIf { it.isNotBlank() }
                 )
             }
         }

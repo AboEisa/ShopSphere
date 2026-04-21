@@ -50,6 +50,8 @@
     <string name="my_details_birth_date">Date of Birth</string>
     <string name="my_details_gender">Gender</string>
     <string name="my_details_phone_number">Phone Number</string>
+    <string name="phone_number">Phone Number</string>
+    <string name="enter_your_phone_number">Enter your phone number</string>
     <string name="my_details_submit">Submit</string>
     <string name="my_details_calendar">Pick date</string>
     <string name="my_details_gender_male">Male</string>
@@ -405,6 +407,7 @@
     <string name="promo_code_applied">SAVE10 applied successfully.</string>
     <string name="payment_method_coming_soon">%1$s will be available soon.</string>
     <string name="notifications_screen_active">You are already on Notifications.</string>
+    <string name="validation_phone_required">please enter your phone number</string>
 
 
 </resources>

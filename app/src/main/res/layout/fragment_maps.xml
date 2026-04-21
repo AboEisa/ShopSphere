@@ -165,6 +165,29 @@
             android:textColorHint="#B0B0B0"
             android:textSize="14sp" />
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/phone_number"
+            android:textColor="@color/_1a1a1a"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/edit_phone"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_form_field"
+            android:hint="@string/enter_your_phone_number"
+            android:inputType="phone"
+            android:maxLength="15"
+            android:paddingHorizontal="14dp"
+            android:textColor="@color/_1a1a1a"
+            android:textColorHint="#B0B0B0"
+            android:textSize="14sp" />
+
         <CheckBox
             android:id="@+id/cb_default"
             android:layout_width="wrap_content"

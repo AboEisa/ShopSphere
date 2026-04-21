@@ -113,7 +113,7 @@ class TrackOrderFragment : Fragment(), OnMapReadyCallback {
             if (_binding == null) return
             val clamped = slideOffset.coerceIn(0f, 1f)
             binding.topOverlay.alpha = OVERLAY_ALPHA_COLLAPSED +
-                ((OVERLAY_ALPHA_EXPANDED - OVERLAY_ALPHA_COLLAPSED) * clamped)
+                    ((OVERLAY_ALPHA_EXPANDED - OVERLAY_ALPHA_COLLAPSED) * clamped)
             updateMapPaddingWithSheetTop(bottomSheet.top)
         }
     }
@@ -146,11 +146,25 @@ class TrackOrderFragment : Fragment(), OnMapReadyCallback {
         mapFragment?.getMapAsync(this)
 
         checkoutSharedViewModel.orderHistory.observe(viewLifecycleOwner) { orders ->
-            val order = orders.firstOrNull { it.orderId == args.orderId } ?: return@observe
+            val order = orders.firstOrNull { it.orderId == args.orderId }
+            if (order == null) {
+                // Order not in list yet — trigger a fresh fetch (e.g. navigated here right after checkout)
+                checkoutSharedViewModel.fetchOrders()
+                return@observe
+            }
             val normalizedOrder = normalizeOrderForTracking(order)
             val previousOrder = currentOrder
             currentOrder = normalizedOrder
             renderOrder(normalizedOrder, previousOrder)
+        }
+
+        // Poll the backend every 15 seconds to get updated order status while on this screen
+        viewLifecycleOwner.lifecycleScope.launch {
+            while (true) {
+                kotlinx.coroutines.delay(15_000L)
+                if (_binding == null) break
+                checkoutSharedViewModel.fetchOrders()
+            }
         }
     }
 
@@ -251,24 +265,31 @@ class TrackOrderFragment : Fragment(), OnMapReadyCallback {
         binding.textLiveStatus.visibility = View.GONE
 
         val destination = LatLng(order.destinationLat ?: DEFAULT_LAT, order.destinationLng ?: DEFAULT_LNG)
-        val current = LatLng(order.currentLat ?: destination.latitude, order.currentLng ?: destination.longitude)
-        val hasArrived = isOrderArrived(order, current, destination)
+        // currentLat/currentLng are null until the backend assigns a driver and
+        // starts sending real courier coordinates.  In that case we show the
+        // timeline and destination pin but skip the courier marker entirely.
+        val courierKnown = order.currentLat != null && order.currentLng != null
+        val current = if (courierKnown)
+            LatLng(order.currentLat!!, order.currentLng!!)
+        else
+            null
+        val hasArrived = current != null && isOrderArrived(order, current, destination)
         val resolvedStep = if (hasArrived) ORDER_STEP_DELIVERED else resolveStatusStep(order.status, order.statusStep)
         val resolvedStatus = statusLabelForStep(resolvedStep)
-        syncOrderStateIfNeeded(order, current, resolvedStatus, resolvedStep)
+        if (current != null) syncOrderStateIfNeeded(order, current, resolvedStatus, resolvedStep)
 
         binding.textLiveStatus.text = resolvedStatus
 
-        showDistanceAndEta(current, destination, hasArrived)
+        if (current != null) showDistanceAndEta(current, destination, hasArrived)
+        else showWaitingForCourier()
         updateStatusTimeline(resolvedStep)
 
         renderMap(
             order = order.copy(status = resolvedStatus, statusStep = resolvedStep),
             previousPosition = previousOrder?.let {
-                LatLng(
-                    it.currentLat ?: current.latitude,
-                    it.currentLng ?: current.longitude
-                )
+                if (it.currentLat != null && it.currentLng != null)
+                    LatLng(it.currentLat, it.currentLng)
+                else null
             }
         )
     }
@@ -280,10 +301,26 @@ class TrackOrderFragment : Fragment(), OnMapReadyCallback {
     ) {
         val googleMap = map ?: return
         val destination = LatLng(order.destinationLat ?: DEFAULT_LAT, order.destinationLng ?: DEFAULT_LNG)
-        val current = LatLng(order.currentLat ?: destination.latitude, order.currentLng ?: destination.longitude)
-        val hasArrived = isOrderArrived(order, current, destination)
 
         upsertDestinationMarker(googleMap, destination)
+
+        // If the backend has not yet provided courier coordinates, only show the
+        // destination pin and centre the camera there — no fake courier dot.
+        if (order.currentLat == null || order.currentLng == null) {
+            courierMarker?.remove()
+            courierMarker = null
+            clearRoutePolyline()
+            if (moveCamera) {
+                googleMap.animateCamera(
+                    com.google.android.gms.maps.CameraUpdateFactory.newLatLngZoom(destination, 14f)
+                )
+            }
+            return
+        }
+
+        val current = LatLng(order.currentLat, order.currentLng)
+        val hasArrived = isOrderArrived(order, current, destination)
+
         upsertCourierMarker(googleMap, current)
         val markerPosition = courierMarker?.position
         val start = previousPosition ?: markerPosition ?: current
@@ -307,7 +344,7 @@ class TrackOrderFragment : Fragment(), OnMapReadyCallback {
 
         val shouldAnimateMovement =
             calculateDistanceMeters(start, current) >= MIN_ANIMATABLE_DISTANCE_METERS &&
-                order.statusStep < ORDER_STEP_DELIVERED
+                    order.statusStep < ORDER_STEP_DELIVERED
 
         if (shouldAnimateMovement) {
             animateCourierMovement(
@@ -701,6 +738,12 @@ class TrackOrderFragment : Fragment(), OnMapReadyCallback {
         binding.textDistanceMinutes.text = getString(R.string.track_eta_minutes, minutes)
     }
 
+    /** Shown when the backend has not yet provided courier coordinates. */
+    private fun showWaitingForCourier() {
+        binding.textDistanceMinutes.text = getString(R.string.track_status_packing)
+        binding.textDistanceMiles.text = ""
+    }
+
     private fun syncOrderStateIfNeeded(
         order: OrderHistoryItem,
         current: LatLng,
@@ -731,32 +774,23 @@ class TrackOrderFragment : Fragment(), OnMapReadyCallback {
         )
     }
 
+    /**
+     * Returns the courier/driver name to display on the tracking screen.
+     *
+     * Priority:
+     *  1. [driverName] from the backend (the actual delivery driver).
+     *  2. A generic fallback string — never the customer's own profile name.
+     */
     private fun resolveCourierName(order: OrderHistoryItem): String {
-        val profileName = sharedPreference.getProfileName().trim()
-        val orderName = order.customerName.trim()
-        return orderName
-            .takeIf { it.isNotBlank() && !it.equals(profileName, ignoreCase = true) }
+        return order.driverName
+            ?.takeIf { it.isNotBlank() }
             ?: getString(R.string.track_courier_default_name)
     }
 
+    // Delegates to the shared ViewModel so there is a single source of truth
+    // for status-string → step resolution across the whole app.
     private fun resolveStatusStep(status: String, storedStep: Int): Int {
-        val normalizedStatus = status
-            .trim()
-            .lowercase(Locale.ENGLISH)
-            .replace("_", " ")
-            .replace("-", " ")
-
-        val derivedStep = when {
-            normalizedStatus.contains("deliver") || normalizedStatus.contains("complete") -> ORDER_STEP_DELIVERED
-            normalizedStatus.contains("transit") ||
-                normalizedStatus.contains("shipping") ||
-                normalizedStatus.contains("shipped") ||
-                normalizedStatus.contains("out for delivery") -> ORDER_STEP_IN_TRANSIT
-            normalizedStatus.contains("pick") || normalizedStatus.contains("dispatch") -> ORDER_STEP_PICKED
-            else -> ORDER_STEP_PACKING
-        }
-
-        return max(storedStep.coerceIn(ORDER_STEP_PACKING, ORDER_STEP_DELIVERED), derivedStep)
+        return checkoutSharedViewModel.resolveOrderStatusStep(status, storedStep)
     }
 
     private fun statusLabelForStep(step: Int): String {
@@ -772,7 +806,7 @@ class TrackOrderFragment : Fragment(), OnMapReadyCallback {
         if (order.statusStep >= ORDER_STEP_DELIVERED) return true
         if (order.status.equals(getString(R.string.track_status_delivered), ignoreCase = true)) return true
         return order.statusStep >= ORDER_STEP_IN_TRANSIT &&
-            calculateDistanceMeters(current, destination) <= ARRIVAL_DISTANCE_THRESHOLD_METERS
+                calculateDistanceMeters(current, destination) <= ARRIVAL_DISTANCE_THRESHOLD_METERS
     }
 
     private fun calculateDistanceMeters(from: LatLng, to: LatLng): Float {
@@ -943,10 +977,10 @@ class TrackOrderFragment : Fragment(), OnMapReadyCallback {
         private const val DIRECTIONS_STATUS_OK = "OK"
         private const val DIRECTIONS_STATUS_REQUEST_DENIED = "REQUEST_DENIED"
 
-        private const val ORDER_STEP_PACKING = 0
-        private const val ORDER_STEP_PICKED = 1
-        private const val ORDER_STEP_IN_TRANSIT = 2
-        private const val ORDER_STEP_DELIVERED = 3
+        private const val ORDER_STEP_PACKING = CheckoutSharedViewModel.STEP_PACKING
+        private const val ORDER_STEP_PICKED = CheckoutSharedViewModel.STEP_PICKED
+        private const val ORDER_STEP_IN_TRANSIT = CheckoutSharedViewModel.STEP_IN_TRANSIT
+        private const val ORDER_STEP_DELIVERED = CheckoutSharedViewModel.STEP_DELIVERED
 
         private const val SHEET_PEEK_HEIGHT_DP = 336
         private const val MAP_TOP_PADDING_MIN_DP = 112
@@ -967,6 +1001,8 @@ class TrackOrderFragment : Fragment(), OnMapReadyCallback {
         private const val MIN_ROUTE_POINT_DISTANCE_METERS = 8f
         private const val POLYLINE_PRECISION = 1E5
 
+        // Fallback map centre when an order has no destination coordinates.
+        // Only affects the camera/bounds — no fake courier dot is placed here.
         private const val DEFAULT_LAT = 30.0444
         private const val DEFAULT_LNG = 31.2357
         private const val METER_IN_MILE = 1609.34

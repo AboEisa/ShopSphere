@@ -7,7 +7,9 @@ data class AddressBookItem(
     val latitude: Double? = null,
     val longitude: Double? = null,
     val isDefault: Boolean = false,
-    val isSelected: Boolean = false
+    val isSelected: Boolean = false,
+    // Contact phone for this delivery address (digits only, min 8)
+    val phone: String = ""
 )
 
 data class PaymentMethodItem(
@@ -37,5 +39,7 @@ data class OrderHistoryItem(
     val destinationLng: Double? = null,
     val currentLat: Double? = null,
     val currentLng: Double? = null,
-    val statusStep: Int = 0
+    val statusStep: Int = 0,
+    // Driver/courier name from the backend; null means not yet assigned
+    val driverName: String? = null
 )

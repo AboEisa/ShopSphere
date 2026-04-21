@@ -91,6 +91,12 @@ class SharedPreference @Inject constructor(
     fun getProfileBirthDate(): String = sharedPref.getString("profile_birth_date", "12/07/1990") ?: "12/07/1990"
     fun getProfileGender(): String = sharedPref.getString("profile_gender", "Male") ?: "Male"
 
+    fun saveDeliveryAddress(address: String) {
+        sharedPref.edit().putString("delivery_address", address.trim()).apply()
+    }
+
+    fun getDeliveryAddress(): String = sharedPref.getString("delivery_address", "") ?: ""
+
     fun saveNotificationPreference(key: String, enabled: Boolean) {
         sharedPref.edit().putBoolean("notification_pref_$key", enabled).apply()
     }
@@ -358,3 +364,4 @@ class SharedPreference @Inject constructor(
         private const val NO_SIZE_TOKEN = "NO_SIZE"
     }
 }
+// placeholder

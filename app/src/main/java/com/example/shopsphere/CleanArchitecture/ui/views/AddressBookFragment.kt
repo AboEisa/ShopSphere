@@ -63,8 +63,9 @@ class AddressBookFragment : Fragment() {
             val lat = bundle.getDouble("lat")
             val lng = bundle.getDouble("lng")
             val isDefault = bundle.getBoolean("is_default", false)
+            val phone = bundle.getString("phone").orEmpty()
             if (title.isNotBlank() && fullAddress.isNotBlank()) {
-                val wasSaved = sharedViewModel.setAddress(title, fullAddress, lat, lng, isDefault)
+                val wasSaved = sharedViewModel.setAddress(title, fullAddress, lat, lng, isDefault, phone)
                 if (!wasSaved) {
                     Toast.makeText(
                         requireContext(),

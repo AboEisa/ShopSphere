@@ -18,6 +18,9 @@ interface IRepository {
     suspend fun clearCart(): Result<Unit>
     suspend fun getCartItemCount(): Int
 
+    suspend fun checkout(): Result<DomainCheckoutResult>
+    suspend fun getMyOrders(): Result<List<DomainOrder>>
+
     suspend fun registerEmail(name: String, email: String, password:
     String): Result<Boolean>
     suspend fun login(email: String, password: String): Result<Unit>

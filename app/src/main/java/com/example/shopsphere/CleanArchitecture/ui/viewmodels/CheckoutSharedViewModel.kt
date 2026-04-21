@@ -5,25 +5,24 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
+import com.example.shopsphere.CleanArchitecture.domain.IRepository
 import com.example.shopsphere.CleanArchitecture.ui.models.AddressBookItem
 import com.example.shopsphere.CleanArchitecture.ui.models.OrderHistoryItem
 import com.example.shopsphere.CleanArchitecture.ui.models.PaymentMethodItem
 import com.example.shopsphere.CleanArchitecture.ui.models.PresentationProductResult
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.DocumentSnapshot
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ListenerRegistration
-import com.google.firebase.firestore.Query
-import com.google.firebase.firestore.SetOptions
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.UUID
+import javax.inject.Inject
 
-class CheckoutSharedViewModel : ViewModel() {
+@HiltViewModel
+class CheckoutSharedViewModel @Inject constructor(
+    private val repository: IRepository
+) : ViewModel() {
 
     private val initialAddresses = listOf(
         AddressBookItem(
@@ -81,18 +80,6 @@ class CheckoutSharedViewModel : ViewModel() {
         )
     )
 
-    private val auth = FirebaseAuth.getInstance()
-    private val firestore = FirebaseFirestore.getInstance()
-
-    private var currentUid: String? = null
-    private var addressListenerRegistration: ListenerRegistration? = null
-    private var paymentListenerRegistration: ListenerRegistration? = null
-    private var orderListenerRegistration: ListenerRegistration? = null
-
-    private val authStateListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
-        bindForUser(firebaseAuth.currentUser?.uid)
-    }
-
     private val _addressBook = MutableLiveData<List<AddressBookItem>>(initialAddresses)
     val addressBook: LiveData<List<AddressBookItem>> = _addressBook
 
@@ -114,10 +101,157 @@ class CheckoutSharedViewModel : ViewModel() {
     private val _orderHistory = MutableLiveData<List<OrderHistoryItem>>(emptyList())
     val orderHistory: LiveData<List<OrderHistoryItem>> = _orderHistory
 
+    private val _isLoadingOrders = MutableLiveData(false)
+    val isLoadingOrders: LiveData<Boolean> = _isLoadingOrders
+
+
+
     init {
-        auth.addAuthStateListener(authStateListener)
-        bindForUser(auth.currentUser?.uid)
+        fetchOrders()
     }
+
+    // ─── Orders (backend API) ────────────────────────────────────────────────
+
+    fun fetchOrders() {
+        viewModelScope.launch {
+            _isLoadingOrders.value = true
+            repository.getMyOrders()
+                .onSuccess { domainOrders ->
+                    val fromApi = domainOrders.map { domain ->
+                        val statusStep = resolveOrderStatusStep(domain.orderStatus, null)
+                        OrderHistoryItem(
+                            orderId = domain.orderId.toString(),
+                            date = formatApiDate(domain.date),
+                            status = normalizeOrderStatusLabel(domain.orderStatus, statusStep),
+                            total = formatApiTotal(domain.totalAmount),
+                            statusStep = statusStep
+                        )
+                    }
+                    _orderHistory.postValue(fromApi)
+                }
+                .onFailure {
+                    // Keep the current list on failure so the screen doesn't go blank
+                }
+            _isLoadingOrders.value = false
+        }
+    }
+
+    // ─── Place order ─────────────────────────────────────────────────────────
+
+    fun placeOrder(
+        total: String,
+        customerName: String,
+        phone: String,
+        cartItems: List<PresentationProductResult>
+    ): Result<OrderHistoryItem> {
+        val sanitizedName = customerName.trim()
+        val digitsPhone = phone.filter { it.isDigit() }
+        val address = selectedAddress.value
+        val paymentMethod = selectedPaymentMethod.value
+
+        if (cartItems.isEmpty())
+            return Result.failure(IllegalStateException("Cart is empty"))
+        if (!isAddressValid(address))
+            return Result.failure(IllegalStateException("Please select a valid delivery address"))
+        if (!isPaymentMethodValid(paymentMethod))
+            return Result.failure(IllegalStateException("Please select a valid payment method"))
+        if (sanitizedName.isBlank())
+            return Result.failure(IllegalStateException("Please enter a valid customer name"))
+        if (digitsPhone.length < 8)
+            return Result.failure(IllegalStateException("Please enter a valid phone number"))
+
+        val invalidStockItem = cartItems.firstOrNull { item ->
+            val stock = item.stock.coerceAtLeast(0)
+            val quantity = item.quantity.coerceAtLeast(1)
+            quantity > stock || stock <= 0
+        }
+        if (invalidStockItem != null) {
+            val stock = invalidStockItem.stock.coerceAtLeast(0)
+            return Result.failure(
+                IllegalStateException(
+                    if (stock <= 0) "'${invalidStockItem.title}' is out of stock"
+                    else "Only $stock left for '${invalidStockItem.title}'"
+                )
+            )
+        }
+
+        val validAddress = address!!
+        val destinationLat = validAddress.latitude ?: 30.0444
+        val destinationLng = validAddress.longitude ?: 31.2357
+        val primaryItem = cartItems.first()
+
+        // Placeholder used only so CheckoutFragment can navigate to TrackOrder immediately.
+        // It is never added to _orderHistory — the real order comes from fetchOrders() below.
+        val placeholderOrder = OrderHistoryItem(
+            orderId = "PENDING",
+            date = SimpleDateFormat("MMM dd, yyyy", Locale.ENGLISH).format(Date()),
+            status = "Packing",
+            total = total,
+            itemTitle = primaryItem.title,
+            itemSize = primaryItem.selectedSize.trim().uppercase(),
+            itemImageUrl = primaryItem.image,
+            itemPrice = formatPrice(primaryItem.price),
+            address = validAddress.address,
+            customerName = sanitizedName,
+            phone = digitsPhone,
+            destinationLat = destinationLat,
+            destinationLng = destinationLng,
+            currentLat = destinationLat + 0.02,
+            currentLng = destinationLng - 0.02,
+            statusStep = 0
+        )
+
+        // Call the real checkout endpoint, then refresh orders from the backend
+        viewModelScope.launch {
+            repository.checkout()
+                .onSuccess { result ->
+                    // Replace placeholder orderId with the real one from the backend if available
+                    fetchOrders()
+                }
+        }
+
+        return Result.success(placeholderOrder)
+    }
+
+    // ─── Review (local only — backend has no review endpoint yet) ────────────
+
+    fun submitOrderReview(orderId: String, rating: Int, comment: String) {
+        val sanitizedComment = comment.trim()
+        val sanitizedRating = rating.coerceIn(1, 5).toDouble()
+        _orderHistory.value = _orderHistory.value.orEmpty().map { order ->
+            if (order.orderId == orderId)
+                order.copy(reviewRating = sanitizedRating, reviewComment = sanitizedComment)
+            else order
+        }
+    }
+
+    // ─── Tracking (local update only) ────────────────────────────────────────
+
+    fun updateOrderTracking(
+        orderId: String,
+        currentLat: Double,
+        currentLng: Double,
+        status: String,
+        statusStep: Int
+    ) {
+        val resolvedStatusStep = resolveOrderStatusStep(status, statusStep)
+        val normalizedStatus = normalizeOrderStatusLabel(status, resolvedStatusStep)
+        _orderHistory.value = _orderHistory.value.orEmpty().map { order ->
+            if (order.orderId == orderId)
+                order.copy(
+                    currentLat = currentLat,
+                    currentLng = currentLng,
+                    status = normalizedStatus,
+                    statusStep = resolvedStatusStep
+                )
+            else order
+        }
+    }
+
+    fun getOrderById(orderId: String): OrderHistoryItem? =
+        _orderHistory.value.orEmpty().firstOrNull { it.orderId == orderId }
+
+    // ─── Address book ─────────────────────────────────────────────────────────
 
     fun setAddress(
         nick: String,
@@ -134,7 +268,7 @@ class CheckoutSharedViewModel : ViewModel() {
         val current = _addressBook.value.orEmpty().ifEmpty { initialAddresses }
         val existing = current.firstOrNull {
             it.title.equals(sanitizedTitle, ignoreCase = true) &&
-                it.address.equals(sanitizedAddress, ignoreCase = true)
+                    it.address.equals(sanitizedAddress, ignoreCase = true)
         }
 
         val updated = if (existing != null) {
@@ -148,7 +282,6 @@ class CheckoutSharedViewModel : ViewModel() {
                         isDefault = isDefault || item.isDefault,
                         isSelected = true
                     )
-
                     isDefault -> item.copy(isDefault = false, isSelected = false)
                     else -> item.copy(isSelected = false)
                 }
@@ -164,25 +297,24 @@ class CheckoutSharedViewModel : ViewModel() {
                 isSelected = true
             )
             current.map { item ->
-                if (isDefault) item.copy(isDefault = false, isSelected = false) else item.copy(isSelected = false)
+                if (isDefault) item.copy(isDefault = false, isSelected = false)
+                else item.copy(isSelected = false)
             } + newItem
         }
 
-        val normalized = normalizeAddresses(updated)
-        _addressBook.value = normalized
-        currentUid?.let { uid -> persistAddressBook(uid, normalized) }
+        _addressBook.value = normalizeAddresses(updated)
         return true
     }
 
     fun selectAddress(addressId: String) {
-        val normalized = normalizeAddresses(
+        _addressBook.value = normalizeAddresses(
             _addressBook.value.orEmpty().map { item ->
                 item.copy(isSelected = item.id == addressId)
             }
         )
-        _addressBook.value = normalized
-        currentUid?.let { uid -> persistAddressBook(uid, normalized) }
     }
+
+    // ─── Payment methods ──────────────────────────────────────────────────────
 
     fun setCardLastFour(
         lastFour: String,
@@ -203,15 +335,10 @@ class CheckoutSharedViewModel : ViewModel() {
 
         val updated = if (existing != null) {
             current.map { item ->
-                if (item.id == existing.id) {
-                    item.copy(
-                        holderName = sanitizedHolder,
-                        brand = sanitizedBrand,
-                        isSelected = true
-                    )
-                } else {
+                if (item.id == existing.id)
+                    item.copy(holderName = sanitizedHolder, brand = sanitizedBrand, isSelected = true)
+                else
                     item.copy(isSelected = false)
-                }
             }
         } else {
             val newItem = PaymentMethodItem(
@@ -225,128 +352,19 @@ class CheckoutSharedViewModel : ViewModel() {
             current.map { it.copy(isSelected = false) } + newItem
         }
 
-        val normalized = normalizePaymentMethods(updated)
-        _paymentMethods.value = normalized
-        currentUid?.let { uid -> persistPaymentMethods(uid, normalized) }
+        _paymentMethods.value = normalizePaymentMethods(updated)
         return true
     }
 
     fun selectPaymentMethod(cardId: String) {
-        val normalized = normalizePaymentMethods(
+        _paymentMethods.value = normalizePaymentMethods(
             _paymentMethods.value.orEmpty().map { item ->
                 item.copy(isSelected = item.id == cardId)
             }
         )
-        _paymentMethods.value = normalized
-        currentUid?.let { uid -> persistPaymentMethods(uid, normalized) }
     }
 
-    fun placeOrder(
-        total: String,
-        customerName: String,
-        phone: String,
-        cartItems: List<PresentationProductResult>
-    ): Result<OrderHistoryItem> {
-        val sanitizedName = customerName.trim()
-        val digitsPhone = phone.filter { it.isDigit() }
-        val address = selectedAddress.value
-        val paymentMethod = selectedPaymentMethod.value
-
-        if (cartItems.isEmpty()) {
-            return Result.failure(IllegalStateException("Cart is empty"))
-        }
-        if (!isAddressValid(address)) {
-            return Result.failure(IllegalStateException("Please select a valid delivery address"))
-        }
-        if (!isPaymentMethodValid(paymentMethod)) {
-            return Result.failure(IllegalStateException("Please select a valid payment method"))
-        }
-        if (sanitizedName.isBlank()) {
-            return Result.failure(IllegalStateException("Please enter a valid customer name"))
-        }
-        if (digitsPhone.length < 8) {
-            return Result.failure(IllegalStateException("Please enter a valid phone number"))
-        }
-
-        val invalidStockItem = cartItems.firstOrNull { item ->
-            val stock = item.stock.coerceAtLeast(0)
-            val quantity = item.quantity.coerceAtLeast(1)
-            quantity > stock || stock <= 0
-        }
-        if (invalidStockItem != null) {
-            val stock = invalidStockItem.stock.coerceAtLeast(0)
-            return Result.failure(
-                IllegalStateException(
-                    if (stock <= 0) {
-                        "'${invalidStockItem.title}' is out of stock"
-                    } else {
-                        "Only $stock left for '${invalidStockItem.title}'"
-                    }
-                )
-            )
-        }
-
-        val validAddress = address!!
-        val destinationLat = validAddress.latitude ?: 30.0444
-        val destinationLng = validAddress.longitude ?: 31.2357
-        val startLat = destinationLat + 0.02
-        val startLng = destinationLng - 0.02
-        val primaryItem = cartItems.first()
-
-        val newOrder = OrderHistoryItem(
-            orderId = "ORD-${UUID.randomUUID().toString().take(8).uppercase()}",
-            date = SimpleDateFormat("MMM dd, yyyy", Locale.ENGLISH).format(Date()),
-            status = "Packing",
-            total = total,
-            itemTitle = primaryItem.title,
-            itemSize = primaryItem.selectedSize.trim().uppercase(),
-            itemImageUrl = primaryItem.image,
-            itemPrice = formatPrice(primaryItem.price),
-            address = validAddress.address,
-            customerName = sanitizedName,
-            phone = digitsPhone,
-            destinationLat = destinationLat,
-            destinationLng = destinationLng,
-            currentLat = startLat,
-            currentLng = startLng,
-            statusStep = 0
-        )
-
-        _orderHistory.value = listOf(newOrder) + _orderHistory.value.orEmpty()
-        currentUid?.let { uid -> persistOrder(uid, newOrder) }
-        return Result.success(newOrder)
-    }
-
-    fun submitOrderReview(orderId: String, rating: Int, comment: String) {
-        val sanitizedComment = comment.trim()
-        val sanitizedRating = rating.coerceIn(1, 5).toDouble()
-        _orderHistory.value = _orderHistory.value.orEmpty().map { order ->
-            if (order.orderId == orderId) {
-                order.copy(reviewRating = sanitizedRating, reviewComment = sanitizedComment)
-            } else {
-                order
-            }
-        }
-
-        currentUid?.let { uid ->
-            viewModelScope.launch {
-                runCatching {
-                    userDocument(uid)
-                        .collection(ORDERS_COLLECTION)
-                        .document(orderId)
-                        .set(
-                            mapOf(
-                                FIELD_REVIEW_RATING to sanitizedRating,
-                                FIELD_REVIEW_COMMENT to sanitizedComment,
-                                FIELD_UPDATED_AT to com.google.firebase.firestore.FieldValue.serverTimestamp()
-                            ),
-                            SetOptions.merge()
-                        )
-                        .await()
-                }
-            }
-        }
-    }
+    // ─── Validation ───────────────────────────────────────────────────────────
 
     fun isAddressValid(address: AddressBookItem?): Boolean {
         if (address == null) return false
@@ -362,349 +380,19 @@ class CheckoutSharedViewModel : ViewModel() {
         return paymentMethod.lastFour.length == 4 && paymentMethod.lastFour.all { it.isDigit() }
     }
 
-    fun updateOrderTracking(
-        orderId: String,
-        currentLat: Double,
-        currentLng: Double,
-        status: String,
-        statusStep: Int
-    ) {
-        val resolvedStatusStep = resolveOrderStatusStep(status, statusStep)
-        val normalizedStatus = normalizeOrderStatusLabel(status, resolvedStatusStep)
-        _orderHistory.value = _orderHistory.value.orEmpty().map { order ->
-            if (order.orderId == orderId) {
-                order.copy(
-                    currentLat = currentLat,
-                    currentLng = currentLng,
-                    status = normalizedStatus,
-                    statusStep = resolvedStatusStep
-                )
-            } else {
-                order
-            }
-        }
-
-        currentUid?.let { uid ->
-            viewModelScope.launch {
-                runCatching {
-                    userDocument(uid)
-                        .collection(ORDERS_COLLECTION)
-                        .document(orderId)
-                        .set(
-                            mapOf(
-                                FIELD_CURRENT_LAT to currentLat,
-                                FIELD_CURRENT_LNG to currentLng,
-                                FIELD_STATUS to normalizedStatus,
-                                FIELD_STATUS_STEP to resolvedStatusStep,
-                                FIELD_UPDATED_AT to com.google.firebase.firestore.FieldValue.serverTimestamp()
-                            ),
-                            SetOptions.merge()
-                        )
-                        .await()
-                }
-            }
-        }
-    }
-
-    fun getOrderById(orderId: String): OrderHistoryItem? {
-        return _orderHistory.value.orEmpty().firstOrNull { it.orderId == orderId }
-    }
-
-    private fun bindForUser(uid: String?) {
-        if (uid == currentUid) return
-        clearFirestoreListeners()
-        currentUid = uid
-
-        if (uid.isNullOrBlank()) {
-            _addressBook.value = initialAddresses
-            _paymentMethods.value = initialPaymentMethods
-            _orderHistory.value = emptyList()
-            return
-        }
-
-        observeAddressBook(uid)
-        observePaymentMethods(uid)
-        observeOrders(uid)
-
-        viewModelScope.launch {
-            ensureDefaultEntries(uid)
-        }
-    }
-
-    private fun observeAddressBook(uid: String) {
-        addressListenerRegistration = userDocument(uid)
-            .collection(ADDRESS_BOOK_COLLECTION)
-            .addSnapshotListener { snapshot, _ ->
-                val mapped = snapshot?.documents.orEmpty()
-                    .mapNotNull { it.toAddressBookItem() }
-                    .filter { isAddressValid(it) }
-                _addressBook.postValue(normalizeAddresses(mapped))
-            }
-    }
-
-    private fun observePaymentMethods(uid: String) {
-        paymentListenerRegistration = userDocument(uid)
-            .collection(PAYMENT_METHODS_COLLECTION)
-            .addSnapshotListener { snapshot, _ ->
-                val mapped = snapshot?.documents.orEmpty()
-                    .mapNotNull { it.toPaymentMethodItem() }
-                    .filter { isPaymentMethodValid(it) }
-                _paymentMethods.postValue(normalizePaymentMethods(mapped))
-            }
-    }
-
-    private fun observeOrders(uid: String) {
-        orderListenerRegistration = userDocument(uid)
-            .collection(ORDERS_COLLECTION)
-            .orderBy(FIELD_CREATED_AT_EPOCH, Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, _ ->
-                val mapped = snapshot?.documents.orEmpty().mapNotNull { it.toOrderHistoryItem() }
-                _orderHistory.postValue(mapped)
-            }
-    }
-
-    private suspend fun ensureDefaultEntries(uid: String) {
-        val userRef = userDocument(uid)
-        userRef.set(
-            mapOf(FIELD_UPDATED_AT to com.google.firebase.firestore.FieldValue.serverTimestamp()),
-            SetOptions.merge()
-        ).await()
-
-        resetCollectionIfNeeded(
-            uid = uid,
-            collectionName = ADDRESS_BOOK_COLLECTION,
-            legacyIds = setOf("address_default"),
-            existingItems = userRef.collection(ADDRESS_BOOK_COLLECTION).get().await().documents,
-            seedData = initialAddresses.associateBy { it.id }.mapValues { (_, item) -> item.toFirestoreMap() }
-        )
-
-        resetCollectionIfNeeded(
-            uid = uid,
-            collectionName = PAYMENT_METHODS_COLLECTION,
-            legacyIds = setOf("card_default"),
-            existingItems = userRef.collection(PAYMENT_METHODS_COLLECTION).get().await().documents,
-            seedData = initialPaymentMethods.associateBy { it.id }.mapValues { (_, item) -> item.toFirestoreMap() }
-        )
-    }
-
-    private suspend fun resetCollectionIfNeeded(
-        uid: String,
-        collectionName: String,
-        legacyIds: Set<String>,
-        existingItems: List<DocumentSnapshot>,
-        seedData: Map<String, Map<String, Any?>>
-    ) {
-        val shouldReset = existingItems.isEmpty() || existingItems.all { snapshot ->
-            val itemId = snapshot.getString(FIELD_ID).orEmpty().ifBlank { snapshot.id }
-            itemId in legacyIds
-        }
-        if (!shouldReset) return
-
-        val collection = userDocument(uid).collection(collectionName)
-        val batch = firestore.batch()
-        existingItems.forEach { snapshot -> batch.delete(collection.document(snapshot.id)) }
-        seedData.forEach { (id, value) ->
-            batch.set(collection.document(id), value, SetOptions.merge())
-        }
-        batch.commit().await()
-    }
-
-    private fun normalizeAddresses(items: List<AddressBookItem>): List<AddressBookItem> {
-        val validItems = items.filter { isAddressValid(it) }
-        if (validItems.isEmpty()) return initialAddresses
-
-        val defaultId = validItems.firstOrNull { it.isDefault }?.id ?: validItems.first().id
-        val selectedId = validItems.firstOrNull { it.isSelected }?.id ?: defaultId
-
-        return validItems.map { item ->
-            item.copy(
-                isDefault = item.id == defaultId,
-                isSelected = item.id == selectedId
-            )
-        }
-    }
-
-    private fun normalizePaymentMethods(items: List<PaymentMethodItem>): List<PaymentMethodItem> {
-        val validItems = items.filter { isPaymentMethodValid(it) }
-        if (validItems.isEmpty()) return initialPaymentMethods
-
-        val defaultId = validItems.firstOrNull { it.isDefault }?.id ?: validItems.first().id
-        val selectedId = validItems.firstOrNull { it.isSelected }?.id ?: defaultId
-
-        return validItems.map { item ->
-            item.copy(
-                isDefault = item.id == defaultId,
-                isSelected = item.id == selectedId
-            )
-        }
-    }
-
-    private fun isValidCoordinates(latitude: Double?, longitude: Double?): Boolean {
-        if (latitude == null || longitude == null) return false
-        return latitude in -90.0..90.0 && longitude in -180.0..180.0
-    }
-
-    private fun persistAddressBook(uid: String, addresses: List<AddressBookItem>) {
-        viewModelScope.launch {
-            runCatching {
-                val collection = userDocument(uid).collection(ADDRESS_BOOK_COLLECTION)
-                val batch = firestore.batch()
-                normalizeAddresses(addresses).forEach { item ->
-                    batch.set(collection.document(item.id), item.toFirestoreMap(), SetOptions.merge())
-                }
-                batch.commit().await()
-            }
-        }
-    }
-
-    private fun persistPaymentMethods(uid: String, methods: List<PaymentMethodItem>) {
-        viewModelScope.launch {
-            runCatching {
-                val collection = userDocument(uid).collection(PAYMENT_METHODS_COLLECTION)
-                val batch = firestore.batch()
-                normalizePaymentMethods(methods).forEach { item ->
-                    batch.set(collection.document(item.id), item.toFirestoreMap(), SetOptions.merge())
-                }
-                batch.commit().await()
-            }
-        }
-    }
-
-    private fun persistOrder(uid: String, order: OrderHistoryItem) {
-        viewModelScope.launch {
-            runCatching {
-                userDocument(uid)
-                    .collection(ORDERS_COLLECTION)
-                    .document(order.orderId)
-                    .set(order.toFirestoreMap(), SetOptions.merge())
-                    .await()
-            }
-        }
-    }
-
-    private fun AddressBookItem.toFirestoreMap(): Map<String, Any?> = mapOf(
-        FIELD_ID to id,
-        FIELD_TITLE to title,
-        FIELD_ADDRESS to address,
-        FIELD_LATITUDE to latitude,
-        FIELD_LONGITUDE to longitude,
-        FIELD_IS_DEFAULT to isDefault,
-        FIELD_IS_SELECTED to isSelected,
-        FIELD_UPDATED_AT to com.google.firebase.firestore.FieldValue.serverTimestamp()
-    )
-
-    private fun PaymentMethodItem.toFirestoreMap(): Map<String, Any?> = mapOf(
-        FIELD_ID to id,
-        FIELD_BRAND to brand,
-        FIELD_HOLDER_NAME to holderName,
-        FIELD_LAST_FOUR to lastFour,
-        FIELD_IS_DEFAULT to isDefault,
-        FIELD_IS_SELECTED to isSelected,
-        FIELD_UPDATED_AT to com.google.firebase.firestore.FieldValue.serverTimestamp()
-    )
-
-    private fun OrderHistoryItem.toFirestoreMap(): Map<String, Any?> = mapOf(
-        FIELD_ORDER_ID to orderId,
-        FIELD_DATE to date,
-        FIELD_STATUS to status,
-        FIELD_TOTAL to total,
-        FIELD_ITEM_TITLE to itemTitle,
-        FIELD_ITEM_SIZE to itemSize,
-        FIELD_ITEM_IMAGE_URL to itemImageUrl,
-        FIELD_ITEM_PRICE to itemPrice,
-        FIELD_REVIEW_RATING to reviewRating,
-        FIELD_REVIEW_COMMENT to reviewComment,
-        FIELD_ADDRESS to address,
-        FIELD_CUSTOMER_NAME to customerName,
-        FIELD_PHONE to phone,
-        FIELD_DEST_LAT to destinationLat,
-        FIELD_DEST_LNG to destinationLng,
-        FIELD_CURRENT_LAT to currentLat,
-        FIELD_CURRENT_LNG to currentLng,
-        FIELD_STATUS_STEP to statusStep,
-        FIELD_CREATED_AT to com.google.firebase.firestore.FieldValue.serverTimestamp(),
-        FIELD_CREATED_AT_EPOCH to System.currentTimeMillis(),
-        FIELD_UPDATED_AT to com.google.firebase.firestore.FieldValue.serverTimestamp()
-    )
-
-    private fun DocumentSnapshot.toAddressBookItem(): AddressBookItem? {
-        return AddressBookItem(
-            id = getString(FIELD_ID).orEmpty().ifBlank { id },
-            title = getString(FIELD_TITLE).orEmpty().ifBlank { "Address" },
-            address = getString(FIELD_ADDRESS).orEmpty(),
-            latitude = getDouble(FIELD_LATITUDE) ?: getLong(FIELD_LATITUDE)?.toDouble(),
-            longitude = getDouble(FIELD_LONGITUDE) ?: getLong(FIELD_LONGITUDE)?.toDouble(),
-            isDefault = getBoolean(FIELD_IS_DEFAULT) ?: false,
-            isSelected = getBoolean(FIELD_IS_SELECTED) ?: false
-        )
-    }
-
-    private fun DocumentSnapshot.toPaymentMethodItem(): PaymentMethodItem? {
-        val lastFour = getString(FIELD_LAST_FOUR).orEmpty()
-        if (lastFour.isBlank()) return null
-        return PaymentMethodItem(
-            id = getString(FIELD_ID).orEmpty().ifBlank { id },
-            brand = getString(FIELD_BRAND).orEmpty().ifBlank { "CARD" },
-            holderName = getString(FIELD_HOLDER_NAME).orEmpty().ifBlank { "ShopSphere User" },
-            lastFour = lastFour,
-            isDefault = getBoolean(FIELD_IS_DEFAULT) ?: false,
-            isSelected = getBoolean(FIELD_IS_SELECTED) ?: false
-        )
-    }
-
-    private fun DocumentSnapshot.toOrderHistoryItem(): OrderHistoryItem? {
-        val orderId = getString(FIELD_ORDER_ID).orEmpty().ifBlank { id }
-        val rawStatus = getString(FIELD_STATUS).orEmpty().ifBlank { "Packing" }
-        val resolvedStatusStep = resolveOrderStatusStep(
-            status = rawStatus,
-            storedStep = getLong(FIELD_STATUS_STEP)?.toInt()
-        )
-        return OrderHistoryItem(
-            orderId = orderId,
-            date = getString(FIELD_DATE).orEmpty().ifBlank {
-                SimpleDateFormat("MMM dd, yyyy", Locale.ENGLISH).format(Date())
-            },
-            status = normalizeOrderStatusLabel(rawStatus, resolvedStatusStep),
-            total = getString(FIELD_TOTAL).orEmpty().ifBlank { "EGP 0.00" },
-            itemTitle = getString(FIELD_ITEM_TITLE).orEmpty(),
-            itemSize = getString(FIELD_ITEM_SIZE).orEmpty().trim().uppercase(),
-            itemImageUrl = getString(FIELD_ITEM_IMAGE_URL).orEmpty(),
-            itemPrice = getString(FIELD_ITEM_PRICE).orEmpty().ifBlank {
-                getString(FIELD_TOTAL).orEmpty().ifBlank { "EGP 0.00" }
-            },
-            reviewRating = getDouble(FIELD_REVIEW_RATING)
-                ?: getLong(FIELD_REVIEW_RATING)?.toDouble()
-                ?: 0.0,
-            reviewComment = getString(FIELD_REVIEW_COMMENT).orEmpty(),
-            address = getString(FIELD_ADDRESS).orEmpty(),
-            customerName = getString(FIELD_CUSTOMER_NAME).orEmpty(),
-            phone = getString(FIELD_PHONE).orEmpty(),
-            destinationLat = getDouble(FIELD_DEST_LAT) ?: getLong(FIELD_DEST_LAT)?.toDouble(),
-            destinationLng = getDouble(FIELD_DEST_LNG) ?: getLong(FIELD_DEST_LNG)?.toDouble(),
-            currentLat = getDouble(FIELD_CURRENT_LAT) ?: getLong(FIELD_CURRENT_LAT)?.toDouble(),
-            currentLng = getDouble(FIELD_CURRENT_LNG) ?: getLong(FIELD_CURRENT_LNG)?.toDouble(),
-            statusStep = resolvedStatusStep
-        )
-    }
+    // ─── Private helpers ──────────────────────────────────────────────────────
 
     private fun resolveOrderStatusStep(status: String, storedStep: Int?): Int {
-        val normalizedStatus = status
-            .trim()
-            .lowercase(Locale.ENGLISH)
-            .replace("_", " ")
-            .replace("-", " ")
-
-        val derivedStep = when {
-            normalizedStatus.contains("deliver") || normalizedStatus.contains("complete") -> 3
-            normalizedStatus.contains("transit") ||
-                normalizedStatus.contains("shipping") ||
-                normalizedStatus.contains("shipped") ||
-                normalizedStatus.contains("out for delivery") -> 2
-            normalizedStatus.contains("pick") || normalizedStatus.contains("dispatch") -> 1
+        val normalized = status.trim().lowercase(Locale.ENGLISH)
+            .replace("_", " ").replace("-", " ")
+        val derived = when {
+            normalized.contains("deliver") || normalized.contains("complete") -> 3
+            normalized.contains("transit") || normalized.contains("shipping") ||
+                    normalized.contains("shipped") || normalized.contains("out for delivery") -> 2
+            normalized.contains("pick") || normalized.contains("dispatch") -> 1
             else -> 0
         }
-
-        return maxOf(storedStep?.coerceIn(0, 3) ?: 0, derivedStep)
+        return maxOf(storedStep?.coerceIn(0, 3) ?: 0, derived)
     }
 
     private fun normalizeOrderStatusLabel(status: String, resolvedStep: Int): String {
@@ -716,63 +404,42 @@ class CheckoutSharedViewModel : ViewModel() {
         }
     }
 
-    private fun userDocument(uid: String) = firestore.collection(USERS_COLLECTION).document(uid)
+    private fun formatApiDate(raw: String): String {
+        return runCatching {
+            // Backend sends "yyyy-MM-dd"; convert to "MMM dd, yyyy"
+            val parsed = SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).parse(raw)!!
+            SimpleDateFormat("MMM dd, yyyy", Locale.ENGLISH).format(parsed)
+        }.getOrDefault(raw)
+    }
+
+    private fun formatApiTotal(amount: Double): String {
+        val formatter = DecimalFormat("#,##0.00")
+        return "EGP ${formatter.format(amount)}"
+    }
 
     private fun formatPrice(price: Double): String {
         val formatter = DecimalFormat("#,##0.##")
         return "EGP ${formatter.format(price)}"
     }
 
-    private fun clearFirestoreListeners() {
-        addressListenerRegistration?.remove()
-        paymentListenerRegistration?.remove()
-        orderListenerRegistration?.remove()
-        addressListenerRegistration = null
-        paymentListenerRegistration = null
-        orderListenerRegistration = null
+    private fun normalizeAddresses(items: List<AddressBookItem>): List<AddressBookItem> {
+        val valid = items.filter { isAddressValid(it) }
+        if (valid.isEmpty()) return initialAddresses
+        val defaultId = valid.firstOrNull { it.isDefault }?.id ?: valid.first().id
+        val selectedId = valid.firstOrNull { it.isSelected }?.id ?: defaultId
+        return valid.map { it.copy(isDefault = it.id == defaultId, isSelected = it.id == selectedId) }
     }
 
-    override fun onCleared() {
-        super.onCleared()
-        clearFirestoreListeners()
-        auth.removeAuthStateListener(authStateListener)
+    private fun normalizePaymentMethods(items: List<PaymentMethodItem>): List<PaymentMethodItem> {
+        val valid = items.filter { isPaymentMethodValid(it) }
+        if (valid.isEmpty()) return initialPaymentMethods
+        val defaultId = valid.firstOrNull { it.isDefault }?.id ?: valid.first().id
+        val selectedId = valid.firstOrNull { it.isSelected }?.id ?: defaultId
+        return valid.map { it.copy(isDefault = it.id == defaultId, isSelected = it.id == selectedId) }
     }
 
-    companion object {
-        private const val USERS_COLLECTION = "users"
-        private const val ADDRESS_BOOK_COLLECTION = "address_book"
-        private const val PAYMENT_METHODS_COLLECTION = "payment_methods"
-        private const val ORDERS_COLLECTION = "orders"
-
-        private const val FIELD_ID = "id"
-        private const val FIELD_TITLE = "title"
-        private const val FIELD_ADDRESS = "address"
-        private const val FIELD_LATITUDE = "latitude"
-        private const val FIELD_LONGITUDE = "longitude"
-        private const val FIELD_IS_DEFAULT = "isDefault"
-        private const val FIELD_IS_SELECTED = "isSelected"
-        private const val FIELD_UPDATED_AT = "updatedAt"
-        private const val FIELD_BRAND = "brand"
-        private const val FIELD_HOLDER_NAME = "holderName"
-        private const val FIELD_LAST_FOUR = "lastFour"
-        private const val FIELD_ORDER_ID = "orderId"
-        private const val FIELD_DATE = "date"
-        private const val FIELD_STATUS = "status"
-        private const val FIELD_TOTAL = "total"
-        private const val FIELD_ITEM_TITLE = "itemTitle"
-        private const val FIELD_ITEM_SIZE = "itemSize"
-        private const val FIELD_ITEM_IMAGE_URL = "itemImageUrl"
-        private const val FIELD_ITEM_PRICE = "itemPrice"
-        private const val FIELD_REVIEW_RATING = "reviewRating"
-        private const val FIELD_REVIEW_COMMENT = "reviewComment"
-        private const val FIELD_CUSTOMER_NAME = "customerName"
-        private const val FIELD_PHONE = "phone"
-        private const val FIELD_DEST_LAT = "destinationLat"
-        private const val FIELD_DEST_LNG = "destinationLng"
-        private const val FIELD_CURRENT_LAT = "currentLat"
-        private const val FIELD_CURRENT_LNG = "currentLng"
-        private const val FIELD_STATUS_STEP = "statusStep"
-        private const val FIELD_CREATED_AT = "createdAt"
-        private const val FIELD_CREATED_AT_EPOCH = "createdAtEpoch"
+    private fun isValidCoordinates(latitude: Double?, longitude: Double?): Boolean {
+        if (latitude == null || longitude == null) return false
+        return latitude in -90.0..90.0 && longitude in -180.0..180.0
     }
 }

@@ -69,6 +69,21 @@ class OrdersFragment : Fragment() {
             allOrders = orders
             renderOrders()
         }
+
+        // Show/hide a loading indicator while orders are being fetched
+        sharedViewModel.isLoadingOrders.observe(viewLifecycleOwner) { isLoading ->
+            binding.emptyState.visibility = when {
+                isLoading -> View.GONE
+                allOrders.isEmpty() -> View.VISIBLE
+                else -> View.GONE
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Refresh from the backend every time the screen becomes visible
+        sharedViewModel.fetchOrders()
     }
 
     private fun renderOrders() {
@@ -120,9 +135,9 @@ class OrdersFragment : Fragment() {
         val derivedStep = when {
             normalizedStatus.contains("deliver") || normalizedStatus.contains("complete") -> 3
             normalizedStatus.contains("transit") ||
-                normalizedStatus.contains("shipping") ||
-                normalizedStatus.contains("shipped") ||
-                normalizedStatus.contains("out for delivery") -> 2
+                    normalizedStatus.contains("shipping") ||
+                    normalizedStatus.contains("shipped") ||
+                    normalizedStatus.contains("out for delivery") -> 2
             normalizedStatus.contains("pick") || normalizedStatus.contains("dispatch") -> 1
             else -> 0
         }

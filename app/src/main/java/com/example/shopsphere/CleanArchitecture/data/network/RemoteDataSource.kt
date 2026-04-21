@@ -141,6 +141,14 @@ class RemoteDataSource @Inject constructor(
         apiService.getAllFavorites()
     }
 
+    override suspend fun checkout(): Result<CheckoutResponseDto> = runCatching {
+        apiService.checkout()
+    }
+
+    override suspend fun getMyOrders(): Result<List<MyOrderDto>> = runCatching {
+        apiService.getMyOrders()
+    }
+
     private suspend fun fetchProductsFromBackend(): List<ProductResult> = coroutineScope {
         val categorizedResults = CATEGORY_ENDPOINTS.map { endpoint ->
             async {

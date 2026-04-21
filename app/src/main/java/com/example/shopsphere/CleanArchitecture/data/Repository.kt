@@ -6,6 +6,8 @@ import com.example.shopsphere.CleanArchitecture.data.network.AuthResponseDto
 import com.example.shopsphere.CleanArchitecture.data.network.IRemoteDataSource
 import com.example.shopsphere.CleanArchitecture.utils.Constant
 import com.example.shopsphere.CleanArchitecture.domain.DomainCartItem
+import com.example.shopsphere.CleanArchitecture.domain.DomainCheckoutResult
+import com.example.shopsphere.CleanArchitecture.domain.DomainOrder
 import com.example.shopsphere.CleanArchitecture.domain.DomainProductResult
 import com.example.shopsphere.CleanArchitecture.domain.IRepository
 import javax.inject.Inject
@@ -269,6 +271,30 @@ class Repository @Inject constructor(
     }
 
     override fun currentUserId(): String? = sharedPreferencesHelper.getUid().ifBlank { null }
+
+    override suspend fun checkout(): Result<DomainCheckoutResult> {
+        return remoteDataSource.checkout().mapCatching { response ->
+            DomainCheckoutResult(
+                success = response.success == true,
+                orderId = response.orderId,
+                message = response.message
+            )
+        }
+    }
+
+    override suspend fun getMyOrders(): Result<List<DomainOrder>> {
+        return remoteDataSource.getMyOrders().mapCatching { orders ->
+            orders.map { dto ->
+                DomainOrder(
+                    orderId = dto.orderId,
+                    totalAmount = dto.totalAmount,
+                    date = dto.date.orEmpty(),
+                    paymentStatus = dto.paymentStatus.orEmpty(),
+                    orderStatus = dto.orderStatus.orEmpty()
+                )
+            }
+        }
+    }
 
     companion object {
         private const val FAVORITES_TTL_MILLIS = 30_000L

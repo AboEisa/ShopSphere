@@ -19,4 +19,6 @@ interface IRemoteDataSource {
     suspend fun addToFavorite(productId: Int): Result<FavoriteMutationResponseDto>
     suspend fun removeFromFavorite(productId: Int): Result<FavoriteMutationResponseDto>
     suspend fun getAllFavorites(): Result<List<FavoriteItemDto>>
+    suspend fun checkout(): Result<CheckoutResponseDto>
+    suspend fun getMyOrders(): Result<List<MyOrderDto>>
 }

@@ -68,4 +68,11 @@ interface ApiServices {
 
     @GET("GetAllFavorites")
     suspend fun getAllFavorites(): List<FavoriteItemDto>
+
+    // POST /ChecKout — body-less, server reads the authenticated user's cart.
+    @POST("ChecKout")
+    suspend fun checkout(): CheckoutResponseDto
+
+    @GET("MyOrders")
+    suspend fun getMyOrders(): List<MyOrderDto>
 }

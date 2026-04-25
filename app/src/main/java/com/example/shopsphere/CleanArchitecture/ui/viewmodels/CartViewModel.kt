@@ -24,27 +24,14 @@ class CartViewModel @Inject constructor(
     private val repository: IRepository,
     private val sharedPreference: SharedPreference
 ) : ViewModel() {
+    // ─── State holders ────────────────────────────────────────────────────────
+    // IMPORTANT: All fields must be declared BEFORE the init block. The init
+    // block calls loadCartProducts() which launches a coroutine on Dispatchers.IO;
+    // if any of these fields are still uninitialized when that coroutine runs,
+    // accessing them throws NullPointerException (this was the post-login /
+    // post-rebuild crash).
     private val _cartItemCount = MutableStateFlow(0)
     val cartItemCount: StateFlow<Int> = _cartItemCount
-
-    init {
-        loadCartProducts()
-    }
-
-    private fun updateCartItemCount(products: List<PresentationProductResult>) {
-        _cartItemCount.value = products.sumOf { it.quantity }
-    }
-
-    fun refreshCartCount() {
-        viewModelScope.launch {
-            try {
-                val count = repository.getCartItemCount()
-                _cartItemCount.value = count
-            } catch (e: Exception) {
-                Log.e("CartViewModel", "refreshCartCount error", e)
-            }
-        }
-    }
 
     private val _cartProducts = MutableLiveData<List<PresentationProductResult>>()
     val cartProducts: LiveData<List<PresentationProductResult>> = _cartProducts
@@ -57,6 +44,37 @@ class CartViewModel @Inject constructor(
 
     private val _totalPrice = MutableLiveData<Double>()
     val totalPrice: LiveData<Double> = _totalPrice
+
+    init {
+        loadCartProducts()
+    }
+
+    private fun updateCartItemCount(products: List<PresentationProductResult>) {
+        // Badge shows the number of unique line items (products) in the cart,
+        // NOT the sum of quantities. Multiple units of one product = one badge "1".
+        _cartItemCount.value = products.size
+    }
+
+    fun refreshCartCount() {
+        viewModelScope.launch {
+            try {
+                // Prefer the accurate list-based count so the badge always reflects
+                // unique product lines. If the list hasn't loaded yet, fall back to
+                // the repository count and clamp to 0 on any failure.
+                val cached = _cartProducts.value
+                if (cached != null) {
+                    _cartItemCount.value = cached.size
+                } else {
+                    val count = repository.getCartItemCount()
+                    _cartItemCount.value = count.coerceAtLeast(0)
+                }
+            } catch (e: Exception) {
+                Log.e("CartViewModel", "refreshCartCount error", e)
+                // Hide the badge on network failure rather than showing a stale count
+                _cartItemCount.value = _cartProducts.value?.size ?: 0
+            }
+        }
+    }
 
     fun loadCartProducts() {
         viewModelScope.launch(Dispatchers.IO) {

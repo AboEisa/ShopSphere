@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Floating rating pill drawn over the product image. Uses 70% black so the
+     star + rating stay legible regardless of the photo behind it. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <corners android:radius="10dp" />
+    <solid android:color="#B3000000" />
+</shape>

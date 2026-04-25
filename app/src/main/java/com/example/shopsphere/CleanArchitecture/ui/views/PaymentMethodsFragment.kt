@@ -63,7 +63,7 @@ class PaymentMethodsFragment : Fragment() {
             val brand = bundle.getString("card_brand").orEmpty()
             val wasSaved = sharedViewModel.setCardLastFour(
                 lastFour = lastFour,
-                holderName = holderName.ifBlank { "ShopSphere User" },
+                holderName = holderName.ifBlank { "YallaShop User" },
                 brand = brand.ifBlank { "CARD" }
             )
             if (!wasSaved) {

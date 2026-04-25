@@ -41,5 +41,7 @@ data class OrderHistoryItem(
     val currentLng: Double? = null,
     val statusStep: Int = 0,
     // Driver/courier name from the backend; null means not yet assigned
-    val driverName: String? = null
+    val driverName: String? = null,
+    // Payment status from /MyOrders (e.g. "Paid", "Pending"). Null = not provided.
+    val paymentStatus: String? = null
 )

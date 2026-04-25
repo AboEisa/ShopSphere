@@ -12,8 +12,6 @@ import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
 import com.example.shopsphere.CleanArchitecture.utils.showSuccessDialog
 import com.example.shopsphere.R
 import com.example.shopsphere.databinding.FragmentMyDetailsBinding
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.UserProfileChangeRequest
 import dagger.hilt.android.AndroidEntryPoint
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -25,9 +23,6 @@ class MyDetailsFragment : Fragment() {
 
     private var _binding: FragmentMyDetailsBinding? = null
     private val binding get() = _binding!!
-
-    @Inject
-    lateinit var firebaseAuth: FirebaseAuth
 
     @Inject
     lateinit var sharedPreference: SharedPreference
@@ -72,18 +67,37 @@ class MyDetailsFragment : Fragment() {
     }
 
     private fun bindUserData() {
-        val user = firebaseAuth.currentUser
         val localName = sharedPreference.getProfileName()
         val localEmail = sharedPreference.getProfileEmail()
         val localPhone = sharedPreference.getProfilePhone()
         val localBirthDate = sharedPreference.getProfileBirthDate()
         val localGender = sharedPreference.getProfileGender()
 
-        binding.editFullName.setText(localName.ifBlank { user?.displayName.orEmpty() })
-        binding.editEmail.setText(localEmail.ifBlank { user?.email.orEmpty() })
+        val resolvedName = localName.ifBlank { deriveNameFromEmail(localEmail).orEmpty() }
+
+        binding.editFullName.setText(resolvedName)
+        binding.editEmail.setText(localEmail)
         binding.editPhone.setText(localPhone)
         binding.editBirthDate.setText(localBirthDate)
         binding.editGender.setText(localGender, false)
+
+        if (resolvedName.isNotBlank() && localName.isBlank()) {
+            sharedPreference.saveProfile(
+                name = resolvedName,
+                email = localEmail,
+                phone = localPhone
+            )
+        }
+    }
+
+    private fun deriveNameFromEmail(email: String): String? {
+        val local = email.substringBefore('@', "").trim()
+        if (local.isBlank()) return null
+        return local.split('.', '_', '-', '+')
+            .map { chunk -> chunk.trimEnd { it.isDigit() } }
+            .filter { it.isNotBlank() }
+            .joinToString(" ") { chunk -> chunk.replaceFirstChar { c -> c.uppercaseChar() } }
+            .ifBlank { null }
     }
 
     private fun saveProfileChanges() {
@@ -112,12 +126,6 @@ class MyDetailsFragment : Fragment() {
 
         sharedPreference.saveProfile(name = name, email = email, phone = phone)
         sharedPreference.saveProfileExtras(birthDate = birthDate, gender = gender)
-
-        val user = firebaseAuth.currentUser
-        if (user != null && name != user.displayName) {
-            val updates = UserProfileChangeRequest.Builder().setDisplayName(name).build()
-            user.updateProfile(updates)
-        }
 
         showSuccessDialog(
             title = getString(R.string.account_changes_saved),

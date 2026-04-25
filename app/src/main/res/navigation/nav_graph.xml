@@ -113,7 +113,15 @@
         android:id="@+id/accountFragment"
         android:name="com.example.shopsphere.CleanArchitecture.ui.views.AccountFragment"
         android:label="fragment_account"
-        tools:layout="@layout/fragment_account" />
+        tools:layout="@layout/fragment_account" >
+        <action
+            android:id="@+id/action_accountFragment_to_chatBotFragment"
+            app:destination="@id/chatBotFragment"
+            app:enterAnim="@anim/animation"
+            app:exitAnim="@anim/animation2"
+            app:popEnterAnim="@anim/animation3"
+            app:popExitAnim="@anim/animation4" />
+    </fragment>
     <fragment
         android:id="@+id/faqsFragment"
         android:name="com.example.shopsphere.CleanArchitecture.ui.views.FaqsFragment"
@@ -142,6 +150,11 @@
             app:popEnterAnim="@anim/animation3"
             app:popExitAnim="@anim/animation4" />
     </fragment>
+    <fragment
+        android:id="@+id/chatBotFragment"
+        android:name="com.example.shopsphere.CleanArchitecture.ui.views.ChatBotFragment"
+        android:label="fragment_chatbot"
+        tools:layout="@layout/fragment_chatbot" />
     <fragment
         android:id="@+id/myDetailsFragment"
         android:name="com.example.shopsphere.CleanArchitecture.ui.views.MyDetailsFragment"

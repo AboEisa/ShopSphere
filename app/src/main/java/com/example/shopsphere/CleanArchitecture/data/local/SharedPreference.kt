@@ -97,6 +97,14 @@ class SharedPreference @Inject constructor(
 
     fun getDeliveryAddress(): String = sharedPref.getString("delivery_address", "") ?: ""
 
+    fun setLanguage(languageTag: String) {
+        sharedPref.edit().putString("app_language", languageTag).apply()
+    }
+
+    fun getLanguage(): String {
+        return sharedPref.getString("app_language", "") ?: ""
+    }
+
     fun saveNotificationPreference(key: String, enabled: Boolean) {
         sharedPref.edit().putBoolean("notification_pref_$key", enabled).apply()
     }

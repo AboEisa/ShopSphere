@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">YALAASHOP</string>
+    <string name="app_name">YallaShop</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="details">Details</string>
@@ -10,7 +10,7 @@
     <string name="title_activity_maps">MapsActivity</string>
     <string name="account">Account</string>
     <string name="account_guest_user">Guest User</string>
-    <string name="account_signed_in_as">Signed in to YALAASHOP</string>
+    <string name="account_signed_in_as">Signed in to YallaShop</string>
     <string name="account_general">GENERAL</string>
     <string name="account_support">SUPPORT</string>
     <string name="account_my_orders">My Orders</string>
@@ -19,7 +19,7 @@
     <string name="account_payment_methods">Payment Methods</string>
     <string name="account_notifications">Notifications</string>
     <string name="account_faqs">FAQs</string>
-    <string name="account_help_center">Help Center</string>
+    <string name="account_help_center">Aria</string>
     <string name="account_logout">Logout</string>
     <string name="account_coming_soon">Coming soon</string>
     <string name="account_notifications_coming_soon">Notifications coming soon</string>
@@ -29,6 +29,11 @@
     <string name="orders_completed">Completed</string>
     <string name="orders_track_order">Track Order</string>
     <string name="orders_leave_review">Leave Review</string>
+    <string name="order_payment_label">Payment</string>
+    <string name="order_driver_label">Driver</string>
+    <string name="order_total_label">Total amount</string>
+    <string name="order_view_details">View details</string>
+    <string name="order_value_pending">—</string>
     <string name="orders_no_ongoing_title">No Ongoing Orders!</string>
     <string name="orders_no_ongoing_message">You don\'t have any ongoing orders at this time.</string>
     <string name="orders_no_completed_title">No Completed Orders!</string>
@@ -151,7 +156,7 @@
     <string name="help_support_email">omarncc00@gmail.com</string>
     <string name="help_support_phone_display">01018613426</string>
     <string name="help_support_phone_raw">01018613426</string>
-    <string name="help_email_subject">YALAASHOP Support Request</string>
+    <string name="help_email_subject">YallaShop Support Request</string>
     <string name="help_email_body_template">Hello Support,\n\nI need help with:\n- \n\nOrder ID (optional): \n\nThanks.</string>
     <string name="help_email_chooser_title">Send support email</string>
     <string name="help_open_mail_failed">No email app found. Support email copied to clipboard.</string>
@@ -360,7 +365,7 @@
     <string name="onboard_saved_title">Beauty &amp; fashion picks</string>
     <string name="onboard_saved_subtitle">Curated products ready for your cart</string>
     <string name="onboard_saved_rating">4.9 top rated</string>
-    <string name="onboard_brand_chip">YALAASHOP</string>
+    <string name="onboard_brand_chip">YallaShop</string>
     <string name="onboard_tracking_chip">LIVE TRACKING</string>
     <string name="onboard_price_chip">EGP 129</string>
     <string name="onboard_front_title">Cart, checkout, and delivery in one flow</string>
@@ -380,7 +385,7 @@
     <string name="onboard_phone_title">Shop the look</string>
     <string name="onboard_phone_subtitle">Online checkout in seconds</string>
     <string name="onboard_add_to_cart">Add to Cart</string>
-    <string name="onboard_bag_chip">YALAASHOP</string>
+    <string name="onboard_bag_chip">YallaShop</string>
     <string name="onboard_bag_title">Everything in one bag</string>
     <string name="onboard_bag_subtitle">Deals, wishlist, checkout, and delivery all moving together.</string>
     <string name="onboard_card_deal_title">Flash Sale</string>
@@ -409,5 +414,72 @@
     <string name="notifications_screen_active">You are already on Notifications.</string>
     <string name="validation_phone_required">please enter your phone number</string>
 
+    <!-- Account screen additions -->
+    <string name="account_title">Account</string>
+    <string name="account_addresses">Addresses</string>
+    <string name="account_track_order">Track Order</string>
+    <string name="account_about">About</string>
+    <string name="account_language">Language</string>
+    <string name="account_section_account">Account</string>
+    <string name="account_section_orders">Orders</string>
+    <string name="account_section_support">Support</string>
+    <string name="account_section_danger">Danger Zone</string>
+    <string name="account_about_title">About YallaShop</string>
+    <string name="account_about_message">YallaShop — your friendly online shopping companion. Version 1.0.</string>
+    <string name="account_avatar_content_description">Profile avatar</string>
+
+    <!-- Language dialog -->
+    <string name="language_dialog_title">Choose language</string>
+    <string name="language_dialog_subtitle">Select your preferred language</string>
+    <string name="language_english">English</string>
+    <string name="language_arabic">العربية</string>
+
+    <!-- Aria — ShopSphere shopping assistant -->
+    <string name="chatbot_title">Aria</string>
+    <string name="chatbot_subtitle">Online • Here to help</string>
+    <string name="chatbot_input_hint">Ask Aria anything…</string>
+    <string name="chatbot_send">Send message</string>
+    <string name="chatbot_empty_title">Hi, I\'m Aria</string>
+    <string name="chatbot_empty_subtitle">Your ShopSphere assistant — orders, returns, deals, anything.</string>
+    <string name="chatbot_chip_track">Track my order</string>
+    <string name="chatbot_chip_returns">Returns policy</string>
+    <string name="chatbot_chip_deals">Deals for me</string>
+    <string name="chatbot_chip_human">Talk to human</string>
+    <string name="chatbot_open">Open Aria</string>
+
+    <!-- Notifications (Room-seeded) -->
+    <string name="notifications_empty_title">No notifications yet</string>
+    <string name="notifications_empty_subtitle">We will let you know when something arrives.</string>
+    <string name="notif_order_placed_title">Order placed successfully</string>
+    <string name="notif_order_placed_body">Order #%1$s received. We will ping you with tracking updates.</string>
+    <string name="notif_order_status_title">Order #%1$s · %2$s</string>
+    <string name="notif_order_status_body_packing">Your order is being packed.</string>
+    <string name="notif_order_status_body_picked">Your order has been picked up.</string>
+    <string name="notif_order_status_body_transit">Your order is on the way.</string>
+    <string name="notif_order_status_body_delivered">Your order has been delivered.</string>
+    <string name="notif_chat_reply_title">Aria replied</string>
+    <string name="notif_chat_reply_body">Tap to continue the conversation.</string>
+
+    <!-- Floating bottom navigation labels -->
+    <string name="nav_home">Home</string>
+    <string name="nav_favorites">Favorites</string>
+    <string name="nav_cart">Cart</string>
+    <string name="nav_orders">Orders</string>
+    <string name="nav_account">Account</string>
+
+    <!-- My Orders polish -->
+    <string name="orders_empty_title">No orders yet</string>
+    <string name="orders_empty_cta">Start Shopping</string>
+    <string name="orders_items_count">%1$d items</string>
+    <string name="orders_item_count">%1$d item</string>
+    <string name="orders_status_packing">Packing</string>
+    <string name="orders_status_picked">Picked</string>
+    <string name="orders_status_transit">In Transit</string>
+    <string name="orders_status_delivered">Delivered</string>
+    <string name="orders_field_missing">—</string>
+
+    <!-- Aria — chatbot legacy aliases -->
+    <string name="chatbot_title_yallashop">Aria</string>
+    <string name="chatbot_bot_name">Aria</string>
 
 </resources>

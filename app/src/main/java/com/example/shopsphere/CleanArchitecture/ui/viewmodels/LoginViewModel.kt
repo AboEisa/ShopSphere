@@ -33,7 +33,7 @@ class LoginViewModel @Inject constructor(
 
             is LoginUiEvent.LoginClicked -> login()
 
-            is LoginUiEvent.GoogleToken -> loginWithGoogle(event.idToken)
+            is LoginUiEvent.GoogleToken -> loginWithGoogle(event.idToken, event.displayName, event.email)
 
             is LoginUiEvent.FacebookToken -> loginWithFacebook(event.accessToken)
         }
@@ -45,18 +45,40 @@ class LoginViewModel @Inject constructor(
         val result = loginUseCase(email, password)
         _uiState.value = if (result.isSuccess) {
             markLoggedIn()
+            // Persist the email entered on the login form so the Account header
+            // / My Details / Checkout can render real data without a Firebase
+            // round-trip. The backend AuthResponseDto doesn't include name/email,
+            // so the form input is the source of truth.
+            prefs.saveProfile(
+                name = prefs.getProfileName(),
+                email = email.trim(),
+                phone = prefs.getProfilePhone()
+            )
             LoginUiState.Success
         } else {
             LoginUiState.Error(result.exceptionOrNull()?.message ?: "Unknown error")
         }
     }
 
-    private fun loginWithGoogle(idToken: String) = viewModelScope.launch {
+    private fun loginWithGoogle(
+        idToken: String,
+        displayName: String?,
+        googleEmail: String?
+    ) = viewModelScope.launch {
         _uiState.value = LoginUiState.Loading
 
         val result = googleLoginUseCase(idToken)
         _uiState.value = if (result.isSuccess) {
             markLoggedIn()
+            val resolvedName = displayName?.trim().orEmpty()
+                .ifBlank { prefs.getProfileName() }
+            val resolvedEmail = googleEmail?.trim().orEmpty()
+                .ifBlank { prefs.getProfileEmail() }
+            prefs.saveProfile(
+                name = resolvedName,
+                email = resolvedEmail,
+                phone = prefs.getProfilePhone()
+            )
             LoginUiState.Success
         } else {
             LoginUiState.Error(result.exceptionOrNull()?.message ?: "Unknown error")

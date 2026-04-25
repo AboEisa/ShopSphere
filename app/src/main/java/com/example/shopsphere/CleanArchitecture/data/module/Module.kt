@@ -1,11 +1,16 @@
 package com.example.shopsphere.CleanArchitecture.data.module
 
+import android.content.Context
+import androidx.room.Room
 import com.example.shopsphere.BuildConfig
 import com.example.shopsphere.CleanArchitecture.data.Repository
 import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
+import com.example.shopsphere.CleanArchitecture.data.local.notifications.AppDatabase
+import com.example.shopsphere.CleanArchitecture.data.local.notifications.NotificationDao
 import com.example.shopsphere.CleanArchitecture.data.network.ApiServices
 import com.example.shopsphere.CleanArchitecture.data.network.DirectionsApiServices
 import com.example.shopsphere.CleanArchitecture.data.network.DummyApiServices
+import com.example.shopsphere.CleanArchitecture.data.network.GeminiApiService
 import com.example.shopsphere.CleanArchitecture.data.network.IRemoteDataSource
 import com.example.shopsphere.CleanArchitecture.data.network.RemoteDataSource
 import com.example.shopsphere.CleanArchitecture.domain.IRepository
@@ -16,11 +21,13 @@ import com.example.shopsphere.CleanArchitecture.domain.auth.RegisterUseCase
 import com.example.shopsphere.CleanArchitecture.utils.Constant.Companion.BASE_URL
 import com.example.shopsphere.CleanArchitecture.utils.Constant.Companion.DIRECTIONS_BASE_URL
 import com.example.shopsphere.CleanArchitecture.utils.Constant.Companion.DUMMY_BASE_URL
+import com.example.shopsphere.CleanArchitecture.utils.Constant.Companion.GEMINI_BASE_URL
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import okhttp3.Dns
 import okhttp3.Interceptor
@@ -179,6 +186,42 @@ object Module {
     fun getDirectionsApiServices(@Named("directionsRetrofit") retrofit: Retrofit): DirectionsApiServices =
         retrofit.create(DirectionsApiServices::class.java)
 
+    // ─── Gemini (Sphere AI chatbot) ──────────────────────────────────────────
+    // Gemini needs a plain OkHttpClient without our Bearer/Ngrok interceptors —
+    // Google's endpoint rejects the `ngrok-skip-browser-warning` header noise.
+    @Singleton
+    @Provides
+    @Named("geminiOkHttpClient")
+    fun provideGeminiOkHttpClient(): OkHttpClient =
+        OkHttpClient.Builder()
+            .connectTimeout(60, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(60, TimeUnit.SECONDS)
+            .apply {
+                if (BuildConfig.DEBUG) {
+                    addInterceptor(HttpLoggingInterceptor().apply {
+                        level = HttpLoggingInterceptor.Level.BODY
+                    })
+                }
+            }
+            .build()
+
+    @Singleton
+    @Provides
+    @Named("geminiRetrofit")
+    fun provideGeminiRetrofit(
+        @Named("geminiOkHttpClient") client: OkHttpClient
+    ): Retrofit = Retrofit.Builder()
+        .addConverterFactory(GsonConverterFactory.create())
+        .client(client)
+        .baseUrl(GEMINI_BASE_URL)
+        .build()
+
+    @Singleton
+    @Provides
+    fun getGeminiApiService(@Named("geminiRetrofit") retrofit: Retrofit): GeminiApiService =
+        retrofit.create(GeminiApiService::class.java)
+
     @Singleton
     @Provides
     fun getRemoteDataSource(apiServices: ApiServices): IRemoteDataSource =
@@ -210,4 +253,16 @@ object Module {
 
     @Provides
     fun provideFacebookLoginUseCase(repo: IRepository) = FacebookLoginUseCase(repo)
+
+    // ─── Room (notifications) ────────────────────────────────────────────────
+    @Provides
+    @Singleton
+    fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase =
+        Room.databaseBuilder(context, AppDatabase::class.java, AppDatabase.DB_NAME)
+            .fallbackToDestructiveMigration()
+            .build()
+
+    @Provides
+    @Singleton
+    fun provideNotificationDao(db: AppDatabase): NotificationDao = db.notificationDao()
 }

@@ -19,7 +19,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.navOptions
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.AuthUiState
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.RegisterViewModel
 import com.example.shopsphere.R
@@ -213,7 +212,16 @@ class RegisterFragment : Fragment() {
                     return@launch
                 }
 
-                viewModel.continueWithGoogle(googleIdTokenCredential.idToken)
+                val resolvedDisplayName = googleIdTokenCredential.displayName
+                    ?: listOfNotNull(
+                        googleIdTokenCredential.givenName,
+                        googleIdTokenCredential.familyName
+                    ).joinToString(" ").ifBlank { null }
+                viewModel.continueWithGoogle(
+                    idToken = googleIdTokenCredential.idToken,
+                    displayName = resolvedDisplayName,
+                    email = googleIdTokenCredential.id
+                )
             } catch (e: GetCredentialException) {
                 Log.e(TAG, "Google sign-in failed", e)
                 showIdleState()
@@ -293,18 +301,15 @@ class RegisterFragment : Fragment() {
     }
 
     private fun navigateToHome() {
-        val navController = findNavController()
-        if (navController.currentDestination?.id != R.id.registerFragment) return
-        navController.navigate(
-            R.id.homeFragment,
-            null,
-            navOptions {
-                popUpTo(R.id.loginFragment) {
-                    inclusive = true
-                }
-                launchSingleTop = true
-            }
-        )
+        if (!isAdded || _binding == null) return
+        // Match LoginFragment: restart MainActivity targeting Home. This is the
+        // safest path because it also bypasses onboarding in the graph and
+        // avoids popUpTo errors when the login destination isn't on the back
+        // stack (e.g. user landed on Register directly).
+        val intent = Intent(requireContext(), MainActivity::class.java)
+        intent.putExtra(MainActivity.EXTRA_OPEN_HOME, true)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
     }
 
     private fun toast(message: String) {

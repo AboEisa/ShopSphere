@@ -16,6 +16,7 @@ import com.example.shopsphere.CleanArchitecture.ui.models.PresentationProductRes
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.CartViewModel
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.CheckoutSharedViewModel
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.SharedCartViewModel
+import com.example.shopsphere.CleanArchitecture.utils.formatEgpPrice
 import com.example.shopsphere.CleanArchitecture.utils.showConfirmDialog
 import com.example.shopsphere.CleanArchitecture.utils.showSuccessDialog
 import com.example.shopsphere.R
@@ -79,17 +80,10 @@ class CheckoutFragment : Fragment() {
 
     private fun observeViewModel() {
         sharedViewModel.selectedAddress.observe(viewLifecycleOwner) { selected ->
-            if (selected != null) {
-                binding.txtHome.text = selected.title
-                binding.txtAddressDetail.text = selected.address
-                // Show the delivery phone directly under the address
-                if (selected.phone.isNotBlank()) {
-                    binding.txtAddressPhone.text = selected.phone
-                    binding.txtAddressPhone.visibility = android.view.View.VISIBLE
-                } else {
-                    binding.txtAddressPhone.visibility = android.view.View.GONE
-                }
-            }
+            binding.txtHome.text = selected?.title?.takeIf { it.isNotBlank() } ?: "N/A"
+            binding.txtAddressDetail.text = selected?.address?.takeIf { it.isNotBlank() } ?: "N/A"
+            binding.txtAddressPhone.text = selected?.phone?.takeIf { it.isNotBlank() } ?: "N/A"
+            binding.txtAddressPhone.visibility = android.view.View.VISIBLE
         }
 
         sharedViewModel.selectedPaymentMethod.observe(viewLifecycleOwner) { selected ->
@@ -147,49 +141,57 @@ class CheckoutFragment : Fragment() {
                 val customerName = sharedPreference.getProfileName().ifBlank {
                     user?.displayName?.takeIf { it.isNotBlank() } ?: getString(R.string.account_guest_user)
                 }
-                // Phone is now taken from the delivery address inside placeOrder.
-                val placedOrderResult = sharedViewModel.placeOrder(
-                    total = binding.txtOrderTotal.text.toString(),
-                    customerName = customerName,
-                    phone = "",
-                    cartItems = currentCartItems
-                )
-                val placedOrder = placedOrderResult.getOrNull()
-                if (placedOrder == null) {
-                    Toast.makeText(
-                        requireContext(),
-                        placedOrderResult.exceptionOrNull()?.message
-                            ?: getString(R.string.validation_checkout_failed),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    return@showConfirmDialog
-                }
+                // Disable the button while the checkout API is in flight, so the
+                // user can't trigger it twice and we don't clear the cart until
+                // the backend confirms the order.
+                binding.btnCheckout.isEnabled = false
+                viewLifecycleOwner.lifecycleScope.launch {
+                    val placedOrderResult = sharedViewModel.placeOrder(
+                        total = binding.txtOrderTotal.text.toString(),
+                        customerName = customerName,
+                        phone = "",
+                        cartItems = currentCartItems
+                    )
+                    if (_binding == null || !isAdded) return@launch
+                    binding.btnCheckout.isEnabled = true
 
-                sharedPreference.clearCartProducts()
-                sharedCartViewModel.setCartItems(emptyList())
-                cartViewModel.clearRemoteCart()
+                    val placedOrder = placedOrderResult.getOrNull()
+                    if (placedOrder == null) {
+                        Toast.makeText(
+                            requireContext(),
+                            placedOrderResult.exceptionOrNull()?.message
+                                ?: getString(R.string.validation_checkout_failed),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        return@launch
+                    }
 
-                showSuccessDialog(
-                    title = getString(R.string.dialog_congratulations_title),
-                    message = getString(R.string.dialog_order_success_message),
-                    primaryText = getString(R.string.track_your_order)
-                ) {
-                    // Wait for fetchOrders() to return the real order from the backend,
-                    // then navigate with the real orderId (not "PENDING")
-                    val observer = object : Observer<List<com.example.shopsphere.CleanArchitecture.ui.models.OrderHistoryItem>> {
-                        override fun onChanged(orders: List<com.example.shopsphere.CleanArchitecture.ui.models.OrderHistoryItem>) {
-                            val realOrder = orders.firstOrNull { it.orderId != "PENDING" }
-                            if (realOrder != null) {
-                                sharedViewModel.orderHistory.removeObserver(this)
-                                if (findNavController().currentDestination?.id == R.id.checkoutFragment) {
-                                    val action = CheckoutFragmentDirections
-                                        .actionCheckoutFragmentToTrackOrderFragment(realOrder.orderId)
-                                    findNavController().navigate(action)
+                    sharedPreference.clearCartProducts()
+                    sharedCartViewModel.setCartItems(emptyList())
+                    cartViewModel.clearRemoteCart()
+
+                    showSuccessDialog(
+                        title = getString(R.string.dialog_congratulations_title),
+                        message = getString(R.string.dialog_order_success_message),
+                        primaryText = getString(R.string.track_your_order)
+                    ) {
+                        // Wait for fetchOrders() to return the real order from the backend,
+                        // then navigate with the real orderId (not "PENDING")
+                        val observer = object : Observer<List<com.example.shopsphere.CleanArchitecture.ui.models.OrderHistoryItem>> {
+                            override fun onChanged(orders: List<com.example.shopsphere.CleanArchitecture.ui.models.OrderHistoryItem>) {
+                                val realOrder = orders.firstOrNull { it.orderId != "PENDING" }
+                                if (realOrder != null) {
+                                    sharedViewModel.orderHistory.removeObserver(this)
+                                    if (findNavController().currentDestination?.id == R.id.checkoutFragment) {
+                                        val action = CheckoutFragmentDirections
+                                            .actionCheckoutFragmentToTrackOrderFragment(realOrder.orderId)
+                                        findNavController().navigate(action)
+                                    }
                                 }
                             }
                         }
+                        sharedViewModel.orderHistory.observe(viewLifecycleOwner, observer)
                     }
-                    sharedViewModel.orderHistory.observe(viewLifecycleOwner, observer)
                 }
             }
         }
@@ -272,10 +274,7 @@ class CheckoutFragment : Fragment() {
         return null
     }
 
-    private fun formatCurrency(value: Double): String {
-        val formatter = DecimalFormat("#,##0.00")
-        return "EGP ${formatter.format(value)}"
-    }
+    private fun formatCurrency(value: Double): String = formatEgpPrice(value)
 
     override fun onDestroyView() {
         super.onDestroyView()

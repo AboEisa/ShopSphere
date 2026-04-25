@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.example.shopsphere.CleanArchitecture.ui.models.PresentationProductResult
+import com.example.shopsphere.CleanArchitecture.utils.formatEgpPrice
 import com.example.shopsphere.R
 import com.example.shopsphere.databinding.ItemDetailsBinding
 
@@ -26,6 +27,18 @@ class DetailsAdapter(
 
     var products: MutableList<PresentationProductResult> = mutableListOf()
     private val selectedSizes = mutableMapOf<Int, String>()
+    private var favoriteIds: Set<Int> = emptySet()
+
+    /**
+     * Keeps the Details heart in sync with the canonical favorites set so the
+     * icon correctly shows red immediately after a toggle (and after any
+     * backend refetch). Called from the fragment observer.
+     */
+    fun updateFavoriteIds(ids: Set<Int>) {
+        if (ids == favoriteIds) return
+        favoriteIds = ids
+        notifyDataSetChanged()
+    }
 
     // Optimistic local quantity overrides keyed by "productId:size". null means
     // cart state confirmed by the ViewModel — fall back to real lookups.
@@ -55,7 +68,7 @@ class DetailsAdapter(
         fun bind(product: PresentationProductResult) {
             binding.apply {
                 productTitle.text = product.title
-                productPrice.text = "EGP ${"%,.0f".format(product.price)}"
+                productPrice.text = formatEgpPrice(product.price)
                 productDescription.text = product.description
                 rate.text = "${product.rating.rate}/5"
                 rateCount.text = root.context.getString(
@@ -239,9 +252,10 @@ class DetailsAdapter(
         }
 
         private fun updateFavoriteIcon(productId: Int) {
+            val isFav = productId in favoriteIds || (favoriteIds.isEmpty() && isFavorite(productId))
             val color = ContextCompat.getColor(
                 binding.root.context,
-                if (isFavorite(productId)) R.color.red else R.color.gray
+                if (isFav) R.color.red else R.color.gray
             )
             binding.favoriteButton.setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN)
         }

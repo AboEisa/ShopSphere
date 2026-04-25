@@ -9,9 +9,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.example.shopsphere.CleanArchitecture.ui.models.PresentationProductResult
+import com.example.shopsphere.CleanArchitecture.utils.formatEgpPrice
 import com.example.shopsphere.R
 import com.example.shopsphere.databinding.ItemCartBinding
-import java.text.DecimalFormat
 
 class CartAdapter(
     private val onItemClick: (Int) -> Unit,
@@ -19,11 +19,6 @@ class CartAdapter(
     private val onQuantityChanged: (String, Int) -> Unit,
     private val onStockLimitReached: (String, Int) -> Unit
 ) : ListAdapter<PresentationProductResult, CartAdapter.Holder>(DIFF) {
-
-    private val currencyFormat = DecimalFormat("#,##0.00").apply {
-        minimumFractionDigits = 2
-        maximumFractionDigits = 2
-    }
 
     /** Locally tracked quantities — decoupled from the list so +/- taps don't rebuild the adapter. */
     private val productQuantities = mutableMapOf<String, Int>()
@@ -36,7 +31,7 @@ class CartAdapter(
         return getItem(position).cartLineId.hashCode().toLong()
     }
 
-    private fun formatPrice(price: Double): String = "EGP ${currencyFormat.format(price)}"
+    private fun formatPrice(price: Double): String = formatEgpPrice(price)
 
     override fun submitList(list: List<PresentationProductResult>?) {
         list?.forEach { productQuantities[it.cartLineId] = it.quantity }

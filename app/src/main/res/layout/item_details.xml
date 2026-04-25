@@ -34,9 +34,15 @@
 
             <ImageView
                 android:id="@+id/favoriteButton"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:layout_gravity="center"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:minWidth="44dp"
+                android:minHeight="44dp"
+                android:padding="13dp"
+                android:scaleType="centerInside"
                 android:src="@drawable/ic_heart"
                 tools:ignore="ContentDescription" />
         </FrameLayout>

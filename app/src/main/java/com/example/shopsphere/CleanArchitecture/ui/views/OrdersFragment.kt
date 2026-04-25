@@ -52,7 +52,12 @@ class OrdersFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding.recyclerOrders.adapter = ordersAdapter
-        binding.btnBack.setOnClickListener { findNavController().navigateUp() }
+        binding.btnBack.setOnClickListener {
+            // Orders is now a root bottom-nav tab; when reached from the nav there
+            // is nothing to pop. Delegate to the activity back handler so we route
+            // to Home cleanly instead of a no-op.
+            requireActivity().onBackPressedDispatcher.onBackPressed()
+        }
         binding.btnNotifications.setOnClickListener {
             findNavController().navigate(R.id.notificationsFragment)
         }
@@ -70,19 +75,22 @@ class OrdersFragment : Fragment() {
             renderOrders()
         }
 
-        // Show/hide a loading indicator while orders are being fetched
-        sharedViewModel.isLoadingOrders.observe(viewLifecycleOwner) { isLoading ->
-            binding.emptyState.visibility = when {
-                isLoading -> View.GONE
-                allOrders.isEmpty() -> View.VISIBLE
-                else -> View.GONE
-            }
+        // Show/hide shimmer skeletons while orders load for the FIRST time. If we
+        // already have a cached list, we keep it on screen and silently refetch in
+        // the background — no flashing skeletons between visits.
+        sharedViewModel.isLoadingOrders.observe(viewLifecycleOwner) {
+            binding.shimmerOrders.visibility = View.GONE
+            binding.shimmerOrders.stopShimmer()
+            binding.recyclerOrders.visibility = View.VISIBLE
+            binding.emptyState.visibility = if (allOrders.isEmpty()) View.VISIBLE else View.GONE
         }
     }
 
     override fun onResume() {
         super.onResume()
-        // Refresh from the backend every time the screen becomes visible
+        // Always refetch so orders appear after signup or placing a new order.
+        // The shimmer only flashes when the list is empty; otherwise the old
+        // list stays on screen while the silent background fetch completes.
         sharedViewModel.fetchOrders()
     }
 

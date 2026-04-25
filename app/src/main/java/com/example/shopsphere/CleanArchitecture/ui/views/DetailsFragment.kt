@@ -29,7 +29,7 @@ class DetailsFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val detailsViewModel: DetailsViewModel by viewModels()
-    private val favoriteViewModel: SavedViewModel by viewModels()
+    private val favoriteViewModel: SavedViewModel by activityViewModels()
     private val args: DetailsFragmentArgs by navArgs()
 
     // FIX: Single activity-scoped instance — shares state with HomeFragment badge
@@ -166,6 +166,10 @@ class DetailsFragment : Fragment() {
         cartViewModel.cartProducts.observe(viewLifecycleOwner) {
             if (!isAdded || _binding == null) return@observe
             detailsAdapter.syncFromRealCart()
+        }
+        favoriteViewModel.favoriteIds.observe(viewLifecycleOwner) { ids ->
+            if (!isAdded || _binding == null) return@observe
+            detailsAdapter.updateFavoriteIds(ids.orEmpty())
         }
     }
 

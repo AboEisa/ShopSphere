@@ -1,6 +1,5 @@
 package com.example.shopsphere.CleanArchitecture.ui.views
 
-import android.animation.ObjectAnimator
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -8,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -35,7 +35,7 @@ class HomeFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val productsViewModel: HomeViewModel by viewModels()
-    private val favoriteViewModel: SavedViewModel by viewModels()
+    private val favoriteViewModel: SavedViewModel by activityViewModels()
     private val shimmerAdapter by lazy { ShimmerHomeAdapter() }
     private val typesList = arrayListOf(HomeViewModel.ALL_CATEGORY)
     private var selectedType: String = HomeViewModel.ALL_CATEGORY
@@ -90,9 +90,17 @@ class HomeFragment : Fragment() {
         setupFilterClick()
         observeLoadingState()
         observeCategories()
-        observeProducts()
+        // Subscribe to favorites BEFORE products so by the time the product list
+        // commit fires onCurrentListChanged → PAYLOAD_FAV rebind, the adapter's
+        // favoriteIds set is already the canonical value from SavedViewModel.
         observeInterestSignals()
-        fetchProductsBasedOnType(selectedType)
+        observeProducts()
+        // Avoid a blank-white flash on every Home revisit: if the ViewModel
+        // already has cached products (survives config change / back-nav), we
+        // skip the explicit refetch. HomeViewModel.init() does the first load.
+        if (productsViewModel.productsLiveData.value.isNullOrEmpty()) {
+            fetchProductsBasedOnType(selectedType)
+        }
 
         //  Initialize badge position
         updateBadgePosition()
@@ -123,11 +131,15 @@ class HomeFragment : Fragment() {
                         var newX = event.rawX + dX
                         var newY = event.rawY + dY
 
-                        // Keep within screen bounds
+                        // Keep within screen bounds. Reserve the bottom 104dp for
+                        // the floating nav (72dp height + 16dp bottom margin +
+                        // 16dp gap) so the FAB can't be dragged behind it.
+                        val density = resources.displayMetrics.density
+                        val bottomReserve = (104f * density)
                         val minX = 0f
                         val maxX = binding.root.width.toFloat() - view.width
                         val minY = 0f
-                        val maxY = binding.root.height.toFloat() - view.height
+                        val maxY = binding.root.height.toFloat() - view.height - bottomReserve
 
                         newX = newX.coerceIn(minX, maxX)
                         newY = newY.coerceIn(minY, maxY)
@@ -207,8 +219,12 @@ class HomeFragment : Fragment() {
     }
 
     private fun observeInterestSignals() {
-        favoriteViewModel.favoriteIds.observe(viewLifecycleOwner) {
+        favoriteViewModel.favoriteIds.observe(viewLifecycleOwner) { ids ->
             if (!isAdded || _binding == null) return@observe
+            // Keep the adapter's heart state in sync with the canonical favorite
+            // set so every visible row reflects the latest toggle — including
+            // after scroll/refresh.
+            productsAdapter.updateFavoriteIds(ids.orEmpty())
             pushInterestsToViewModel()
         }
 
@@ -263,11 +279,10 @@ class HomeFragment : Fragment() {
     private fun observeLoadingState() {
         productsViewModel.isLoading.observe(viewLifecycleOwner) { loading ->
             if (!isAdded || _binding == null) return@observe
+            hideShimmerAndShowProducts()
             if (loading == true) {
-                showShimmer()
                 binding.noResult.visibility = View.GONE
             } else {
-                hideShimmerAndShowProducts()
                 val hasLoaded = productsViewModel.hasLoadedOnce.value == true
                 val visibleProducts = productsViewModel.productsLiveData.value.orEmpty()
                 binding.noResult.visibility =

@@ -53,6 +53,14 @@ class RegisterViewModel @Inject constructor(
                 if (result.isSuccess) {
                     val uid = result.getOrNull().orEmpty()
                     markLoggedIn(uid)
+                    // Persist the name + email entered on the signup form so
+                    // Account header / My Details / Checkout can render the real
+                    // user data immediately, no Firebase round-trip required.
+                    prefs.saveProfile(
+                        name = name.trim(),
+                        email = email.trim(),
+                        phone = prefs.getProfilePhone()
+                    )
 
                     Log.d(TAG, "Setting state to Success")
                     _state.value = AuthUiState.Success("Account created successfully!")
@@ -70,12 +78,25 @@ class RegisterViewModel @Inject constructor(
         }
     }
 
-    fun continueWithGoogle(idToken: String) {
+    fun continueWithGoogle(
+        idToken: String,
+        displayName: String? = null,
+        email: String? = null
+    ) {
         viewModelScope.launch {
             _state.value = AuthUiState.Loading
             val result = googleLoginUseCase(idToken)
             _state.value = if (result.isSuccess) {
                 markLoggedIn(prefs.getUid())
+                val resolvedName = displayName?.trim().orEmpty()
+                    .ifBlank { prefs.getProfileName() }
+                val resolvedEmail = email?.trim().orEmpty()
+                    .ifBlank { prefs.getProfileEmail() }
+                prefs.saveProfile(
+                    name = resolvedName,
+                    email = resolvedEmail,
+                    phone = prefs.getProfilePhone()
+                )
                 AuthUiState.Success("Signed in successfully!")
             } else {
                 AuthUiState.Error(result.exceptionOrNull()?.message ?: "Google sign-in failed")

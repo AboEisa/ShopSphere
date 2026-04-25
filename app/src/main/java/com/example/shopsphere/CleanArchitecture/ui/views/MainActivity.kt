@@ -4,13 +4,17 @@ import android.os.Bundle
 import android.view.View
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.navigation.NavController
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
+import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
 import com.example.shopsphere.R
 import com.example.shopsphere.databinding.ActivityMainBinding
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 
 @AndroidEntryPoint
@@ -26,24 +30,27 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var navController: NavController
 
+    @Inject
+    lateinit var sharedPreference: SharedPreference
+
+    // Bottom-nav tabs: Home / Favorites (saved) / Cart / Orders / Account.
     private val rootDestinations = setOf(
         R.id.homeFragment,
-        R.id.searchFragment,
         R.id.savedFragment,
         R.id.cartFragment,
+        R.id.ordersFragment,
         R.id.accountFragment
     )
 
+    // Screens where the floating nav stays visible. Anything pushed on top of
+    // a root tab (details, address book, checkout, …) hides the nav.
     private val bottomNavVisibleDestinations = rootDestinations + setOf(
-        R.id.ordersFragment,
-        R.id.myDetailsFragment,
-        R.id.notificationsFragment,
-        R.id.faqsFragment,
-        R.id.helpCenterFragment
+        R.id.searchFragment
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        applyPersistedLanguage()
         _binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -68,6 +75,36 @@ class MainActivity : AppCompatActivity() {
 
         // Connect bottom nav AFTER setting the graph
         binding.bottomNav.setupWithNavController(navController)
+
+        // Robust tab navigation: some tabs (e.g. Account) don't have back-stack
+        // entries that `setupWithNavController` can pop cleanly, so a user taps
+        // "Home" and nothing visible happens. Always force-route to the picked
+        // root destination with proper pop/restore options.
+        binding.bottomNav.setOnItemSelectedListener { item ->
+            val targetId = item.itemId
+            if (targetId !in rootDestinations) return@setOnItemSelectedListener false
+            val currentId = navController.currentDestination?.id
+            if (currentId == targetId) return@setOnItemSelectedListener true
+
+            val options = NavOptions.Builder()
+                .setLaunchSingleTop(true)
+                .setRestoreState(true)
+                .setPopUpTo(
+                    navController.graph.startDestinationId,
+                    inclusive = false,
+                    saveState = true
+                )
+                .build()
+            navController.navigate(targetId, null, options)
+            true
+        }
+        // Tapping an already-selected tab: send the user to Home as a consistent
+        // "home" gesture. (Otherwise reselection is a silent no-op on some devices.)
+        binding.bottomNav.setOnItemReselectedListener { item ->
+            if (item.itemId != R.id.homeFragment) {
+                navigateToHomeTab()
+            }
+        }
 
         // Hide or show bottom navigation based on current screen
         navController.addOnDestinationChangedListener { _, destination, _ ->
@@ -108,6 +145,18 @@ class MainActivity : AppCompatActivity() {
 
         if (!navController.popBackStack()) {
             navigateToHomeTab()
+        }
+    }
+
+    private fun applyPersistedLanguage() {
+        val tag = sharedPreference.getLanguage()
+        if (tag.isNotBlank()) {
+            val current = AppCompatDelegate.getApplicationLocales()
+            if (current.isEmpty || current.toLanguageTags() != tag) {
+                AppCompatDelegate.setApplicationLocales(
+                    LocaleListCompat.forLanguageTags(tag)
+                )
+            }
         }
     }
 

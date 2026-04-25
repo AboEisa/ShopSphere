@@ -2,136 +2,239 @@
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/orderCard"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="12dp"
+    android:layout_marginBottom="14dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
     app:cardBackgroundColor="@android:color/white"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="0dp"
-    app:strokeColor="#EBEBEB"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="2dp"
+    app:strokeColor="#EEF1F5"
     app:strokeWidth="1dp">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="12dp">
+        android:orientation="vertical"
+        android:padding="16dp">
 
-        <ImageView
-            android:id="@+id/imageOrderProduct"
-            android:layout_width="74dp"
-            android:layout_height="84dp"
-            android:background="@drawable/bg_form_field"
-            android:scaleType="centerCrop"
-            android:src="@drawable/ic_order"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:ignore="ContentDescription" />
-
-        <TextView
-            android:id="@+id/textOrderStatus"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/bg_order_status_neutral"
-            android:paddingStart="10dp"
-            android:paddingTop="4dp"
-            android:paddingEnd="10dp"
-            android:paddingBottom="4dp"
-            android:textColor="#8B8B8B"
-            android:textSize="11sp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:text="In Transit" />
-
-        <TextView
-            android:id="@+id/textOrderId"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="14dp"
-            android:layout_marginEnd="12dp"
-            android:maxLines="2"
-            android:textColor="#1A1A1A"
-            android:textSize="17sp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toStartOf="@id/textOrderStatus"
-            app:layout_constraintStart_toEndOf="@id/imageOrderProduct"
-            app:layout_constraintTop_toTopOf="@id/imageOrderProduct"
-            tools:text="Regular Fit Slogan" />
-
-        <TextView
-            android:id="@+id/textOrderDate"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="14dp"
-            android:layout_marginTop="4dp"
-            android:textColor="#B2B2B2"
-            android:textSize="13sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/imageOrderProduct"
-            app:layout_constraintTop_toBottomOf="@id/textOrderId"
-            tools:text="Size M" />
-
-        <TextView
-            android:id="@+id/textOrderTotal"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="14dp"
-            android:layout_marginTop="14dp"
-            android:textColor="#1A1A1A"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toBottomOf="@id/buttonOrderAction"
-            app:layout_constraintStart_toEndOf="@id/imageOrderProduct"
-            app:layout_constraintTop_toTopOf="@id/buttonOrderAction"
-            tools:text="EGP 1,190" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/buttonOrderAction"
-            android:layout_width="104dp"
-            android:layout_height="40dp"
-            android:backgroundTint="@android:color/transparent"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            android:text="@string/orders_track_order"
-            android:textAllCaps="false"
-            android:textColor="@android:color/white"
-            android:textSize="12sp"
-            app:backgroundTint="@android:color/transparent"
-            app:cornerRadius="8dp"
-            app:layout_constraintBottom_toBottomOf="@id/imageOrderProduct"
-            app:layout_constraintEnd_toEndOf="parent"
-            tools:background="@drawable/bg_black_action" />
-
+        <!-- Top row: order id + status pill -->
         <LinearLayout
-            android:id="@+id/layoutRatingChip"
-            android:layout_width="wrap_content"
-            android:layout_height="40dp"
-            android:background="@drawable/bg_rating_chip"
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:paddingHorizontal="12dp"
-            android:visibility="gone"
-            app:layout_constraintBottom_toBottomOf="@id/imageOrderProduct"
-            app:layout_constraintEnd_toEndOf="parent">
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/textOrderId"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="#0F172A"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    tools:text="Order #1004" />
+
+                <TextView
+                    android:id="@+id/textOrderDate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:textColor="#94A3B8"
+                    android:textSize="12sp"
+                    tools:text="Apr 24, 2026" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/textOrderStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_order_status_neutral"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="6dp"
+                android:textColor="#8B8B8B"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                tools:text="Processing" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="14dp"
+            android:background="#F1F5F9" />
+
+        <!-- Detail rows pulled from /MyOrders -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
             <ImageView
                 android:layout_width="14dp"
                 android:layout_height="14dp"
-                android:src="@drawable/ic_star"
+                android:src="@drawable/ic_card"
+                android:tint="#94A3B8"
                 tools:ignore="ContentDescription" />
 
             <TextView
-                android:id="@+id/textReviewRating"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="@string/order_payment_label"
+                android:textColor="#64748B"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/textPaymentStatus"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
                 android:layout_marginStart="6dp"
-                android:textColor="#4B4B4B"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:gravity="end"
+                android:maxLines="1"
+                android:textColor="#0F172A"
                 android:textSize="12sp"
                 android:textStyle="bold"
-                tools:text="4.5/5" />
+                tools:text="Pending" />
         </LinearLayout>
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        <LinearLayout
+            android:id="@+id/rowDriver"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:src="@drawable/ic_user"
+                android:tint="#94A3B8"
+                tools:ignore="ContentDescription" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="@string/order_driver_label"
+                android:textColor="#64748B"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/textDriverName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:gravity="end"
+                android:maxLines="1"
+                android:textColor="#0F172A"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                tools:text="Ahmed Hassan" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="14dp"
+            android:background="#F1F5F9" />
+
+        <!-- Total + details affordance -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/order_total_label"
+                    android:textColor="#64748B"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/textOrderTotal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textColor="@color/bright_green"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    tools:text="EGP 1,190" />
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonOrderAction"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:paddingHorizontal="18dp"
+                android:text="@string/order_view_details"
+                android:textAllCaps="false"
+                android:textColor="@android:color/white"
+                android:textSize="12sp"
+                app:backgroundTint="@color/bright_green"
+                app:cornerRadius="20dp"
+                app:icon="@drawable/ic_go"
+                app:iconGravity="end"
+                app:iconPadding="6dp"
+                app:iconSize="14dp"
+                app:iconTint="@android:color/white" />
+
+            <LinearLayout
+                android:id="@+id/layoutRatingChip"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_rating_chip"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:paddingHorizontal="14dp"
+                android:visibility="gone">
+
+                <ImageView
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:src="@drawable/ic_star"
+                    tools:ignore="ContentDescription" />
+
+                <TextView
+                    android:id="@+id/textReviewRating"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:textColor="#4B4B4B"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    tools:text="4.5/5" />
+            </LinearLayout>
+        </LinearLayout>
+
+    </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

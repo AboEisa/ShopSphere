@@ -6,11 +6,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
 import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
+import com.example.shopsphere.CleanArchitecture.data.local.notifications.NotificationsRepository
 import com.example.shopsphere.CleanArchitecture.domain.IRepository
 import com.example.shopsphere.CleanArchitecture.ui.models.AddressBookItem
 import com.example.shopsphere.CleanArchitecture.ui.models.OrderHistoryItem
 import com.example.shopsphere.CleanArchitecture.ui.models.PaymentMethodItem
 import com.example.shopsphere.CleanArchitecture.ui.models.PresentationProductResult
+import com.example.shopsphere.CleanArchitecture.utils.formatEgpPrice
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import java.text.DecimalFormat
@@ -23,15 +25,22 @@ import javax.inject.Inject
 @HiltViewModel
 class CheckoutSharedViewModel @Inject constructor(
     private val repository: IRepository,
-    private val sharedPreference: SharedPreference
+    private val sharedPreference: SharedPreference,
+    private val notificationsRepository: NotificationsRepository
 ) : ViewModel() {
+
+    /**
+     * Tracks the last-seen status step per order so `updateOrderTracking`
+     * only fires a notification when the step actually advances.
+     */
+    private val lastNotifiedStatusStep = mutableMapOf<String, Int>()
 
     // ─── Mock payment methods (no backend endpoint yet) ───────────────────────
     private val initialPaymentMethods = listOf(
         PaymentMethodItem(
             id = "card_visa_2512_default",
             brand = "VISA",
-            holderName = "ShopSphere User",
+            holderName = "YallaShop User",
             lastFour = "2512",
             isDefault = true,
             isSelected = true
@@ -39,13 +48,13 @@ class CheckoutSharedViewModel @Inject constructor(
         PaymentMethodItem(
             id = "card_mastercard_5421",
             brand = "MASTERCARD",
-            holderName = "ShopSphere User",
+            holderName = "YallaShop User",
             lastFour = "5421"
         ),
         PaymentMethodItem(
             id = "card_visa_2512_alt",
             brand = "VISA",
-            holderName = "ShopSphere User",
+            holderName = "YallaShop User",
             lastFour = "2512"
         )
     )
@@ -77,20 +86,35 @@ class CheckoutSharedViewModel @Inject constructor(
     val isLoadingOrders: LiveData<Boolean> = _isLoadingOrders
 
     init {
-        // Pre-populate address from the last address the user saved
+        // Pre-populate address from the last address the user saved. If the user
+        // has no saved address (fresh signup), seed a default "N/A" placeholder
+        // so they can still place an order without being forced through address
+        // entry first. The user can replace it from the Address Book later.
         val savedAddress = sharedPreference.getDeliveryAddress()
-        if (savedAddress.isNotBlank()) {
-            val savedItem = AddressBookItem(
+        val seededItem = if (savedAddress.isNotBlank()) {
+            AddressBookItem(
                 id = "address_saved",
                 title = "Delivery Address",
                 address = savedAddress,
                 latitude = null,
                 longitude = null,
                 isDefault = true,
-                isSelected = true
+                isSelected = true,
+                phone = sharedPreference.getProfilePhone().ifBlank { DEFAULT_NA }
             )
-            _addressBook.value = listOf(savedItem)
+        } else {
+            AddressBookItem(
+                id = "address_default_na",
+                title = "Delivery Address",
+                address = DEFAULT_NA,
+                latitude = null,
+                longitude = null,
+                isDefault = true,
+                isSelected = true,
+                phone = DEFAULT_NA
+            )
         }
+        _addressBook.value = listOf(seededItem)
         fetchOrders()
     }
 
@@ -98,7 +122,11 @@ class CheckoutSharedViewModel @Inject constructor(
 
     fun fetchOrders() {
         viewModelScope.launch {
-            _isLoadingOrders.value = true
+            // Only flip `isLoadingOrders` true on the very first load. Silent
+            // background re-fetches (poll, onResume) should not trigger the
+            // shimmer placeholder — that would look like the list was wiped.
+            val isFirstLoad = _orderHistory.value.isNullOrEmpty()
+            if (isFirstLoad) _isLoadingOrders.value = true
             repository.getMyOrders()
                 .onSuccess { domainOrders ->
                     val fromApi = domainOrders.map { domain ->
@@ -113,7 +141,9 @@ class CheckoutSharedViewModel @Inject constructor(
                             currentLat = domain.currentLat,
                             currentLng = domain.currentLng,
                             // Real driver name from the backend
-                            driverName = domain.driverName
+                            driverName = domain.driverName,
+                            paymentStatus = domain.paymentStatus
+                                .takeIf { it.isNotBlank() }
                         )
                     }
                     _orderHistory.postValue(fromApi)
@@ -121,13 +151,13 @@ class CheckoutSharedViewModel @Inject constructor(
                 .onFailure {
                     // Keep the current list on failure so the screen doesn't go blank
                 }
-            _isLoadingOrders.value = false
+            if (isFirstLoad) _isLoadingOrders.value = false
         }
     }
 
     // ─── Place order ─────────────────────────────────────────────────────────
 
-    fun placeOrder(
+    suspend fun placeOrder(
         total: String,
         customerName: String,
         phone: String,
@@ -148,11 +178,12 @@ class CheckoutSharedViewModel @Inject constructor(
 
         // Phone comes from the delivery address (entered in MapsFragment).
         // The passed-in `phone` param is kept as a fallback for callers that
-        // still supply it, but the address phone takes priority.
-        val digitsPhone = address!!.phone.filter { it.isDigit() }
+        // still supply it, but the address phone takes priority. If both are
+        // missing we fall back to "N/A" so the order can still be placed.
+        val rawAddressPhone = address!!.phone.trim()
+        val digitsPhone = rawAddressPhone.filter { it.isDigit() }
             .ifBlank { phone.filter { it.isDigit() } }
-        if (digitsPhone.length < 8)
-            return Result.failure(IllegalStateException("Please add a phone number to your delivery address"))
+        val resolvedPhone = digitsPhone.ifBlank { DEFAULT_NA }
 
         val invalidStockItem = cartItems.firstOrNull { item ->
             val stock = item.stock.coerceAtLeast(0)
@@ -190,7 +221,7 @@ class CheckoutSharedViewModel @Inject constructor(
             itemPrice = formatPrice(primaryItem.price),
             address = validAddress.address,
             customerName = sanitizedName,
-            phone = digitsPhone,
+            phone = resolvedPhone,
             destinationLat = destinationLat,
             destinationLng = destinationLng,
             currentLat = null,   // real position comes from backend via fetchOrders()
@@ -199,12 +230,30 @@ class CheckoutSharedViewModel @Inject constructor(
             driverName = null    // assigned by backend after dispatch
         )
 
-        // Call the real checkout endpoint, then refresh orders from the backend
+        // Await the real checkout endpoint so callers don't clear the cart
+        // before the server confirms. On failure we propagate the backend
+        // message so the UI can show it.
+        val checkoutResult = repository.checkout()
+        if (checkoutResult.isFailure) {
+            return Result.failure(
+                checkoutResult.exceptionOrNull()
+                    ?: IllegalStateException("Checkout failed")
+            )
+        }
+
+        // Refresh orders + notify in parallel — these are non-blocking.
         viewModelScope.launch {
-            repository.checkout()
-                .onSuccess {
-                    fetchOrders()
-                }
+            fetchOrders()
+            val latestId = _orderHistory.value
+                ?.firstOrNull()?.orderId ?: placeholderOrder.orderId
+            runCatching {
+                notificationsRepository.notify(
+                    title = "Order placed successfully",
+                    body = "Order #$latestId received. We'll keep you posted with tracking updates.",
+                    deepLink = "track_order:$latestId",
+                    iconName = "ic_bell"
+                )
+            }
         }
 
         return Result.success(placeholderOrder)
@@ -242,6 +291,28 @@ class CheckoutSharedViewModel @Inject constructor(
                     statusStep = resolvedStatusStep
                 )
             else order
+        }
+
+        // Seed a notification only when the resolved step advances for this order.
+        val previousStep = lastNotifiedStatusStep[orderId] ?: -1
+        if (resolvedStatusStep > previousStep) {
+            lastNotifiedStatusStep[orderId] = resolvedStatusStep
+            val body = when (resolvedStatusStep) {
+                STEP_DELIVERED -> "Your order has been delivered."
+                STEP_IN_TRANSIT -> "Your order is on the way."
+                STEP_PICKED -> "Your order has been picked up."
+                else -> "Your order is being packed."
+            }
+            viewModelScope.launch {
+                runCatching {
+                    notificationsRepository.notify(
+                        title = "Order #$orderId · $normalizedStatus",
+                        body = body,
+                        deepLink = "track_order:$orderId",
+                        iconName = "ic_bell"
+                    )
+                }
+            }
         }
     }
 
@@ -325,7 +396,7 @@ class CheckoutSharedViewModel @Inject constructor(
 
     fun setCardLastFour(
         lastFour: String,
-        holderName: String = "ShopSphere User",
+        holderName: String = "YallaShop User",
         brand: String = "VISA"
     ): Boolean {
         val sanitized = lastFour.filter { it.isDigit() }.takeLast(4)
@@ -375,10 +446,12 @@ class CheckoutSharedViewModel @Inject constructor(
 
     fun isAddressValid(address: AddressBookItem?): Boolean {
         if (address == null) return false
-        if (address.title.trim().length < 2) return false
-        if (address.address.trim().length < 5) return false
-        if (address.phone.filter { it.isDigit() }.length < 8) return false
-        return true  // coordinates are optional — backend only needs the address string
+        if (address.title.trim().isBlank()) return false
+        // Accept any non-blank address string, including the "N/A" default so
+        // users can place an order immediately after signup without filling in
+        // address details. They can update it later from the Address Book.
+        if (address.address.trim().isBlank()) return false
+        return true
     }
 
     fun isPaymentMethodValid(paymentMethod: PaymentMethodItem?): Boolean {
@@ -430,15 +503,9 @@ class CheckoutSharedViewModel @Inject constructor(
         }.getOrDefault(raw)
     }
 
-    private fun formatApiTotal(amount: Double): String {
-        val formatter = DecimalFormat("#,##0.00")
-        return "EGP ${formatter.format(amount)}"
-    }
+    private fun formatApiTotal(amount: Double): String = formatEgpPrice(amount)
 
-    private fun formatPrice(price: Double): String {
-        val formatter = DecimalFormat("#,##0.##")
-        return "EGP ${formatter.format(price)}"
-    }
+    private fun formatPrice(price: Double): String = formatEgpPrice(price)
 
     private fun normalizeAddresses(items: List<AddressBookItem>): List<AddressBookItem> {
         val valid = items.filter { isAddressValid(it) }
@@ -466,5 +533,12 @@ class CheckoutSharedViewModel @Inject constructor(
         const val STEP_PICKED = 1
         const val STEP_IN_TRANSIT = 2
         const val STEP_DELIVERED = 3
+
+        /**
+         * Default placeholder shown when the user has not entered an address
+         * or phone yet. Lets a fresh signup place an order without first
+         * filling in profile details.
+         */
+        const val DEFAULT_NA = "N/A"
     }
 }

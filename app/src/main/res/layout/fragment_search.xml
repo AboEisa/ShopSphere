@@ -8,13 +8,18 @@
 
     <ImageView
         android:id="@+id/btn_back"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
         android:src="@drawable/ic_back"
-        android:layout_marginTop="@dimen/_24sdp"
+        android:layout_marginTop="@dimen/_18sdp"
+        android:padding="8dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/account_back_button"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginStart="@dimen/_26sdp"
+        android:layout_marginStart="@dimen/_18sdp"
         />
 
     <TextView
@@ -38,22 +43,20 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="@dimen/_20sdp"
         android:layout_marginStart="@dimen/_20sdp"
-        android:backgroundTintMode="add"
-        android:textColorHint="?attr/colorOnSurface"
-        app:boxBackgroundMode="outline"
-        app:boxCornerRadiusBottomEnd="0dp"
-        app:boxCornerRadiusBottomStart="0dp"
-        app:boxCornerRadiusTopEnd="0dp"
-        app:boxCornerRadiusTopStart="0dp"
-
-        app:boxStrokeColor="?attr/colorPrimary"
-        app:boxStrokeWidth="1.5sp"
-        app:endIconMode="none"
-        app:hintEnabled="false"
         android:layout_marginTop="@dimen/_12sdp"
-
-        app:hintTextColor="?attr/colorPrimary"
-
+        android:textColorHint="#9CA3AF"
+        app:boxBackgroundMode="outline"
+        app:boxBackgroundColor="#F9FAFB"
+        app:boxCornerRadiusBottomEnd="14dp"
+        app:boxCornerRadiusBottomStart="14dp"
+        app:boxCornerRadiusTopEnd="14dp"
+        app:boxCornerRadiusTopStart="14dp"
+        app:boxStrokeColor="@color/bright_green"
+        app:boxStrokeWidth="1dp"
+        app:boxStrokeWidthFocused="2dp"
+        app:endIconMode="clear_text"
+        app:endIconTint="#6B7280"
+        app:hintEnabled="false"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/txt_discover">
 
@@ -61,13 +64,14 @@
             android:id="@+id/textSearch"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/edittext_background"
+            android:background="@android:color/transparent"
             android:drawableStart="@drawable/ic_text_search"
             android:drawablePadding="@dimen/_6sdp"
             android:hint="@string/search_for_clothes"
             android:inputType="text"
             android:singleLine="true"
-            android:textColorHint="?attr/colorOnSurface" />
+            android:textColor="#111827"
+            android:textColorHint="#9CA3AF" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <androidx.recyclerview.widget.RecyclerView
@@ -104,7 +108,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/imageView"
         android:visibility="gone"
-        android:textColor="@color/black"
+        android:textColor="#111827"
         android:layout_marginTop="@dimen/_8sdp"
         android:fontFamily="sans-serif-medium"
         />

@@ -1,67 +1,88 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingHorizontal="8dp"
-    android:paddingVertical="4dp">
+    android:paddingHorizontal="6dp"
+    android:paddingVertical="3dp">
 
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="@dimen/_10sdp"
-        android:layout_marginTop="@dimen/_10sdp"
-        android:layout_marginBottom="8dp"
-        app:cardCornerRadius="20dp"
-        app:cardElevation="10dp"
+        android:layout_marginHorizontal="@dimen/_6sdp"
+        android:layout_marginTop="@dimen/_6sdp"
+        android:layout_marginBottom="6dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="6dp"
         app:cardBackgroundColor="@android:color/white"
-        app:cardMaxElevation="12dp">
+        app:cardMaxElevation="8dp">
 
         <ImageView
             android:id="@+id/productImage"
             android:layout_width="match_parent"
-            android:layout_height="220dp"
+            android:layout_height="160dp"
             android:scaleType="centerCrop"
             android:background="@color/_808080"
             tools:src="@drawable/ic_launcher_background" />
 
         <androidx.cardview.widget.CardView
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
             android:layout_gravity="top|end"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="8dp"
+            android:layout_marginTop="6dp"
+            android:layout_marginEnd="6dp"
             app:cardBackgroundColor="@color/ffffff"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="4dp">
+            app:cardCornerRadius="17dp"
+            app:cardElevation="3dp">
 
             <ImageView
                 android:id="@+id/favoriteButton"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_gravity="center"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:minWidth="34dp"
+                android:minHeight="34dp"
+                android:padding="8dp"
+                android:scaleType="centerInside"
                 android:src="@drawable/ic_heart" />
         </androidx.cardview.widget.CardView>
+
+        <TextView
+            android:id="@+id/discountPercentage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|start"
+            android:layout_margin="6dp"
+            android:background="@drawable/bg_rating_chip_overlay"
+            android:paddingHorizontal="6dp"
+            android:paddingVertical="3dp"
+            android:textColor="@android:color/white"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            tools:text="★ 4.5" />
     </androidx.cardview.widget.CardView>
 
     <TextView
         android:id="@+id/productTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="6dp"
         android:ellipsize="end"
         android:maxLines="2"
         android:textColor="@color/_212121"
-        android:textSize="16sp"
-        android:layout_marginStart="@dimen/_10sdp"
+        android:textSize="13sp"
+        android:layout_marginStart="@dimen/_8sdp"
         tools:text="Regular Fit Slogan" />
 
     <LinearLayout
         android:id="@+id/priceContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="2dp"
+        android:layout_marginBottom="4dp"
         android:orientation="horizontal">
 
         <TextView
@@ -69,20 +90,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="#23a36e"
-            android:textSize="14sp"
+            android:textSize="12sp"
             android:textStyle="bold"
-            android:layout_marginStart="@dimen/_10sdp"
+            android:layout_marginStart="@dimen/_8sdp"
             tools:text="@string/_1_190" />
-
-        <TextView
-            android:id="@+id/discountPercentage"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:textColor="@color/ff0000"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:visibility="visible"
-            tools:text="-52%" />
     </LinearLayout>
 </LinearLayout>

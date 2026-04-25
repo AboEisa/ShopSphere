@@ -4,12 +4,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_marginTop="@dimen/_3sdp"
-    android:layout_marginBottom="@dimen/_3sdp"
-    android:layout_marginEnd="@dimen/_6sdp"
+    android:layout_marginTop="@dimen/_2sdp"
+    android:layout_marginBottom="@dimen/_2sdp"
+    android:layout_marginEnd="@dimen/_5sdp"
     app:cardBackgroundColor="@android:color/transparent"
-    app:cardCornerRadius="22dp"
-    app:cardElevation="4dp"
+    app:cardCornerRadius="18dp"
+    app:cardElevation="2dp"
     app:strokeWidth="0dp">
 
     <TextView
@@ -17,10 +17,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@drawable/types_background"
-        android:textSize="@dimen/_12sdp"
+        android:textSize="@dimen/_10sdp"
         android:textColor="@color/black"
         android:fontFamily="sans-serif-medium"
-        android:paddingHorizontal="@dimen/_15sdp"
-        android:paddingVertical="@dimen/_6sdp"
+        android:paddingHorizontal="@dimen/_11sdp"
+        android:paddingVertical="@dimen/_4sdp"
         tools:text="All" />
 </com.google.android.material.card.MaterialCardView>

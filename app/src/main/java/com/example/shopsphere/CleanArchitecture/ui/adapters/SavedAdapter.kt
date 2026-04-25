@@ -11,6 +11,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.example.shopsphere.CleanArchitecture.ui.adapters.SavedAdapter.Holder
 import com.example.shopsphere.CleanArchitecture.ui.models.PresentationProductResult
+import com.example.shopsphere.CleanArchitecture.utils.formatEgpPrice
 import com.example.shopsphere.R
 import com.example.shopsphere.databinding.ItemSavedBinding
 
@@ -44,7 +45,7 @@ class SavedAdapter(
         fun bind(product: PresentationProductResult) {
             binding.apply {
                 productTitle.text = product.title
-                originalPrice.text = "EGP ${product.price}"
+                originalPrice.text = formatEgpPrice(product.price)
                 discountPercentage.text = "\u2605 ${String.format("%.1f", product.rating.rate)}"
 
                 Glide.with(root)

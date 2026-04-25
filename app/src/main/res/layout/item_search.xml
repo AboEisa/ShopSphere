@@ -5,7 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
-    app:cardCornerRadius="8dp"
+    app:cardBackgroundColor="@android:color/white"
+    app:cardCornerRadius="14dp"
     app:cardElevation="2dp">
 
     <LinearLayout
@@ -32,8 +33,10 @@
                 android:id="@+id/productTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="@color/_212121"
-                android:textSize="16sp"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:textColor="#111827"
+                android:textSize="15sp"
                 android:textStyle="bold"
                 tools:text="@string/regular_fit_polo" />
 
@@ -42,8 +45,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:textColor="#23a36e"
+                android:textColor="@color/bright_green"
                 android:textSize="14sp"
+                android:textStyle="bold"
                 tools:text="@string/_1_190" />
 
 

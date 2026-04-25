@@ -136,7 +136,17 @@ class LoginFragment : Fragment() {
                     return@launch
                 }
 
-                viewModel.onEvent(LoginUiEvent.GoogleToken(googleIdTokenCredential.idToken))
+                viewModel.onEvent(
+                    LoginUiEvent.GoogleToken(
+                        idToken = googleIdTokenCredential.idToken,
+                        displayName = googleIdTokenCredential.displayName
+                            ?: listOfNotNull(
+                                googleIdTokenCredential.givenName,
+                                googleIdTokenCredential.familyName
+                            ).joinToString(" ").ifBlank { null },
+                        email = googleIdTokenCredential.id
+                    )
+                )
             } catch (e: GetCredentialException) {
                 Log.e(TAG, "Google sign-in failed", e)
                 showToastSafely(mapGoogleSignInError(e))

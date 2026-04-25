@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
@@ -20,7 +21,7 @@ class SavedFragment : Fragment() {
     private var _binding: FragmentSavedBinding? = null
     private val binding get() = _binding!!
     private lateinit var adapter: SavedAdapter
-    val viewModel: SavedViewModel by viewModels()
+    val viewModel: SavedViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -82,13 +83,9 @@ class SavedFragment : Fragment() {
                 hideEmptyState()
             }
         }
-        viewModel.loading.observe(viewLifecycleOwner) { isLoading ->
+        viewModel.loading.observe(viewLifecycleOwner) {
             if (!isAdded || _binding == null) return@observe
-            if (isLoading) {
-                binding.progressBar.visibility = View.VISIBLE
-            } else {
-                binding.progressBar.visibility = View.GONE
-            }
+            binding.progressBar.visibility = View.GONE
         }
     }
 

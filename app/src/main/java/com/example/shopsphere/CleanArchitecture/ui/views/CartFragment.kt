@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
+import com.example.shopsphere.CleanArchitecture.utils.formatEgpPrice
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -49,8 +50,15 @@ class CartFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        // loadCartProducts() also updates the badge count — no need to double-fetch.
-        cartViewModel.loadCartProducts()
+        // Guard against re-hydrating on every revisit when we already have a
+        // cart list in the ViewModel. This keeps the screen showing the cached
+        // data instantly while the ViewModel refreshes itself on change events.
+        if (cartViewModel.cartProducts.value.isNullOrEmpty()) {
+            cartViewModel.loadCartProducts()
+        } else {
+            // Make sure the badge count is still accurate after returning.
+            cartViewModel.refreshCartCount()
+        }
     }
 
     fun onClicks() {
@@ -171,9 +179,9 @@ class CartFragment : Fragment() {
     }
 
     private fun observeLoading() {
-        cartViewModel.loading.observe(viewLifecycleOwner) { isLoading ->
+        cartViewModel.loading.observe(viewLifecycleOwner) {
             if (!isAdded || _binding == null) return@observe
-            binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+            binding.progressBar.visibility = View.GONE
         }
     }
 
@@ -196,7 +204,7 @@ class CartFragment : Fragment() {
     private fun updateTotalPrice() {
         if (_binding == null) return
         val totalPrice = cartAdapter.getTotalPrice()
-        binding.textTotalPrice.text = "Total: EGP ${String.format("%.2f", totalPrice)}"
+        binding.textTotalPrice.text = "Total: ${formatEgpPrice(totalPrice)}"
     }
 
     private fun showEmptyState() {

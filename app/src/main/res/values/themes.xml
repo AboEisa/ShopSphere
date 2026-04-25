@@ -13,7 +13,18 @@
         <item name="haloColor">@color/seekbar_halo</item>
     </style>
 
+    <!-- Compact text style for the floating bottom navigation labels so they
+         don't get clipped in the 5-tab pill layout. -->
+    <style name="TextAppearance.App.BottomNavLabel" parent="TextAppearance.Material3.LabelSmall">
+        <item name="android:textSize">10sp</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
 
-
+    <style name="TextAppearance.App.BottomNavLabel.Active">
+        <item name="android:textStyle">bold</item>
+    </style>
 
 </resources>

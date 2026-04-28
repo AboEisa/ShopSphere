@@ -62,6 +62,9 @@ class ChatBotViewModel @Inject constructor(
 
         viewModelScope.launch {
             val ctx = buildChatContext()
+            // Keep the last MAX_HISTORY_TURNS turns of real conversation. Older
+            // turns are dropped to keep token usage bounded and the model
+            // focused on the current thread.
             val history = _state.value.messages
                 .filter { it !is ChatMessage.TypingIndicator && it.id != userMsg.id }
                 .mapNotNull { msg ->
@@ -71,6 +74,7 @@ class ChatBotViewModel @Inject constructor(
                         is ChatMessage.TypingIndicator -> null
                     }
                 }
+                .takeLast(MAX_HISTORY_TURNS * 2)
 
             val result = sendChatMessageUseCase.send(trimmed, history, ctx)
 
@@ -89,7 +93,7 @@ class ChatBotViewModel @Inject constructor(
                 .onFailure {
                     _state.value = _state.value.copy(
                         messages = withoutTyping + ChatMessage.BotMessage(
-                            text = "Hmm, I'm having trouble connecting. Try again?",
+                            text = "I couldn't reach the server just now — check your connection and tap Retry.",
                             isError = true
                         ),
                         isSending = false,
@@ -97,6 +101,12 @@ class ChatBotViewModel @Inject constructor(
                     )
                 }
         }
+    }
+
+    private companion object {
+        // 12 user/model exchanges = enough to keep the thread coherent without
+        // ballooning prompt size.
+        private const val MAX_HISTORY_TURNS = 12
     }
 
     fun retryLast() {

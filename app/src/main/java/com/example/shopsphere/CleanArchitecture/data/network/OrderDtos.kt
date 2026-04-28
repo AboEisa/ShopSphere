@@ -11,6 +11,36 @@ data class CheckoutResponseDto(
     @SerializedName("message") val message: String? = null
 )
 
+// POST /CreateInvoice — body-less; server builds an invoice from the latest
+// order/cart of the authenticated user.
+data class InvoiceResponseDto(
+    @SerializedName("success") val success: Boolean? = null,
+    @SerializedName("invoiceId") val invoiceId: String? = null,
+    @SerializedName("orderId") val orderId: Int? = null,
+    @SerializedName("amount") val amount: Double? = null,
+    @SerializedName("currency") val currency: String? = null,
+    @SerializedName("message") val message: String? = null
+)
+
+// POST /PayNow — body-less; server returns the URL/token the client opens to
+// complete payment (e.g. a Paymob/Stripe iframe URL).
+data class PayNowResponseDto(
+    @SerializedName("success") val success: Boolean? = null,
+    @SerializedName("paymentUrl") val paymentUrl: String? = null,
+    @SerializedName("paymentToken") val paymentToken: String? = null,
+    @SerializedName("orderId") val orderId: Int? = null,
+    @SerializedName("message") val message: String? = null
+)
+
+// POST /Callbackt — payment-provider webhook acknowledged by the server.
+// Exposed from the app mainly for testing / manual reconciliation.
+data class PaymentCallbackDto(
+    @SerializedName("success") val success: Boolean? = null,
+    @SerializedName("orderId") val orderId: Int? = null,
+    @SerializedName("paymentStatus") val paymentStatus: String? = null,
+    @SerializedName("message") val message: String? = null
+)
+
 // GET /MyOrders — returns an array of orders for the authenticated user.
 // Element example:
 // { "orderId": 1004, "totalAmount": 210.00, "date": "2026-04-21",

@@ -38,7 +38,10 @@ class OrdersFragment : Fragment() {
         )
     }
     private var allOrders: List<OrderHistoryItem> = emptyList()
-    private var showingCompleted = false
+    private var activeTab: Tab = Tab.ALL
+    private var searchQuery: String = ""
+
+    private enum class Tab { ALL, ONGOING, COMPLETED }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -59,16 +62,38 @@ class OrdersFragment : Fragment() {
             requireActivity().onBackPressedDispatcher.onBackPressed()
         }
         binding.btnNotifications.setOnClickListener {
-            findNavController().navigate(R.id.notificationsFragment)
+            // Top-right icon now reads as a shopping bag in the redesign — open
+            // Cart as a tab so the bottom-nav state stays in sync.
+            val nav = findNavController()
+            val options = androidx.navigation.NavOptions.Builder()
+                .setLaunchSingleTop(true)
+                .setPopUpTo(R.id.homeFragment, false)
+                .build()
+            runCatching { nav.navigate(R.id.cartFragment, null, options) }
+        }
+        binding.tabAll.setOnClickListener {
+            activeTab = Tab.ALL
+            renderOrders()
         }
         binding.tabOngoing.setOnClickListener {
-            showingCompleted = false
+            activeTab = Tab.ONGOING
             renderOrders()
         }
         binding.tabCompleted.setOnClickListener {
-            showingCompleted = true
+            activeTab = Tab.COMPLETED
             renderOrders()
         }
+
+        binding.searchInput.addTextChangedListener(
+            object : android.text.TextWatcher {
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+                override fun afterTextChanged(s: android.text.Editable?) = Unit
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                    searchQuery = s?.toString().orEmpty().trim()
+                    renderOrders()
+                }
+            }
+        )
 
         sharedViewModel.orderHistory.observe(viewLifecycleOwner) { orders ->
             allOrders = orders
@@ -95,37 +120,64 @@ class OrdersFragment : Fragment() {
     }
 
     private fun renderOrders() {
-        val filtered = if (showingCompleted) {
-            allOrders.filter(::isCompletedOrder)
-        } else {
-            allOrders.filterNot(::isCompletedOrder)
+        val byTab = when (activeTab) {
+            Tab.ALL -> allOrders
+            Tab.ONGOING -> allOrders.filterNot(::isCompletedOrder)
+            Tab.COMPLETED -> allOrders.filter(::isCompletedOrder)
+        }
+
+        val filtered = if (searchQuery.isBlank()) byTab else {
+            val q = searchQuery.lowercase(Locale.ENGLISH)
+            byTab.filter { order ->
+                order.orderId.lowercase(Locale.ENGLISH).contains(q) ||
+                    order.status.lowercase(Locale.ENGLISH).contains(q) ||
+                    order.itemTitle.lowercase(Locale.ENGLISH).contains(q) ||
+                    order.driverName?.lowercase(Locale.ENGLISH)?.contains(q) == true
+            }
         }
 
         updateTabs()
-        ordersAdapter.submitList(filtered, showingCompleted)
+        ordersAdapter.submitList(filtered, activeTab == Tab.COMPLETED)
 
         val isEmpty = filtered.isEmpty()
         binding.recyclerOrders.visibility = if (isEmpty) View.GONE else View.VISIBLE
         binding.emptyState.visibility = if (isEmpty) View.VISIBLE else View.GONE
         binding.textEmptyTitle.text = getString(
-            if (showingCompleted) R.string.orders_no_completed_title else R.string.orders_no_ongoing_title
+            if (activeTab == Tab.COMPLETED) R.string.orders_no_completed_title
+            else R.string.orders_no_ongoing_title
         )
         binding.textEmptySubtitle.text = getString(
-            if (showingCompleted) R.string.orders_no_completed_message else R.string.orders_no_ongoing_message
+            if (activeTab == Tab.COMPLETED) R.string.orders_no_completed_message
+            else R.string.orders_no_ongoing_message
         )
     }
 
     private fun updateTabs() {
-        if (showingCompleted) {
-            binding.tabCompleted.setBackgroundResource(R.drawable.bg_segmented_selected)
-            binding.tabCompleted.setTextColor(requireContext().getColor(R.color._1a1a1a))
-            binding.tabOngoing.background = null
-            binding.tabOngoing.setTextColor(requireContext().getColor(R.color._999999))
-        } else {
-            binding.tabOngoing.setBackgroundResource(R.drawable.bg_segmented_selected)
-            binding.tabOngoing.setTextColor(requireContext().getColor(R.color._1a1a1a))
-            binding.tabCompleted.background = null
-            binding.tabCompleted.setTextColor(requireContext().getColor(R.color._999999))
+        val context = requireContext()
+        val activeBg = R.drawable.bg_segmented_selected
+        val activeColor = context.getColor(R.color.bright_green)
+        val inactiveColor = 0xFF6B7280.toInt()
+
+        binding.tabAll.background = null
+        binding.tabOngoing.background = null
+        binding.tabCompleted.background = null
+        binding.tabAll.setTextColor(inactiveColor)
+        binding.tabOngoing.setTextColor(inactiveColor)
+        binding.tabCompleted.setTextColor(inactiveColor)
+
+        when (activeTab) {
+            Tab.ALL -> {
+                binding.tabAll.setBackgroundResource(activeBg)
+                binding.tabAll.setTextColor(activeColor)
+            }
+            Tab.ONGOING -> {
+                binding.tabOngoing.setBackgroundResource(activeBg)
+                binding.tabOngoing.setTextColor(activeColor)
+            }
+            Tab.COMPLETED -> {
+                binding.tabCompleted.setBackgroundResource(activeBg)
+                binding.tabCompleted.setTextColor(activeColor)
+            }
         }
     }
 
@@ -202,7 +254,7 @@ class OrdersFragment : Fragment() {
                 else -> {
                     sharedViewModel.submitOrderReview(order.orderId, selectedRating, review)
                     dialog.dismiss()
-                    showingCompleted = true
+                    activeTab = Tab.COMPLETED
                     renderOrders()
                     showSuccessDialog(
                         title = getString(R.string.review_sheet_success_title),

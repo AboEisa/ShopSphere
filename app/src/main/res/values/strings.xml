@@ -19,7 +19,7 @@
     <string name="account_payment_methods">Payment Methods</string>
     <string name="account_notifications">Notifications</string>
     <string name="account_faqs">FAQs</string>
-    <string name="account_help_center">Aria</string>
+    <string name="account_help_center">Chatbot</string>
     <string name="account_logout">Logout</string>
     <string name="account_coming_soon">Coming soon</string>
     <string name="account_notifications_coming_soon">Notifications coming soon</string>
@@ -27,6 +27,13 @@
     <string name="account_notifications_button">Open notifications</string>
     <string name="orders_ongoing">Ongoing</string>
     <string name="orders_completed">Completed</string>
+    <string name="orders_all">All</string>
+    <string name="orders_search_hint">Search your orders…</string>
+    <string name="orders_search_filter">Filter orders</string>
+    <string name="orders_buy_again">Buy Again</string>
+    <string name="orders_placed_on">Placed on %1$s</string>
+    <string name="orders_delivered_on">Delivered on %1$s</string>
+    <string name="orders_thumbnail_overflow">+%1$d</string>
     <string name="orders_track_order">Track Order</string>
     <string name="orders_leave_review">Leave Review</string>
     <string name="order_payment_label">Payment</string>
@@ -434,18 +441,18 @@
     <string name="language_english">English</string>
     <string name="language_arabic">العربية</string>
 
-    <!-- Aria — ShopSphere shopping assistant -->
-    <string name="chatbot_title">Aria</string>
+    <!-- Chatbot — ShopSphere shopping assistant -->
+    <string name="chatbot_title">Chatbot</string>
     <string name="chatbot_subtitle">Online • Here to help</string>
-    <string name="chatbot_input_hint">Ask Aria anything…</string>
+    <string name="chatbot_input_hint">Ask Chatbot anything…</string>
     <string name="chatbot_send">Send message</string>
-    <string name="chatbot_empty_title">Hi, I\'m Aria</string>
+    <string name="chatbot_empty_title">Hi, I\'m Chatbot</string>
     <string name="chatbot_empty_subtitle">Your ShopSphere assistant — orders, returns, deals, anything.</string>
     <string name="chatbot_chip_track">Track my order</string>
     <string name="chatbot_chip_returns">Returns policy</string>
     <string name="chatbot_chip_deals">Deals for me</string>
     <string name="chatbot_chip_human">Talk to human</string>
-    <string name="chatbot_open">Open Aria</string>
+    <string name="chatbot_open">Open Chatbot</string>
 
     <!-- Notifications (Room-seeded) -->
     <string name="notifications_empty_title">No notifications yet</string>
@@ -457,7 +464,7 @@
     <string name="notif_order_status_body_picked">Your order has been picked up.</string>
     <string name="notif_order_status_body_transit">Your order is on the way.</string>
     <string name="notif_order_status_body_delivered">Your order has been delivered.</string>
-    <string name="notif_chat_reply_title">Aria replied</string>
+    <string name="notif_chat_reply_title">Chatbot replied</string>
     <string name="notif_chat_reply_body">Tap to continue the conversation.</string>
 
     <!-- Floating bottom navigation labels -->
@@ -478,8 +485,8 @@
     <string name="orders_status_delivered">Delivered</string>
     <string name="orders_field_missing">—</string>
 
-    <!-- Aria — chatbot legacy aliases -->
-    <string name="chatbot_title_yallashop">Aria</string>
-    <string name="chatbot_bot_name">Aria</string>
+    <!-- Chatbot — legacy aliases -->
+    <string name="chatbot_title_yallashop">Chatbot</string>
+    <string name="chatbot_bot_name">Chatbot</string>
 
 </resources>

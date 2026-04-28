@@ -149,6 +149,9 @@ dependencies {
     // Splash Screen
     implementation("androidx.core:core-splashscreen:1.0.1")
 
+    // Chrome Custom Tabs (used by CheckoutFragment to open the payment URL)
+    implementation("androidx.browser:browser:1.8.0")
+
     // Firebase BoM (Bill of Materials) - Single version
     implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
     implementation("com.google.firebase:firebase-analytics")

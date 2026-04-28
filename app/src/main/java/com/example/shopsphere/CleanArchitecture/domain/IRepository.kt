@@ -5,6 +5,7 @@ import com.example.shopsphere.CleanArchitecture.data.models.AddToCartRequest
 interface IRepository {
     suspend fun getProducts(): Result<List<DomainProductResult>>
     suspend fun getProductsByCategory(category: String): Result<List<DomainProductResult>>
+    suspend fun searchProducts(query: String): Result<List<DomainProductResult>>
     suspend fun getFavoriteProducts(ids: List<Int>): Result<List<DomainProductResult>>
     suspend fun toggleFavorite(productId: Int)
     suspend fun isFavorite(productId: Int): Boolean

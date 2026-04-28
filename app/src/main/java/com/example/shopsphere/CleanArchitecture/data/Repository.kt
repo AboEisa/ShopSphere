@@ -60,6 +60,15 @@ class Repository @Inject constructor(
         }
     }
 
+    override suspend fun searchProducts(query: String): Result<List<DomainProductResult>> {
+        return try {
+            val results = remoteDataSource.searchProducts(query)
+            Result.success(results.getOrNull()?.map { it.mapToDomain() } ?: emptyList())
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     override suspend fun getFavoriteProducts(ids: List<Int>): Result<List<DomainProductResult>> {
         return try {
             val favIds = favoriteIds(forceRefresh = true)

@@ -11,14 +11,17 @@ import androidx.core.os.LocaleListCompat
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.card.MaterialCardView
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
 import com.example.shopsphere.R
+import com.example.shopsphere.CleanArchitecture.domain.LogoutUseCase
 import com.example.shopsphere.CleanArchitecture.utils.showConfirmDialog
 import com.example.shopsphere.CleanArchitecture.utils.showSuccessDialog
 import com.example.shopsphere.databinding.FragmentAccountBinding
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -32,6 +35,9 @@ class AccountFragment : Fragment() {
 
     @Inject
     lateinit var sharedPreference: SharedPreference
+
+    @Inject
+    lateinit var logoutUseCase: LogoutUseCase
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -151,6 +157,12 @@ class AccountFragment : Fragment() {
                 message = getString(R.string.dialog_logout_message),
                 positiveText = getString(R.string.dialog_logout_title)
             ) {
+                // Best-effort: tell the server first (clears its session/token),
+                // then drop local state. LogoutUseCase already swallows server
+                // failures so the user always gets logged out locally.
+                viewLifecycleOwner.lifecycleScope.launch {
+                    logoutUseCase()
+                }
                 firebaseAuth.signOut()
                 sharedPreference.clear()
                 sharedPreference.saveIsLoggedIn(false)
@@ -236,5 +248,4 @@ class AccountFragment : Fragment() {
         super.onDestroyView()
         _binding = null
     }
-
 }

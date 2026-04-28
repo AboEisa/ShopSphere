@@ -39,7 +39,7 @@
             android:paddingVertical="10dp"
             android:textColor="#1A1A1A"
             android:textSize="14sp"
-            tools:text="Hi! I'm YallaShop AI, how can I help?" />
+            tools:text="Hi! I'm Chatbot, how can I help?" />
 
         <TextView
             android:id="@+id/buttonRetry"

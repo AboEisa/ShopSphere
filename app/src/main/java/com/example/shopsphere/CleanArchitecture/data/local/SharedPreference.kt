@@ -97,6 +97,17 @@ class SharedPreference @Inject constructor(
 
     fun getDeliveryAddress(): String = sharedPref.getString("delivery_address", "") ?: ""
 
+    /** Filename returned by /Upload — render via "${BASE_URL}GetImage/$fileName". */
+    fun saveProfileImageName(fileName: String) {
+        sharedPref.edit().putString("profile_image_name", fileName.trim()).apply()
+    }
+
+    fun getProfileImageName(): String = sharedPref.getString("profile_image_name", "") ?: ""
+
+    fun clearProfileImageName() {
+        sharedPref.edit().remove("profile_image_name").apply()
+    }
+
     fun setLanguage(languageTag: String) {
         sharedPref.edit().putString("app_language", languageTag).apply()
     }

@@ -1,6 +1,10 @@
 package com.example.shopsphere.CleanArchitecture.ui.views
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.util.Log
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
@@ -12,6 +16,9 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
+import com.example.shopsphere.CleanArchitecture.domain.CreateInvoiceUseCase
+import com.example.shopsphere.CleanArchitecture.domain.PayNowUseCase
+import com.example.shopsphere.CleanArchitecture.domain.PaymentCallbackUseCase
 import com.example.shopsphere.CleanArchitecture.ui.models.PresentationProductResult
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.CartViewModel
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.CheckoutSharedViewModel
@@ -46,6 +53,18 @@ class CheckoutFragment : Fragment() {
 
     @Inject
     lateinit var firebaseAuth: FirebaseAuth
+
+    @Inject
+    lateinit var createInvoiceUseCase: CreateInvoiceUseCase
+
+    @Inject
+    lateinit var payNowUseCase: PayNowUseCase
+
+    @Inject
+    lateinit var paymentCallbackUseCase: PaymentCallbackUseCase
+
+    /** True once we've handed the user off to the payment provider's URL. */
+    private var awaitingPaymentReturn = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -170,6 +189,15 @@ class CheckoutFragment : Fragment() {
                     sharedCartViewModel.setCartItems(emptyList())
                     cartViewModel.clearRemoteCart()
 
+                    // Card path → run the online payment handshake.
+                    // /CreateInvoice prepares the invoice on the server, /PayNow
+                    // returns the provider URL we hand off to the user.
+                    // Cash / Apple Pay / "no card selected" all skip this and
+                    // settle out-of-band.
+                    if (sharedViewModel.selectedPaymentMethod.value != null) {
+                        launchOnlinePayment()
+                    }
+
                     showSuccessDialog(
                         title = getString(R.string.dialog_congratulations_title),
                         message = getString(R.string.dialog_order_success_message),
@@ -276,6 +304,45 @@ class CheckoutFragment : Fragment() {
 
     private fun formatCurrency(value: Double): String = formatEgpPrice(value)
 
+    /**
+     * Calls /CreateInvoice → /PayNow and opens the provider payment URL in a
+     * Chrome Custom Tab. Falls back to a plain browser intent if Chrome isn't
+     * installed. Errors are swallowed silently — the order is already placed
+     * and we don't want to confuse the user with provider-internal failures.
+     */
+    private fun launchOnlinePayment() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            createInvoiceUseCase()  // server-side preparation; we don't need the body
+            val payNow = payNowUseCase().getOrNull()
+            val url = payNow?.paymentUrl?.takeIf { it.isNotBlank() } ?: run {
+                Log.w(TAG, "PayNow returned no URL — order will be settled out-of-band")
+                return@launch
+            }
+
+            val uri = runCatching { Uri.parse(url) }.getOrNull() ?: return@launch
+            try {
+                CustomTabsIntent.Builder().build().launchUrl(requireContext(), uri)
+            } catch (_: Throwable) {
+                // Fall back to default browser if no CCT-capable browser is present.
+                runCatching { startActivity(Intent(Intent.ACTION_VIEW, uri)) }
+            }
+            awaitingPaymentReturn = true
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // When the user returns from the payment provider, ask the server to
+        // reconcile via /Callbackt. The provider also calls this server-side,
+        // but a foreground ping shortens the "stuck on Pending" window.
+        if (awaitingPaymentReturn) {
+            awaitingPaymentReturn = false
+            viewLifecycleOwner.lifecycleScope.launch {
+                paymentCallbackUseCase()
+            }
+        }
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
@@ -283,5 +350,6 @@ class CheckoutFragment : Fragment() {
 
     companion object {
         private const val PROMO_CODE = "SAVE10"
+        private const val TAG = "CheckoutFragment"
     }
 }

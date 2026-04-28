@@ -2,9 +2,9 @@ package com.example.shopsphere.CleanArchitecture.ui.adapters
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
-import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -47,91 +47,115 @@ class OrdersAdapter(
             val context = itemView.context
             val dash = context.getString(R.string.order_value_pending)
 
-            // Always show "Order #<id>" — the API gives us a real id
-            binding.textOrderId.text =
-                if (item.orderId.isBlank() || item.orderId == "PENDING") dash
-                else context.getString(R.string.account_order_prefix, item.orderId)
+            // Top row: ORDER #1004 (caps, muted) + status pill
+            val orderId = item.orderId.takeIf { it.isNotBlank() && it != "PENDING" }
+            binding.textOrderId.text = orderId
+                ?.let { context.getString(R.string.account_order_prefix, it).uppercase(Locale.ENGLISH) }
+                ?: dash
 
-            binding.textOrderDate.text = item.date.ifBlank { dash }
+            // Date row — "Placed on Oct 24, 2023" or "Delivered on …" for delivered
+            val step = resolveStatusStep(item)
+            val dateText = item.date.ifBlank { dash }
+            binding.textOrderDate.text = if (step >= 3) {
+                context.getString(R.string.orders_delivered_on, dateText)
+            } else {
+                context.getString(R.string.orders_placed_on, dateText)
+            }
 
-            // Total — straight from /MyOrders.totalAmount via the VM mapper
-            binding.textOrderTotal.text =
-                item.total.ifBlank { item.itemPrice.ifBlank { dash } }
+            // Thumbnails: backend doesn't return product images per order yet, so
+            // we show a single neutral placeholder so the row keeps its visual
+            // weight without inventing fake content.
+            binding.thumbnail1.isVisible = true
+            binding.thumbnail2.isGone = true
+            binding.thumbnailOverflow.isGone = true
 
-            // Detail rows: payment status + driver from the API
-            binding.textPaymentStatus.text =
-                item.paymentStatus?.takeIf { it.isNotBlank() } ?: dash
-            val driver = item.driverName?.takeIf { it.isNotBlank() }
-            binding.textDriverName.text = driver ?: dash
+            // Total amount in green
+            binding.textOrderTotal.text = item.total.ifBlank { item.itemPrice.ifBlank { dash } }
 
-            // Navigation to the full details screen is intentionally disabled
-            // for now (per spec: "make it default as null"). The card and the
-            // action button are non-interactive until the details screen is wired.
-            binding.root.setOnClickListener(null)
-            binding.root.isClickable = false
-            binding.root.isFocusable = false
+            // Status pill — color depends on the step
+            renderStatusPill(item, step, context)
 
-            if (completedMode) {
-                binding.textOrderStatus.text = context.getString(R.string.orders_completed)
-                binding.textOrderStatus.background =
-                    ContextCompat.getDrawable(context, R.drawable.bg_order_status_completed)
-                binding.textOrderStatus.setTextColor(
+            // Card root + button click handlers stay null per the earlier spec —
+            // the details screen isn't wired yet.
+            binding.orderCard.setOnClickListener(null)
+            binding.orderCard.isClickable = false
+
+            // Action button morphs based on the order step:
+            //  - delivered  -> "Buy Again" (light green pill)
+            //  - in transit -> "Track Order" (solid green)
+            //  - otherwise  -> "Order Details" (light grey pill)
+            renderActionButton(item, step, context)
+        }
+
+        private fun renderStatusPill(item: OrderHistoryItem, step: Int, context: android.content.Context) {
+            binding.textOrderStatus.text = statusLabel(item, step, context)
+
+            val (bgRes, textColorInt) = when (step) {
+                3 -> R.drawable.bg_order_status_completed to ContextCompat.getColor(context, R.color.bright_green)
+                2 -> R.drawable.bg_order_status_shipped to ContextCompat.getColor(context, R.color.bright_green)
+                1 -> R.drawable.bg_order_status_processing to 0xFF1F4F7C.toInt()
+                else -> R.drawable.bg_order_status_processing to 0xFF1F4F7C.toInt()
+            }
+            binding.textOrderStatus.background = ContextCompat.getDrawable(context, bgRes)
+            binding.textOrderStatus.setTextColor(textColorInt)
+        }
+
+        private fun renderActionButton(
+            item: OrderHistoryItem,
+            step: Int,
+            context: android.content.Context
+        ) {
+            val (bgRes, label, textColor) = when {
+                step >= 3 -> Triple(
+                    R.drawable.bg_order_buyagain_button,
+                    context.getString(R.string.orders_buy_again),
                     ContextCompat.getColor(context, R.color.bright_green)
                 )
-
-                val hasReview = item.reviewRating > 0.0
-                binding.buttonOrderAction.isGone = hasReview
-                binding.layoutRatingChip.isVisible = hasReview
-
-                if (hasReview) {
-                    binding.textReviewRating.text = context.getString(
-                        R.string.reviews_average_value_inline,
-                        item.reviewRating
-                    )
-                } else {
-                    binding.buttonOrderAction.text =
-                        context.getString(R.string.orders_leave_review)
-                    binding.buttonOrderAction.setOnClickListener { onReviewClicked(item) }
-                }
-            } else {
-                binding.layoutRatingChip.isGone = true
-                binding.buttonOrderAction.isVisible = true
-                binding.buttonOrderAction.text =
-                    context.getString(R.string.order_view_details)
-                // Per spec, view-details navigation is null for now.
-                binding.buttonOrderAction.setOnClickListener(null)
-
-                val step = resolveStatusStep(item)
-                binding.textOrderStatus.text = ongoingStatusLabel(item)
-                binding.textOrderStatus.background =
-                    ContextCompat.getDrawable(context, statusChipBg(step))
-                binding.textOrderStatus.setTextColor(
-                    ContextCompat.getColor(context, statusChipColor(step))
+                step == 2 -> Triple(
+                    R.drawable.bg_order_track_button,
+                    context.getString(R.string.orders_track_order),
+                    0xFFFFFFFF.toInt()
+                )
+                else -> Triple(
+                    R.drawable.bg_order_details_button,
+                    context.getString(R.string.order_view_details),
+                    0xFF1F2937.toInt()
                 )
             }
-        }
+            binding.buttonOrderAction.background = ContextCompat.getDrawable(context, bgRes)
+            binding.buttonOrderAction.text = label
+            binding.buttonOrderAction.setTextColor(textColor)
 
-        private fun statusChipBg(step: Int): Int = when (step) {
-            3 -> R.drawable.bg_order_status_completed
-            2 -> R.drawable.bg_status_shipped
-            1 -> R.drawable.bg_status_processing
-            else -> R.drawable.bg_order_status_neutral
-        }
-
-        private fun statusChipColor(step: Int): Int = when (step) {
-            3 -> R.color.bright_green
-            2 -> R.color.status_blue
-            1 -> R.color.status_orange
-            else -> R.color._808080
-        }
-
-        private fun ongoingStatusLabel(item: OrderHistoryItem): String {
-            return when (resolveStatusStep(item)) {
-                3 -> itemView.context.getString(R.string.orders_completed)
-                2 -> itemView.context.getString(R.string.track_status_in_transit)
-                1 -> itemView.context.getString(R.string.track_status_picked)
-                else -> itemView.context.getString(R.string.track_status_packing)
+            // Reviews UI (completed mode + already reviewed) — keep the chip path
+            // but only when an existing review exists. The action button still
+            // shows "Buy Again" for delivered orders.
+            val hasReview = item.reviewRating > 0.0
+            if (completedMode && hasReview) {
+                binding.layoutRatingChip.isVisible = true
+                binding.textReviewRating.text = context.getString(
+                    R.string.reviews_average_value_inline,
+                    item.reviewRating
+                )
+            } else {
+                binding.layoutRatingChip.isGone = true
             }
+
+            // Per spec: every action button is a no-op until the details screen
+            // is wired. Leaving review submission still works through long-press
+            // / details flow, not the card itself.
+            binding.buttonOrderAction.setOnClickListener(null)
+            binding.buttonOrderAction.isClickable = false
+        }
+
+        private fun statusLabel(
+            item: OrderHistoryItem,
+            step: Int,
+            context: android.content.Context
+        ): String = when (step) {
+            3 -> context.getString(R.string.orders_status_delivered)
+            2 -> context.getString(R.string.orders_status_transit)
+            1 -> context.getString(R.string.orders_status_picked)
+            else -> context.getString(R.string.orders_status_packing)
         }
 
         private fun resolveStatusStep(item: OrderHistoryItem): Int {
@@ -153,7 +177,6 @@ class OrdersAdapter(
 
             return maxOf(item.statusStep.coerceIn(0, 3), derivedStep)
         }
-
     }
 
     companion object {

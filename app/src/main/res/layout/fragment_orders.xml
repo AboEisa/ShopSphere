@@ -4,14 +4,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white"
+    android:background="#F4F7FB"
     tools:context=".CleanArchitecture.ui.views.OrdersFragment">
 
     <View
         android:id="@+id/topAccent"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="@color/bright_green_indicator"
+        android:background="@android:color/white"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -37,8 +37,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/account_my_orders"
-        android:textColor="@color/bright_green"
-        android:textSize="20sp"
+        android:textColor="#0F172A"
+        android:textSize="18sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="@id/btnBack"
         app:layout_constraintEnd_toEndOf="parent"
@@ -56,7 +56,7 @@
         android:focusable="true"
         android:foreground="?attr/selectableItemBackgroundBorderless"
         android:padding="8dp"
-        android:src="@drawable/ic_bell"
+        android:src="@drawable/ic_cart"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/topAccent"
         app:tint="@color/bright_green" />
@@ -65,49 +65,114 @@
         android:id="@+id/headerDivider"
         android:layout_width="0dp"
         android:layout_height="1dp"
-        android:layout_marginTop="18dp"
+        android:layout_marginTop="14dp"
         android:background="#E9EDF2"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/btnBack" />
 
+    <!-- Search bar -->
     <LinearLayout
-        android:id="@+id/tabContainer"
+        android:id="@+id/searchContainer"
         android:layout_width="0dp"
         android:layout_height="52dp"
         android:layout_marginStart="20dp"
-        android:layout_marginTop="18dp"
+        android:layout_marginTop="14dp"
         android:layout_marginEnd="20dp"
-        android:background="@drawable/bg_segmented_container"
-        android:gravity="center"
+        android:background="@drawable/bg_orders_search"
+        android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:padding="6dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="6dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/headerDivider">
 
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_text_search"
+            android:tint="#94A3B8"
+            tools:ignore="ContentDescription" />
+
+        <EditText
+            android:id="@+id/searchInput"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="10dp"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:hint="@string/orders_search_hint"
+            android:imeOptions="actionSearch"
+            android:inputType="text"
+            android:singleLine="true"
+            android:textColor="#0F172A"
+            android:textColorHint="#94A3B8"
+            android:textSize="15sp" />
+
+        <ImageView
+            android:id="@+id/searchFilterButton"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_search_filter_button"
+            android:clickable="true"
+            android:contentDescription="@string/orders_search_filter"
+            android:focusable="true"
+            android:padding="9dp"
+            android:src="@drawable/ic_filter"
+            android:tint="#1F2937" />
+    </LinearLayout>
+
+    <!-- Segmented tabs: All / Ongoing / Completed -->
+    <LinearLayout
+        android:id="@+id/tabContainer"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="14dp"
+        android:layout_marginEnd="20dp"
+        android:background="@drawable/bg_segmented_container"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:padding="5dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/searchContainer">
+
         <TextView
-            android:id="@+id/tabOngoing"
+            android:id="@+id/tabAll"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:background="@drawable/bg_segmented_selected"
             android:gravity="center"
+            android:text="@string/orders_all"
+            android:textColor="@color/bright_green"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tabOngoing"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:gravity="center"
             android:text="@string/orders_ongoing"
-            android:textColor="#1A1A1A"
-            android:textSize="15sp"
+            android:textColor="#6B7280"
+            android:textSize="14sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/tabCompleted"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="6dp"
             android:layout_weight="1"
             android:gravity="center"
             android:text="@string/orders_completed"
-            android:textColor="#9B9B9B"
-            android:textSize="15sp"
+            android:textColor="#6B7280"
+            android:textSize="14sp"
             android:textStyle="bold" />
     </LinearLayout>
 

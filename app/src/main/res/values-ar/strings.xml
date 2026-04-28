@@ -19,7 +19,7 @@
     <string name="account_payment_methods">طرق الدفع</string>
     <string name="account_notifications">الإشعارات</string>
     <string name="account_faqs">الأسئلة الشائعة</string>
-    <string name="account_help_center">يلا شوب AI</string>
+    <string name="account_help_center">شات بوت</string>
     <string name="account_logout">تسجيل الخروج</string>
     <string name="account_coming_soon">قريبًا</string>
     <string name="account_notifications_coming_soon">الإشعارات قريبًا</string>
@@ -27,6 +27,13 @@
     <string name="account_notifications_button">فتح الإشعارات</string>
     <string name="orders_ongoing">قيد التنفيذ</string>
     <string name="orders_completed">مكتملة</string>
+    <string name="orders_all">الكل</string>
+    <string name="orders_search_hint">ابحث في طلباتك…</string>
+    <string name="orders_search_filter">تصفية الطلبات</string>
+    <string name="orders_buy_again">اطلب مرة أخرى</string>
+    <string name="orders_placed_on">تم الطلب في %1$s</string>
+    <string name="orders_delivered_on">تم التسليم في %1$s</string>
+    <string name="orders_thumbnail_overflow">+%1$d</string>
     <string name="orders_track_order">تتبع الطلب</string>
     <string name="orders_leave_review">أضف تقييمًا</string>
     <string name="order_payment_label">الدفع</string>
@@ -434,18 +441,18 @@
     <string name="language_english">English</string>
     <string name="language_arabic">العربية</string>
 
-    <!-- مساعد يلا شوب الذكي -->
-    <string name="chatbot_title">Sphere AI</string>
+    <!-- شات بوت — مساعد ShopSphere -->
+    <string name="chatbot_title">شات بوت</string>
     <string name="chatbot_subtitle">متصل • جاهز لمساعدتك</string>
-    <string name="chatbot_input_hint">اسأل مساعد يلا شوب أي حاجة…</string>
+    <string name="chatbot_input_hint">اسأل شات بوت أي حاجة…</string>
     <string name="chatbot_send">إرسال الرسالة</string>
-    <string name="chatbot_empty_title">أهلًا، أنا Sphere AI</string>
+    <string name="chatbot_empty_title">أهلًا، أنا شات بوت</string>
     <string name="chatbot_empty_subtitle">مساعدك في ShopSphere — طلبات، إرجاع، عروض، وأي حاجة.</string>
     <string name="chatbot_chip_track">تتبع طلبي</string>
     <string name="chatbot_chip_returns">سياسة الإرجاع</string>
     <string name="chatbot_chip_deals">عروض ليك</string>
     <string name="chatbot_chip_human">تكلم مع شخص</string>
-    <string name="chatbot_open">افتح مساعد يلا شوب</string>
+    <string name="chatbot_open">افتح شات بوت</string>
 
     <!-- Notifications -->
     <string name="notifications_empty_title">مفيش إشعارات لسه</string>
@@ -457,7 +464,7 @@
     <string name="notif_order_status_body_picked">الكابتن استلم أوردرك.</string>
     <string name="notif_order_status_body_transit">أوردرك في الطريق إليك.</string>
     <string name="notif_order_status_body_delivered">أوردرك وصل. كفاية حلاوة.</string>
-    <string name="notif_chat_reply_title">مساعد يلا شوب ردّ عليك</string>
+    <string name="notif_chat_reply_title">شات بوت ردّ عليك</string>
     <string name="notif_chat_reply_body">دوس علشان تكمّل المحادثة.</string>
 
     <!-- تبويبات شريط التنقل العائم -->
@@ -478,8 +485,8 @@
     <string name="orders_status_delivered">اتسلّم</string>
     <string name="orders_field_missing">—</string>
 
-    <!-- مساعد يلا شوب الذكي -->
-    <string name="chatbot_title_yallashop">Sphere AI</string>
-    <string name="chatbot_bot_name">مساعد يلا شوب</string>
+    <!-- شات بوت — أسماء قديمة -->
+    <string name="chatbot_title_yallashop">شات بوت</string>
+    <string name="chatbot_bot_name">شات بوت</string>
 
 </resources>

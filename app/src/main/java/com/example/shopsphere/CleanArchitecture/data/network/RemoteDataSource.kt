@@ -7,6 +7,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import okhttp3.MultipartBody
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -65,12 +66,8 @@ class RemoteDataSource @Inject constructor(
         email: String,
         password: String
     ): Result<AuthResponseDto> = runCatching {
-        apiService.login(
-            AuthRequestDto(
-                email = email,
-                password = password
-            )
-        )
+        // /Login expects lowercase {email, password} — see LoginRequestDto.
+        apiService.login(LoginRequestDto(email = email, password = password))
     }
 
     override suspend fun loginWithGoogle(idToken: String): Result<AuthResponseDto> =
@@ -86,7 +83,7 @@ class RemoteDataSource @Inject constructor(
 
             // Try login first; if it fails, register then login
             try {
-                apiService.login(AuthRequestDto(email = email, password = password))
+                apiService.login(LoginRequestDto(email = email, password = password))
             } catch (_: Exception) {
                 apiService.signUp(
                     AuthRequestDto(
@@ -95,9 +92,13 @@ class RemoteDataSource @Inject constructor(
                         password = password
                     )
                 )
-                apiService.login(AuthRequestDto(email = email, password = password))
+                apiService.login(LoginRequestDto(email = email, password = password))
             }
         }
+
+    override suspend fun logout(): Result<GenericResponseDto> = runCatching {
+        apiService.logout()
+    }
 
     override suspend fun addToCart(
         productId: Int,
@@ -141,12 +142,80 @@ class RemoteDataSource @Inject constructor(
         apiService.getAllFavorites()
     }
 
+    override suspend fun searchProducts(query: String): Result<List<ProductResult>> = runCatching {
+        val trimmed = query.trim()
+        if (trimmed.isEmpty()) return@runCatching emptyList()
+
+        // Hit /Search server-side for relevance, then map each hit through the
+        // already-cached product list to keep category/rating/description
+        // consistent with the rest of the app.
+        val hits = apiService.searchProducts(trimmed)
+        if (hits.isEmpty()) return@runCatching emptyList()
+
+        val catalogueById = getProducts()
+            .getOrDefault(emptyList())
+            .associateBy { it.id }
+
+        hits.map { dto ->
+            catalogueById[dto.id] ?: dto.toProductResult(
+                category = overrideCategoryFromTitle(dto.name, GENERAL_CATEGORY)
+            )
+        }
+    }
+
+    // ── Profile ───────────────────────────────────────────────────────────
+
+    override suspend fun getMyDetails(): Result<MyDetailsDto> = runCatching {
+        apiService.getMyDetails()
+    }
+
+    override suspend fun updateMyDetails(
+        fullName: String,
+        email: String
+    ): Result<GenericResponseDto> = runCatching {
+        apiService.updateMyDetails(UpdateMyDetailsRequest(fullName = fullName, email = email))
+    }
+
+    override suspend fun updateMyAddressAndPhone(
+        address: String,
+        phone: String
+    ): Result<GenericResponseDto> = runCatching {
+        // Path is intentionally `UpdateMyAddress&Phone` — see ApiServices for why
+        // we route through @Url instead of @PUT("...").
+        apiService.updateMyAddressAndPhone(
+            url = "UpdateMyAddress&Phone",
+            request = UpdateAddressPhoneRequest(address = address, phone = phone)
+        )
+    }
+
+    // ── Images ────────────────────────────────────────────────────────────
+
+    override suspend fun uploadImage(
+        part: MultipartBody.Part
+    ): Result<UploadResponseDto> = runCatching {
+        apiService.uploadImage(part)
+    }
+
+    // ── Orders / Payment ──────────────────────────────────────────────────
+
     override suspend fun checkout(): Result<CheckoutResponseDto> = runCatching {
         apiService.checkout()
     }
 
     override suspend fun getMyOrders(): Result<List<MyOrderDto>> = runCatching {
         apiService.getMyOrders()
+    }
+
+    override suspend fun createInvoice(): Result<InvoiceResponseDto> = runCatching {
+        apiService.createInvoice()
+    }
+
+    override suspend fun payNow(): Result<PayNowResponseDto> = runCatching {
+        apiService.payNow()
+    }
+
+    override suspend fun paymentCallback(): Result<PaymentCallbackDto> = runCatching {
+        apiService.paymentCallback()
     }
 
     private suspend fun fetchProductsFromBackend(): List<ProductResult> = coroutineScope {

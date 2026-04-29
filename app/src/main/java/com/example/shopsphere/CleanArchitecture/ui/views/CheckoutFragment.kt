@@ -255,14 +255,13 @@ class CheckoutFragment : Fragment() {
                     } else {
                         // Online Payment: Proceed with payment gateway
                         Log.d(TAG, "Online payment selected - launching payment gateway")
-                        val paymentSuccess = launchOnlinePayment()
-
-                        if (paymentSuccess) {
-                            // Payment succeeded - call callback API to update status
-                            updatePaymentStatusAndCompleteOrder()
-                        } else {
-                            // Payment failed
-                            handlePaymentFailure()
+                        // null  = WebView launched, result handled by PaymentWebViewFragment
+                        // false = PayNow API failed before WebView could open
+                        // true  = payment completed without WebView (unused path)
+                        when (launchOnlinePayment()) {
+                            true -> updatePaymentStatusAndCompleteOrder()
+                            false -> handlePaymentFailure()
+                            null -> { /* WebView is open — it owns success/failure handling */ }
                         }
                     }
                 }
@@ -447,10 +446,11 @@ class CheckoutFragment : Fragment() {
     }
 
     /**
-     * Calls /PayNow directly with orderId and opens the provider payment URL in a
-     * Chrome Custom Tab. Suspends until user returns from payment gateway.
+     * Calls /PayNow and opens the payment URL in PaymentWebViewFragment.
+     * Returns null when the WebView was launched (result owned by WebView fragment),
+     * false when PayNow API failed before WebView could open.
      */
-    private suspend fun launchOnlinePayment(): Boolean {
+    private suspend fun launchOnlinePayment(): Boolean? {
         return try {
             Log.d(TAG, "Starting payment process...")
 
@@ -531,10 +531,8 @@ class CheckoutFragment : Fragment() {
                 .actionCheckoutFragmentToPaymentWebViewFragment(url, orderId)
             findNavController().navigate(action)
 
-            // Return false here — we navigated away, so we do NOT call
-            // updatePaymentStatusAndCompleteOrder() now. The WebView fragment
-            // handles success/failure on its own after the user pays or cancels.
-            false
+            // null = WebView launched; PaymentWebViewFragment owns success/failure.
+            null
         } catch (e: Exception) {
             Log.e(TAG, "Payment launch failed with exception", e)
             Toast.makeText(

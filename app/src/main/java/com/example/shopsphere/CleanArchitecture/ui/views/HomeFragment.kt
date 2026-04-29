@@ -279,7 +279,7 @@ class HomeFragment : Fragment() {
     private fun observeLoadingState() {
         productsViewModel.isLoading.observe(viewLifecycleOwner) { loading ->
             if (!isAdded || _binding == null) return@observe
-            
+
             // Show modern loading overlay on first load
             if (loading == true) {
                 val hasLoaded = productsViewModel.hasLoadedOnce.value == true
@@ -294,7 +294,7 @@ class HomeFragment : Fragment() {
                 // Hide loading overlay
                 binding.loadingOverlay.loadingOverlay.visibility = View.GONE
                 hideShimmerAndShowProducts()
-                
+
                 val hasLoaded = productsViewModel.hasLoadedOnce.value == true
                 val visibleProducts = productsViewModel.productsLiveData.value.orEmpty()
                 binding.noResult.visibility =
@@ -384,7 +384,9 @@ class HomeFragment : Fragment() {
                 updateBadgePosition()
             }
         } else {
-            binding.fabCart.hide()
+            // Use GONE directly instead of FAB's animated hide() so the cart FAB
+            // disappears instantly after an order is created (no scale-out delay).
+            binding.fabCart.visibility = View.GONE
             binding.tvCartBadge.visibility = View.GONE
         }
     }

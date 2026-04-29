@@ -40,7 +40,27 @@ class ChatBotFragment : Fragment() {
     private val sharedViewModel: CheckoutSharedViewModel by activityViewModels()
 
     private val messagesAdapter by lazy {
-        ChatMessagesAdapter(onRetry = { viewModel.retryLast() })
+        ChatMessagesAdapter(
+            onRetry = { viewModel.retryLast() },
+            onActionClick = { action ->
+                when (action) {
+                    is com.example.shopsphere.CleanArchitecture.ui.models.ChatAction.OpenProduct -> {
+                        val bundle = android.os.Bundle().apply {
+                            putInt("productId", action.productId)
+                        }
+                        findNavController().navigate(
+                            com.example.shopsphere.R.id.action_chatBotFragment_to_detailsFragment,
+                            bundle
+                        )
+                    }
+                    is com.example.shopsphere.CleanArchitecture.ui.models.ChatAction.ViewOrder -> {
+                        findNavController().navigate(
+                            com.example.shopsphere.R.id.action_chatBotFragment_to_ordersFragment
+                        )
+                    }
+                }
+            }
+        )
     }
 
     override fun onCreateView(

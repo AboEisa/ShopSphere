@@ -4,6 +4,8 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
+import androidx.core.content.getSystemService
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -52,12 +54,20 @@ class SearchFragment : Fragment() {
             if (query.isNotEmpty()) {
                 searchViewModel.searchProducts(query)
                 showSearchResults()
+                // Dismiss keyboard so results are immediately tappable without
+                // pressing done first.
+                hideKeyboard()
             } else {
                 searchViewModel.clearResults()
                 binding.recyclerSearchResults.visibility = View.GONE
                 hideEmptyState()
             }
         }
+    }
+
+    private fun hideKeyboard() {
+        val imm = requireContext().getSystemService<InputMethodManager>()
+        imm?.hideSoftInputFromWindow(binding.textSearch.windowToken, 0)
     }
 
     private fun setupRecyclerView() {

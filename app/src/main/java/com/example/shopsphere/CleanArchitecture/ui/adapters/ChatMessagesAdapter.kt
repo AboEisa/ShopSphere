@@ -7,6 +7,7 @@ import android.view.animation.AnimationUtils
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.example.shopsphere.CleanArchitecture.ui.models.ChatAction
 import com.example.shopsphere.CleanArchitecture.ui.models.ChatMessage
 import com.example.shopsphere.R
 import com.example.shopsphere.databinding.ItemChatMessageBotBinding
@@ -21,7 +22,8 @@ import com.example.shopsphere.databinding.ItemChatTypingBinding
  * (already present in the project).
  */
 class ChatMessagesAdapter(
-    private val onRetry: () -> Unit
+    private val onRetry: () -> Unit,
+    private val onActionClick: (ChatAction) -> Unit = {}
 ) : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(DIFF) {
 
     override fun getItemViewType(position: Int): Int = when (getItem(position)) {
@@ -34,7 +36,7 @@ class ChatMessagesAdapter(
         val inflater = LayoutInflater.from(parent.context)
         return when (viewType) {
             TYPE_USER -> UserVH(ItemChatMessageUserBinding.inflate(inflater, parent, false))
-            TYPE_BOT -> BotVH(ItemChatMessageBotBinding.inflate(inflater, parent, false), onRetry)
+            TYPE_BOT -> BotVH(ItemChatMessageBotBinding.inflate(inflater, parent, false), onRetry, onActionClick)
             else -> TypingVH(ItemChatTypingBinding.inflate(inflater, parent, false))
         }
     }
@@ -68,12 +70,33 @@ class ChatMessagesAdapter(
 
     class BotVH(
         private val b: ItemChatMessageBotBinding,
-        private val onRetry: () -> Unit
+        private val onRetry: () -> Unit,
+        private val onActionClick: (ChatAction) -> Unit
     ) : RecyclerView.ViewHolder(b.root) {
         fun bind(msg: ChatMessage.BotMessage) {
             b.textMessage.text = msg.text
             b.buttonRetry.visibility = if (msg.isError) View.VISIBLE else View.GONE
             b.buttonRetry.setOnClickListener { onRetry() }
+
+            // Render deep-link action chips under the bubble.
+            if (msg.actions.isEmpty()) {
+                b.actionsScroll.visibility = View.GONE
+                b.actionsContainer.removeAllViews()
+            } else {
+                b.actionsScroll.visibility = View.VISIBLE
+                b.actionsContainer.removeAllViews()
+                val inflater = LayoutInflater.from(b.root.context)
+                msg.actions.forEach { action ->
+                    val chip = inflater.inflate(
+                        R.layout.item_chat_action_chip,
+                        b.actionsContainer,
+                        false
+                    ) as android.widget.TextView
+                    chip.text = action.label
+                    chip.setOnClickListener { onActionClick(action) }
+                    b.actionsContainer.addView(chip)
+                }
+            }
         }
     }
 

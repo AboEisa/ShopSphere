@@ -25,8 +25,8 @@
                 android:layout_width="64dp"
                 android:layout_height="64dp"
                 android:indeterminate="true"
-                app:indicatorColor="@android:color/white"
-                app:trackColor="#4D23a36e"
+                app:indicatorColor="@color/bright_green"
+                app:trackColor="#1A23a36e"
                 app:trackThickness="4dp" />
 
             <TextView
@@ -35,7 +35,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 android:text="Loading..."
-                android:textColor="@android:color/white"
+                android:textColor="#1A1A1A"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
@@ -45,7 +45,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:text="Please wait"
-                android:textColor="#B3FFFFFF"
+                android:textColor="#808080"
                 android:textSize="14sp" />
 
         </LinearLayout>

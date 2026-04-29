@@ -2,7 +2,6 @@ package com.example.shopsphere.CleanArchitecture.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.shopsphere.CleanArchitecture.data.local.ChatHistoryStore
 import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
 import com.example.shopsphere.CleanArchitecture.domain.IRepository
 import com.example.shopsphere.CleanArchitecture.domain.SendChatMessageUseCase
@@ -14,19 +13,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
+import retrofit2.HttpException
 import javax.inject.Inject
 
-/**
- * Backs [ChatBotFragment]. Holds the in-memory conversation, pushes user
- * messages through [SendChatMessageUseCase] (FAQ → Gemini), and exposes a
- * single [UiState] the Fragment renders.
- */
 @HiltViewModel
 class ChatBotViewModel @Inject constructor(
     private val sendChatMessageUseCase: SendChatMessageUseCase,
     private val repository: IRepository,
     private val sharedPreference: SharedPreference,
-    private val chatHistoryStore: ChatHistoryStore
 ) : ViewModel() {
 
     data class UiState(
@@ -35,25 +30,16 @@ class ChatBotViewModel @Inject constructor(
         val lastFailedUserMessage: String? = null
     )
 
-    // Restore the previous session's conversation so the user can keep the
-    // thread going across app restarts. Typing indicators and error bubbles
-    // are dropped at save time, so what we get back here is clean.
-    private val _state = MutableStateFlow(UiState(messages = chatHistoryStore.load()))
+    // Fresh conversation every session — no persistence.
+    private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> = _state.asStateFlow()
 
-    // Rolling context the use case passes into Gemini. Refreshed before each send.
     private var recentOrders: List<OrderHistoryItem> = emptyList()
 
-    /** Wipe persisted history and reset the in-memory thread. */
     fun clearHistory() {
-        chatHistoryStore.clear()
         _state.value = UiState()
     }
 
-    /**
-     * Called by the Fragment once the shared order LiveData emits — keeps the
-     * Gemini system prompt's order list up to date.
-     */
     fun updateOrderContext(orders: List<OrderHistoryItem>) {
         recentOrders = orders.take(5)
     }
@@ -65,6 +51,19 @@ class ChatBotViewModel @Inject constructor(
         val userMsg = ChatMessage.UserMessage(text = trimmed)
         val typing = ChatMessage.TypingIndicator()
 
+        // Capture history from the CURRENT messages BEFORE appending the new user message,
+        // so retries don't keep duplicating the user turn in the conversation history.
+        val history = _state.value.messages
+            .filter { it !is ChatMessage.TypingIndicator }
+            .mapNotNull { msg ->
+                when (msg) {
+                    is ChatMessage.UserMessage -> "user" to msg.text
+                    is ChatMessage.BotMessage -> if (!msg.isError) "model" to msg.text else null
+                    is ChatMessage.TypingIndicator -> null
+                }
+            }
+            .takeLast(MAX_HISTORY_TURNS * 2)
+
         _state.value = _state.value.copy(
             messages = _state.value.messages + userMsg + typing,
             isSending = true,
@@ -73,28 +72,24 @@ class ChatBotViewModel @Inject constructor(
 
         viewModelScope.launch {
             val ctx = buildChatContext()
-            // Keep the last MAX_HISTORY_TURNS turns of real conversation. Older
-            // turns are dropped to keep token usage bounded and the model
-            // focused on the current thread.
-            val history = _state.value.messages
-                .filter { it !is ChatMessage.TypingIndicator && it.id != userMsg.id }
-                .mapNotNull { msg ->
-                    when (msg) {
-                        is ChatMessage.UserMessage -> "user" to msg.text
-                        is ChatMessage.BotMessage -> if (!msg.isError) "model" to msg.text else null
-                        is ChatMessage.TypingIndicator -> null
+
+            // Cap the entire send at 15 s so the typing indicator never spins forever.
+            val result = withTimeoutOrNull(15_000L) {
+                runCatching { sendChatMessageUseCase.send(trimmed, history, ctx) }
+                    .getOrElse { e ->
+                        android.util.Log.e("ChatBot", "send() threw exception", e)
+                        Result.failure(e)
                     }
-                }
-                .takeLast(MAX_HISTORY_TURNS * 2)
+            } ?: run {
+                android.util.Log.e("ChatBot", "send() timed out after 15s")
+                Result.failure(Exception("Request timed out"))
+            }
 
-            val result = sendChatMessageUseCase.send(trimmed, history, ctx)
-
-            // Remove the typing indicator, then append either the reply or an
-            // error bubble the user can retry.
             val withoutTyping = _state.value.messages.filterNot { it is ChatMessage.TypingIndicator }
 
             result
                 .onSuccess { reply ->
+                    android.util.Log.d("ChatBot", "ViewModel got success reply")
                     _state.value = _state.value.copy(
                         messages = withoutTyping + ChatMessage.BotMessage(
                             text = reply.text,
@@ -103,35 +98,35 @@ class ChatBotViewModel @Inject constructor(
                         isSending = false,
                         lastFailedUserMessage = null
                     )
-                    chatHistoryStore.save(_state.value.messages)
                 }
-                .onFailure {
+                .onFailure { e ->
+                    android.util.Log.e("ChatBot", "ViewModel got failure: ${e.message}", e)
+                    val errorText = when {
+                        e is retrofit2.HttpException && e.code() == 429 ->
+                            "I'm handling a lot of requests right now — please wait a moment and tap Retry."
+                        e.message?.contains("timed out", ignoreCase = true) == true ->
+                            "That took too long to respond. Check your connection and tap Retry."
+                        else ->
+                            "I couldn't reach the server just now — check your connection and tap Retry."
+                    }
                     _state.value = _state.value.copy(
                         messages = withoutTyping + ChatMessage.BotMessage(
-                            text = "I couldn't reach the server just now — check your connection and tap Retry.",
+                            text = errorText,
                             isError = true
                         ),
                         isSending = false,
                         lastFailedUserMessage = trimmed
                     )
-                    // Error bubbles are filtered out at save time, but persist
-                    // the user message so it isn't lost if the user backgrounds
-                    // the app before retrying.
-                    chatHistoryStore.save(_state.value.messages)
                 }
         }
     }
 
     private companion object {
-        // 12 user/model exchanges = enough to keep the thread coherent without
-        // ballooning prompt size.
         private const val MAX_HISTORY_TURNS = 12
     }
 
     fun retryLast() {
         val failed = _state.value.lastFailedUserMessage ?: return
-        // Drop the trailing error bubble before retrying so the conversation
-        // doesn't accumulate dead "try again" messages.
         val pruned = _state.value.messages.toMutableList()
         val lastIndex = pruned.indexOfLast { it is ChatMessage.BotMessage && (it as ChatMessage.BotMessage).isError }
         if (lastIndex >= 0) pruned.removeAt(lastIndex)
@@ -143,17 +138,16 @@ class ChatBotViewModel @Inject constructor(
     }
 
     private suspend fun buildChatContext(): SendChatMessageUseCase.ChatContext {
-        // Cart summary — safe fallbacks on any failure (never block the chat).
-        // We pull the full item list when possible so the prompt can answer
-        // "what's in my cart?" with actual product names.
-        val itemsResult = runCatching { repository.getCartItems().getOrNull().orEmpty() }
-        val items = itemsResult.getOrDefault(emptyList())
+        val items = runCatching {
+            withTimeoutOrNull(5_000L) {
+                repository.getCartItems().getOrNull().orEmpty()
+            } ?: emptyList()
+        }.getOrDefault(emptyList())
 
-        val cartCount = if (items.isNotEmpty()) {
-            items.sumOf { it.quantity }
-        } else {
-            runCatching { repository.getCartItemCount() }.getOrDefault(0)
-        }
+        val cartCount = items.sumOf { it.quantity }
+            .takeIf { it > 0 }
+            ?: runCatching { repository.getCartItemCount() }.getOrDefault(0)
+
         val cartTotal = formatEgpPrice(items.sumOf { it.price * it.quantity })
         val cartLines = items.take(5).map {
             SendChatMessageUseCase.CartLine(

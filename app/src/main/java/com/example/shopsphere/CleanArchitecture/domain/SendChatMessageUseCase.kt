@@ -83,41 +83,40 @@ class SendChatMessageUseCase @Inject constructor(
         context: ChatContext
     ): Result<ChatReply> {
         val userName = sharedPreference.getProfileName().trim().takeIf { it.isNotBlank() }
+        android.util.Log.d("ChatBot", "send() called | message='$message' | historySize=${history.size}")
 
-        // 1) Fast path — FAQ rule matched. Greetings only fire on the very first
-        //    user turn, and order-shaped topics defer to Gemini whenever we
-        //    actually have order data so the reply can cite the order number.
+        // 1) Fast path — FAQ rule matched.
         val isFirstUserMessage = history.none { it.first == "user" }
-        faqMatcher.match(
+        val faqMatch = faqMatcher.match(
             message = message,
             userName = userName,
             isFirstMessage = isFirstUserMessage,
             hasOrderContext = context.recentOrders.isNotEmpty()
-        )?.let { match ->
-            // FAQ replies are static and don't reference specific orders /
-            // products, so no deep-link actions are attached.
-            return Result.success(ChatReply(text = match.answer))
+        )
+        if (faqMatch != null) {
+            android.util.Log.d("ChatBot", "FAQ matched → '${faqMatch.answer.take(80)}'")
+            return Result.success(ChatReply(text = faqMatch.answer))
         }
+        android.util.Log.d("ChatBot", "No FAQ match → going to Gemini")
 
         // 2) Gemini fallback.
         val apiKey = BuildConfig.GEMINI_API_KEY
+        android.util.Log.d("ChatBot", "API key blank=${apiKey.isBlank()} length=${apiKey.length}")
         if (apiKey.isBlank()) {
+            android.util.Log.e("ChatBot", "GEMINI_API_KEY is not configured!")
             return Result.failure(IllegalStateException("Gemini API key not configured"))
         }
 
-        // Look up products on the fly when the message smells like an
-        // availability / product question. Cheap-ish — only runs when intent is
-        // detected and we cap the result list.
-        val productMatches = lookupProductsFor(message)
+        val productMatches = runCatching { lookupProductsFor(message) }.getOrDefault(emptyList())
+        android.util.Log.d("ChatBot", "productMatches=${productMatches.size}")
+
         val orderFocus = pickFocusOrder(message, context.recentOrders)
-        // Cart-driven recommendations: only fetch when the user actually asks
-        // for ideas / suggestions, so the prompt stays small otherwise. Falls
-        // back to popular catalog items when the cart is empty or the
-        // cart-based search returned nothing relevant.
         val recommendations = if (looksLikeRecommendationRequest(message)) {
-            buildRecommendations(context.cartLines)
+            runCatching { buildRecommendations(context.cartLines) }.getOrDefault(RecommendationSet.empty)
         } else RecommendationSet.empty
         val cancelIntent = looksLikeCancelRequest(message)
+
+        android.util.Log.d("ChatBot", "Sending to Gemini | model=${Constant.GEMINI_MODEL} | historyTurns=${history.size}")
 
         return runCatching {
             val systemInstruction = Content(
@@ -140,23 +139,23 @@ class SendChatMessageUseCase @Inject constructor(
                 contents = conversation,
                 systemInstruction = systemInstruction,
                 generationConfig = GenerationConfig(
-                    // Slightly lower temperature → more focused, less rambling.
                     temperature = 0.55f,
                     topP = 0.9f,
-                    // Cap output so the bot stays conversational instead of
-                    // dumping a wall of text.
                     maxOutputTokens = 360
                 )
             )
 
+            android.util.Log.d("ChatBot", "Calling generateContent...")
             val response = geminiApiService.generateContent(
                 model = Constant.GEMINI_MODEL,
                 apiKey = apiKey,
                 request = request
             )
+            android.util.Log.d("ChatBot", "Gemini response received | candidates=${response.candidates?.size} | blockReason=${response.promptFeedback?.blockReason}")
 
             val firstCandidate = response.candidates?.firstOrNull()
             val raw = firstCandidate?.content?.parts?.joinToString("") { it.text }?.trim()
+            android.util.Log.d("ChatBot", "Raw reply (first 120): ${raw?.take(120)}")
 
             val text = when {
                 !raw.isNullOrBlank() -> sanitizeReply(raw)
@@ -165,13 +164,12 @@ class SendChatMessageUseCase @Inject constructor(
                 else -> "I didn't quite get that. Could you rephrase, or ask about orders, returns, payments, or deals?"
             }
 
-            // Surface deep-link shortcuts when the reply quotes specific data
-            // we already have ID for — orders by number, products by title.
             val actions = buildActionsFor(
                 replyText = text,
                 orders = context.recentOrders,
                 productPool = productMatches + recommendations.items
             )
+            android.util.Log.d("ChatBot", "Reply ready | actions=${actions.size}")
             ChatReply(text = text, actions = actions)
         }
     }
@@ -216,15 +214,15 @@ class SendChatMessageUseCase @Inject constructor(
             if (p.productId in seenProductIds) continue
             val titleLower = p.title.lowercase()
             val mentioned = lowerReply.contains(titleLower) ||
-                run {
-                    val keyword = p.title
-                        .split(' ', '-', '/', ',')
-                        .map { it.trim() }
-                        .filter { it.length >= 5 }
-                        .maxByOrNull { it.length }
-                        ?.lowercase()
-                    keyword != null && lowerReply.contains(keyword)
-                }
+                    run {
+                        val keyword = p.title
+                            .split(' ', '-', '/', ',')
+                            .map { it.trim() }
+                            .filter { it.length >= 5 }
+                            .maxByOrNull { it.length }
+                            ?.lowercase()
+                        keyword != null && lowerReply.contains(keyword)
+                    }
             if (!mentioned) continue
             seenProductIds += p.productId
             actions += ChatAction.OpenProduct(

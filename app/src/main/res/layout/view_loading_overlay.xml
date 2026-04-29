@@ -24,8 +24,8 @@
             android:layout_width="64dp"
             android:layout_height="64dp"
             android:indeterminate="true"
-            app:indicatorColor="@android:color/white"
-            app:trackColor="#4D23a36e"
+            app:indicatorColor="@color/bright_green"
+            app:trackColor="#1A23a36e"
             app:trackThickness="4dp" />
 
         <!-- Loading text -->
@@ -35,7 +35,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
             android:text="Loading..."
-            android:textColor="@android:color/white"
+            android:textColor="#1A1A1A"
             android:textSize="16sp"
             android:textStyle="bold" />
 
@@ -46,7 +46,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:text="Please wait"
-            android:textColor="#B3FFFFFF"
+            android:textColor="#808080"
             android:textSize="14sp" />
 
         <!-- Cancel button shown when payment is in progress -->
@@ -56,12 +56,12 @@
             android:layout_height="44dp"
             android:layout_marginTop="36dp"
             android:text="Cancel"
-            android:textColor="@android:color/white"
+            android:textColor="@color/bright_green"
             android:textSize="14sp"
             android:visibility="gone"
-            app:backgroundTint="#2A23a36e"
+            app:backgroundTint="#1A23a36e"
             app:cornerRadius="22dp"
-            app:strokeColor="#7023a36e"
+            app:strokeColor="@color/bright_green"
             app:strokeWidth="1dp" />
 
     </LinearLayout>

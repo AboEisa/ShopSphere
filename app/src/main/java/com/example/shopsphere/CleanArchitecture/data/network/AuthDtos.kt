@@ -2,13 +2,13 @@ package com.example.shopsphere.CleanArchitecture.data.network
 
 import com.google.gson.annotations.SerializedName
 
-// SignUp body uses PascalCase keys (per /SignUp Postman).
+// SignUp body matches backend API: { "fristName", "lastName", "email", "password" }
+// Note: Backend has typo "fristName" instead of "firstName"
 data class AuthRequestDto(
-    @SerializedName("FullName") val fullName: String? = null,
-    @SerializedName("Email") val email: String,
-    @SerializedName("Password") val password: String,
-    @SerializedName("Phone") val phone: String? = null,
-    @SerializedName("Address") val address: String? = null
+    @SerializedName("fristName") val fristName: String,
+    @SerializedName("lastName") val lastName: String,
+    @SerializedName("email") val email: String,
+    @SerializedName("password") val password: String
 )
 
 // Login body uses lowercase keys (per /Login Postman). Kept as a separate DTO

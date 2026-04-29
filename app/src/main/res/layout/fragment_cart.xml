@@ -33,6 +33,25 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
+    <!-- Clear All Button -->
+    <TextView
+        android:id="@+id/btnClearCart"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/_15sdp"
+        android:layout_marginEnd="20dp"
+        android:text="@string/cart_clear_all"
+        android:textColor="#FF3B30"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackgroundBorderless"
+        android:paddingHorizontal="4dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
     <ImageView
         android:id="@+id/imageView"
         android:layout_width="wrap_content"
@@ -139,4 +158,11 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
+
+    <!-- Modern loading overlay -->
+    <include
+        android:id="@+id/loading_overlay"
+        layout="@layout/view_loading_overlay"
+        android:visibility="gone" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

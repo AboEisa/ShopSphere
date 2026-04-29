@@ -2,6 +2,7 @@ package com.example.shopsphere.CleanArchitecture.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.shopsphere.CleanArchitecture.data.local.ChatHistoryStore
 import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
 import com.example.shopsphere.CleanArchitecture.domain.IRepository
 import com.example.shopsphere.CleanArchitecture.domain.SendChatMessageUseCase
@@ -24,7 +25,8 @@ import javax.inject.Inject
 class ChatBotViewModel @Inject constructor(
     private val sendChatMessageUseCase: SendChatMessageUseCase,
     private val repository: IRepository,
-    private val sharedPreference: SharedPreference
+    private val sharedPreference: SharedPreference,
+    private val chatHistoryStore: ChatHistoryStore
 ) : ViewModel() {
 
     data class UiState(
@@ -33,11 +35,20 @@ class ChatBotViewModel @Inject constructor(
         val lastFailedUserMessage: String? = null
     )
 
-    private val _state = MutableStateFlow(UiState())
+    // Restore the previous session's conversation so the user can keep the
+    // thread going across app restarts. Typing indicators and error bubbles
+    // are dropped at save time, so what we get back here is clean.
+    private val _state = MutableStateFlow(UiState(messages = chatHistoryStore.load()))
     val state: StateFlow<UiState> = _state.asStateFlow()
 
     // Rolling context the use case passes into Gemini. Refreshed before each send.
     private var recentOrders: List<OrderHistoryItem> = emptyList()
+
+    /** Wipe persisted history and reset the in-memory thread. */
+    fun clearHistory() {
+        chatHistoryStore.clear()
+        _state.value = UiState()
+    }
 
     /**
      * Called by the Fragment once the shared order LiveData emits — keeps the
@@ -85,10 +96,14 @@ class ChatBotViewModel @Inject constructor(
             result
                 .onSuccess { reply ->
                     _state.value = _state.value.copy(
-                        messages = withoutTyping + ChatMessage.BotMessage(text = reply),
+                        messages = withoutTyping + ChatMessage.BotMessage(
+                            text = reply.text,
+                            actions = reply.actions
+                        ),
                         isSending = false,
                         lastFailedUserMessage = null
                     )
+                    chatHistoryStore.save(_state.value.messages)
                 }
                 .onFailure {
                     _state.value = _state.value.copy(
@@ -99,6 +114,10 @@ class ChatBotViewModel @Inject constructor(
                         isSending = false,
                         lastFailedUserMessage = trimmed
                     )
+                    // Error bubbles are filtered out at save time, but persist
+                    // the user message so it isn't lost if the user backgrounds
+                    // the app before retrying.
+                    chatHistoryStore.save(_state.value.messages)
                 }
         }
     }
@@ -125,20 +144,30 @@ class ChatBotViewModel @Inject constructor(
 
     private suspend fun buildChatContext(): SendChatMessageUseCase.ChatContext {
         // Cart summary — safe fallbacks on any failure (never block the chat).
-        val (cartCount, cartTotal) = runCatching {
-            val items = repository.getCartItems().getOrNull().orEmpty()
-            val count = items.sumOf { it.quantity }
-            val total = items.sumOf { it.price * it.quantity }
-            val formatted = formatEgpPrice(total)
-            count to formatted
-        }.getOrDefault(
-            runCatching { repository.getCartItemCount() }.getOrDefault(0) to formatEgpPrice(0.0)
-        )
+        // We pull the full item list when possible so the prompt can answer
+        // "what's in my cart?" with actual product names.
+        val itemsResult = runCatching { repository.getCartItems().getOrNull().orEmpty() }
+        val items = itemsResult.getOrDefault(emptyList())
+
+        val cartCount = if (items.isNotEmpty()) {
+            items.sumOf { it.quantity }
+        } else {
+            runCatching { repository.getCartItemCount() }.getOrDefault(0)
+        }
+        val cartTotal = formatEgpPrice(items.sumOf { it.price * it.quantity })
+        val cartLines = items.take(5).map {
+            SendChatMessageUseCase.CartLine(
+                name = it.productName,
+                quantity = it.quantity,
+                price = formatEgpPrice(it.price)
+            )
+        }
 
         return SendChatMessageUseCase.ChatContext(
             recentOrders = recentOrders,
             cartItemCount = cartCount,
-            cartTotal = cartTotal
+            cartTotal = cartTotal,
+            cartLines = cartLines
         )
     }
 }

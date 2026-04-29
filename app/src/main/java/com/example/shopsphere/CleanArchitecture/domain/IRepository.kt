@@ -22,8 +22,7 @@ interface IRepository {
     suspend fun checkout(): Result<DomainCheckoutResult>
     suspend fun getMyOrders(): Result<List<DomainOrder>>
 
-    suspend fun registerEmail(name: String, email: String, password:
-    String): Result<Boolean>
+    suspend fun registerEmail(firstName: String, lastName: String, email: String, password: String): Result<Boolean>
     suspend fun login(email: String, password: String): Result<Unit>
     suspend fun loginWithGoogle(idToken: String): Result<Unit>
     suspend fun loginWithFacebook(accessToken: String): Result<Unit>

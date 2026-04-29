@@ -452,7 +452,20 @@
     <string name="chatbot_chip_returns">سياسة الإرجاع</string>
     <string name="chatbot_chip_deals">عروض ليك</string>
     <string name="chatbot_chip_human">تكلم مع شخص</string>
+    <string name="chatbot_chip_availability">المنتج متوفر؟</string>
+    <string name="chatbot_chip_status">حالة الطلب</string>
+    <string name="chatbot_chip_cancel">إلغاء طلب</string>
+    <string name="chatbot_chip_recommend">اقترح ليا حاجة</string>
+    <string name="chatbot_prompt_availability">هل المنتج ده لسه متوفر؟</string>
+    <string name="chatbot_prompt_status">إيه حالة آخر طلب ليا؟</string>
+    <string name="chatbot_prompt_cancel">عايز ألغي طلبي</string>
+    <string name="chatbot_prompt_recommend">اقترح ليا حاجة على أساس الكارت بتاعي</string>
     <string name="chatbot_open">افتح شات بوت</string>
+    <string name="chatbot_clear">امسح سجل المحادثة</string>
+    <string name="chatbot_clear_confirm_title">امسح المحادثة؟</string>
+    <string name="chatbot_clear_confirm_message">ده هيمسح المحادثة المحفوظة. مفيش تراجع.</string>
+    <string name="chatbot_clear_confirm_positive">امسح</string>
+    <string name="chatbot_clear_confirm_negative">إلغاء</string>
 
     <!-- Notifications -->
     <string name="notifications_empty_title">مفيش إشعارات لسه</string>
@@ -488,5 +501,9 @@
     <!-- شات بوت — أسماء قديمة -->
     <string name="chatbot_title_yallashop">شات بوت</string>
     <string name="chatbot_bot_name">شات بوت</string>
+
+    <!-- الحساب / تفاصيلي — أحداث AccountViewModel -->
+    <string name="dialog_error_title">حدث خطأ ما</string>
+    <string name="my_details_partial_save_warning">تم حفظ تغييراتك على هذا الجهاز لكن تعذّر مزامنتها مع الخادم: %1$s. ستظهر في المرة القادمة التي تفتح فيها التطبيق مع اتصال بالإنترنت.</string>
 
 </resources>

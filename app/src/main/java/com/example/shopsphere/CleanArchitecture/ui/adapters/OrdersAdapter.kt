@@ -2,12 +2,15 @@ package com.example.shopsphere.CleanArchitecture.ui.adapters
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.shopsphere.CleanArchitecture.ui.models.OrderHistoryItem
 import com.example.shopsphere.R
 import com.example.shopsphere.databinding.ItemOrderBinding
@@ -15,7 +18,9 @@ import java.util.Locale
 
 class OrdersAdapter(
     private val onTrackClicked: (OrderHistoryItem) -> Unit,
-    private val onReviewClicked: (OrderHistoryItem) -> Unit
+    private val onReviewClicked: (OrderHistoryItem) -> Unit,
+    private val onOrderClicked: (OrderHistoryItem) -> Unit,
+    private val onPayAgainClicked: ((OrderHistoryItem) -> Unit)? = null
 ) : ListAdapter<OrderHistoryItem, OrdersAdapter.OrderViewHolder>(DIFF) {
 
     private var completedMode = false
@@ -62,12 +67,8 @@ class OrdersAdapter(
                 context.getString(R.string.orders_placed_on, dateText)
             }
 
-            // Thumbnails: backend doesn't return product images per order yet, so
-            // we show a single neutral placeholder so the row keeps its visual
-            // weight without inventing fake content.
-            binding.thumbnail1.isVisible = true
-            binding.thumbnail2.isGone = true
-            binding.thumbnailOverflow.isGone = true
+            // Thumbnails: show all product images from the order
+            renderProductThumbnails(item, context)
 
             // Total amount in green
             binding.textOrderTotal.text = item.total.ifBlank { item.itemPrice.ifBlank { dash } }
@@ -75,10 +76,11 @@ class OrdersAdapter(
             // Status pill — color depends on the step
             renderStatusPill(item, step, context)
 
-            // Card root + button click handlers stay null per the earlier spec —
-            // the details screen isn't wired yet.
-            binding.orderCard.setOnClickListener(null)
-            binding.orderCard.isClickable = false
+            // Card root click handler - navigate to order details
+            binding.orderCard.setOnClickListener {
+                onOrderClicked(item)
+            }
+            binding.orderCard.isClickable = true
 
             // Action button morphs based on the order step:
             //  - delivered  -> "Buy Again" (light green pill)
@@ -87,6 +89,63 @@ class OrdersAdapter(
             renderActionButton(item, step, context)
         }
 
+        private fun renderProductThumbnails(item: OrderHistoryItem, context: android.content.Context) {
+            val products = item.products
+
+            if (products.isEmpty()) {
+                // No products - show placeholder
+                binding.thumbnail1.isVisible = true
+                binding.thumbnail1Image.setImageResource(R.drawable.ic_order)
+                binding.thumbnail1Image.setColorFilter(0xFF94A3B8.toInt())
+                binding.thumbnail2.isGone = true
+                binding.thumbnailOverflow.isGone = true
+                return
+            }
+
+            // Show first product image
+            binding.thumbnail1.isVisible = true
+            loadProductImage(binding.thumbnail1Image, products[0].imageUrl)
+
+            // Show second product image or overflow
+            if (products.size > 1) {
+                if (products.size == 2) {
+                    // Show second image
+                    binding.thumbnail2.isVisible = true
+                    binding.thumbnailOverflow.isGone = true
+                    loadProductImage(binding.thumbnail2Image, products[1].imageUrl)
+                } else {
+                    // Show overflow count (+2, +3, etc.)
+                    binding.thumbnail2.isGone = true
+                    binding.thumbnailOverflow.isVisible = true
+                    binding.thumbnailOverflow.text = "+${products.size - 1}"
+                }
+            } else {
+                binding.thumbnail2.isGone = true
+                binding.thumbnailOverflow.isGone = true
+            }
+        }
+
+        private fun loadProductImage(imageView: ImageView, imageUrl: String?) {
+            val context = imageView.context
+            android.util.Log.d("OrdersAdapter", "Loading image: $imageUrl")
+
+            if (!imageUrl.isNullOrEmpty()) {
+                // Clear any tint before loading real image
+                imageView.colorFilter = null
+                Glide.with(context)
+                    .load(imageUrl)
+                    .placeholder(R.drawable.ic_order)
+                    .error(R.drawable.ic_order)
+                    .centerInside()
+                    .into(imageView)
+                android.util.Log.d("OrdersAdapter", "✅ Loading real image")
+            } else {
+                imageView.setImageResource(R.drawable.ic_order)
+                // Apply grey tint to placeholder
+                imageView.setColorFilter(0xFF94A3B8.toInt(), android.graphics.PorterDuff.Mode.SRC_IN)
+                android.util.Log.d("OrdersAdapter", "⚠️ No image URL, showing placeholder")
+            }
+        }
         private fun renderStatusPill(item: OrderHistoryItem, step: Int, context: android.content.Context) {
             binding.textOrderStatus.text = statusLabel(item, step, context)
 
@@ -145,17 +204,32 @@ class OrdersAdapter(
             // / details flow, not the card itself.
             binding.buttonOrderAction.setOnClickListener(null)
             binding.buttonOrderAction.isClickable = false
+
+            // "Pay Again" button — visible only for orders with pending/failed payment
+            val paymentStatus = item.paymentStatus?.lowercase(Locale.ENGLISH).orEmpty()
+            val needsPayment = paymentStatus == "pending" || paymentStatus == "failed" || paymentStatus == "unpaid"
+            if (needsPayment && onPayAgainClicked != null) {
+                binding.buttonPayAgain.visibility = android.view.View.VISIBLE
+                binding.buttonPayAgain.setOnClickListener { onPayAgainClicked.invoke(item) }
+            } else {
+                binding.buttonPayAgain.visibility = android.view.View.GONE
+            }
         }
 
         private fun statusLabel(
             item: OrderHistoryItem,
             step: Int,
             context: android.content.Context
-        ): String = when (step) {
-            3 -> context.getString(R.string.orders_status_delivered)
-            2 -> context.getString(R.string.orders_status_transit)
-            1 -> context.getString(R.string.orders_status_picked)
-            else -> context.getString(R.string.orders_status_packing)
+        ): String {
+            // Use backend status if available, otherwise fall back to step-based
+            return item.status.ifBlank {
+                when (step) {
+                    3 -> context.getString(R.string.orders_status_delivered)
+                    2 -> context.getString(R.string.orders_status_transit)
+                    1 -> context.getString(R.string.orders_status_picked)
+                    else -> context.getString(R.string.orders_status_packing)
+                }
+            }
         }
 
         private fun resolveStatusStep(item: OrderHistoryItem): Int {
@@ -168,9 +242,9 @@ class OrdersAdapter(
             val derivedStep = when {
                 normalizedStatus.contains("deliver") || normalizedStatus.contains("complete") -> 3
                 normalizedStatus.contains("transit") ||
-                    normalizedStatus.contains("shipping") ||
-                    normalizedStatus.contains("shipped") ||
-                    normalizedStatus.contains("out for delivery") -> 2
+                        normalizedStatus.contains("shipping") ||
+                        normalizedStatus.contains("shipped") ||
+                        normalizedStatus.contains("out for delivery") -> 2
                 normalizedStatus.contains("pick") || normalizedStatus.contains("dispatch") -> 1
                 else -> 0
             }

@@ -279,10 +279,22 @@ class HomeFragment : Fragment() {
     private fun observeLoadingState() {
         productsViewModel.isLoading.observe(viewLifecycleOwner) { loading ->
             if (!isAdded || _binding == null) return@observe
-            hideShimmerAndShowProducts()
+            
+            // Show modern loading overlay on first load
             if (loading == true) {
+                val hasLoaded = productsViewModel.hasLoadedOnce.value == true
+                if (!hasLoaded) {
+                    // First time loading - show modern overlay
+                    binding.loadingOverlay.loadingOverlay.visibility = View.VISIBLE
+                    binding.loadingOverlay.loadingText.text = "Loading Products"
+                    binding.loadingOverlay.loadingSubtitle.text = "Fetching the latest items for you"
+                }
                 binding.noResult.visibility = View.GONE
             } else {
+                // Hide loading overlay
+                binding.loadingOverlay.loadingOverlay.visibility = View.GONE
+                hideShimmerAndShowProducts()
+                
                 val hasLoaded = productsViewModel.hasLoadedOnce.value == true
                 val visibleProducts = productsViewModel.productsLiveData.value.orEmpty()
                 binding.noResult.visibility =

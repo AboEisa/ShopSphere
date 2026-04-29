@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.getSystemService
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -75,6 +76,24 @@ class ChatBotFragment : Fragment() {
 
     private fun setupTopBar() {
         binding.btnBack.setOnClickListener { findNavController().navigateUp() }
+        binding.btnClear.setOnClickListener { confirmClearHistory() }
+    }
+
+    /**
+     * Persistence is permanent — surface a confirm dialog so a stray tap can't
+     * wipe the user's saved conversation. Hidden when the thread is already
+     * empty since there's nothing to clear.
+     */
+    private fun confirmClearHistory() {
+        if (viewModel.state.value.messages.isEmpty()) return
+        AlertDialog.Builder(requireContext())
+            .setTitle(com.example.shopsphere.R.string.chatbot_clear_confirm_title)
+            .setMessage(com.example.shopsphere.R.string.chatbot_clear_confirm_message)
+            .setPositiveButton(com.example.shopsphere.R.string.chatbot_clear_confirm_positive) { _, _ ->
+                viewModel.clearHistory()
+            }
+            .setNegativeButton(com.example.shopsphere.R.string.chatbot_clear_confirm_negative, null)
+            .show()
     }
 
     private fun setupInput() {
@@ -88,10 +107,14 @@ class ChatBotFragment : Fragment() {
     }
 
     private fun setupQuickReplyChips() {
-        binding.chipTrack.setOnClickListener { sendText("Track my order") }
-        binding.chipReturns.setOnClickListener { sendText("What's the returns policy?") }
-        binding.chipDeals.setOnClickListener { sendText("Any deals for me today?") }
-        binding.chipHuman.setOnClickListener { sendText("Talk to a human") }
+        binding.chipTrack.setOnClickListener { sendText(getString(com.example.shopsphere.R.string.chatbot_chip_track)) }
+        binding.chipStatus.setOnClickListener { sendText(getString(com.example.shopsphere.R.string.chatbot_prompt_status)) }
+        binding.chipAvailability.setOnClickListener { sendText(getString(com.example.shopsphere.R.string.chatbot_prompt_availability)) }
+        binding.chipReturns.setOnClickListener { sendText(getString(com.example.shopsphere.R.string.chatbot_chip_returns)) }
+        binding.chipDeals.setOnClickListener { sendText(getString(com.example.shopsphere.R.string.chatbot_chip_deals)) }
+        binding.chipRecommend.setOnClickListener { sendText(getString(com.example.shopsphere.R.string.chatbot_prompt_recommend)) }
+        binding.chipCancel.setOnClickListener { sendText(getString(com.example.shopsphere.R.string.chatbot_prompt_cancel)) }
+        binding.chipHuman.setOnClickListener { sendText(getString(com.example.shopsphere.R.string.chatbot_chip_human)) }
     }
 
     /**
@@ -132,6 +155,8 @@ class ChatBotFragment : Fragment() {
                     binding.emptyState.visibility = if (hasMessages) View.GONE else View.VISIBLE
                     // Show quick-reply chips only when conversation is empty.
                     binding.chipsScroll.visibility = if (hasMessages) View.GONE else View.VISIBLE
+                    // Clear button only matters once there's something to clear.
+                    binding.btnClear.visibility = if (hasMessages) View.VISIBLE else View.GONE
                 }
             }
         }

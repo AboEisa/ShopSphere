@@ -58,6 +58,8 @@
     <string name="review_sheet_success_title">Review submitted</string>
     <string name="review_sheet_success_message">Thanks for sharing your feedback.</string>
     <string name="my_details_full_name">Full Name</string>
+    <string name="my_details_first_name">First Name</string>
+    <string name="my_details_last_name">Last Name</string>
     <string name="my_details_email">Email Address</string>
     <string name="my_details_birth_date">Date of Birth</string>
     <string name="my_details_gender">Gender</string>
@@ -164,7 +166,14 @@
     <string name="help_support_phone_display">01018613426</string>
     <string name="help_support_phone_raw">01018613426</string>
     <string name="help_email_subject">YallaShop Support Request</string>
-    <string name="help_email_body_template">Hello Support,\n\nI need help with:\n- \n\nOrder ID (optional): \n\nThanks.</string>
+    <string name="help_email_body_template">Hello Support,
+
+I need help with:
+- 
+
+Order ID (optional): 
+
+Thanks.</string>
     <string name="help_email_chooser_title">Send support email</string>
     <string name="help_open_mail_failed">No email app found. Support email copied to clipboard.</string>
     <string name="help_open_dialer_failed">Dialer is not available on this device.</string>
@@ -199,6 +208,10 @@
     <string name="total_0_00">Total: EGP 0.00</string>
     <string name="checkout">Checkout</string>
     <string name="my_cart">My Cart</string>
+    <string name="cart_clear_all">Clear All</string>
+    <string name="cart_clear_confirm_title">Clear Cart</string>
+    <string name="cart_clear_confirm_message">Remove all items from your cart?</string>
+    <string name="cart_clear_success">Cart cleared</string>
     <string name="price">Price</string>
     <string name="delivery_address">Delivery Address</string>
     <string name="home">Home</string>
@@ -217,7 +230,7 @@
     <string name="promo_discount">Promo Discount</string>
     <string name="total">Total</string>
     <string name="_5_950">EGP 5,950</string>
-    <string name="place_order">Place Order</string>
+    <string name="place_order">Proceed to Payment</string>
     <string name="filters">Filters</string>
     <string name="apply_filter">Apply Filter</string>
     <string name="reset_filter">Reset Filter</string>
@@ -452,7 +465,20 @@
     <string name="chatbot_chip_returns">Returns policy</string>
     <string name="chatbot_chip_deals">Deals for me</string>
     <string name="chatbot_chip_human">Talk to human</string>
+    <string name="chatbot_chip_availability">Check availability</string>
+    <string name="chatbot_chip_status">Order status</string>
+    <string name="chatbot_chip_cancel">Cancel an order</string>
+    <string name="chatbot_chip_recommend">Recommend something</string>
+    <string name="chatbot_prompt_availability">Is this product still available?</string>
+    <string name="chatbot_prompt_status">What\'s the status of my latest order?</string>
+    <string name="chatbot_prompt_cancel">I want to cancel my order</string>
+    <string name="chatbot_prompt_recommend">Recommend something based on my cart</string>
     <string name="chatbot_open">Open Chatbot</string>
+    <string name="chatbot_clear">Clear chat history</string>
+    <string name="chatbot_clear_confirm_title">Clear chat?</string>
+    <string name="chatbot_clear_confirm_message">This will erase the saved conversation. You can\'t undo this.</string>
+    <string name="chatbot_clear_confirm_positive">Clear</string>
+    <string name="chatbot_clear_confirm_negative">Cancel</string>
 
     <!-- Notifications (Room-seeded) -->
     <string name="notifications_empty_title">No notifications yet</string>
@@ -488,5 +514,28 @@
     <!-- Chatbot — legacy aliases -->
     <string name="chatbot_title_yallashop">Chatbot</string>
     <string name="chatbot_bot_name">Chatbot</string>
+
+    <!-- Account / My Details — AccountViewModel events -->
+    <string name="dialog_error_title">Something went wrong</string>
+    <string name="my_details_partial_save_warning">Your changes were saved on this device but could not be synced to the server: %1$s. They will appear next time you open the app with a connection.</string>
+    <string name="my_details_address">Address</string>
+    <string name="my_details_section_personal">Personal Information</string>
+    <string name="my_details_section_contact">Address &amp; Phone</string>
+    <string name="my_details_edit_button">Edit</string>
+    <string name="my_details_not_set">Not set</string>
+
+    <!-- Checkout enhancements -->
+    <string name="edit_address_phone">Edit Address &amp; Phone</string>
+    <string name="phone_hint">Phone Number</string>
+    <string name="address_hint">Delivery Address</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="cart_items_title">Cart Items</string>
+    <string name="payment_processing">Processing Payment…</string>
+    <string name="payment_success">Payment Successful</string>
+    <string name="payment_failed">Payment Failed</string>
+    <string name="payment_failure_message">Your order could not be completed due to payment failure. Please try again.</string>
+    <string name="order_created_pending">Order created successfully. Please complete the payment.</string>
+    <string name="qty_label">Qty: %1$d</string>
 
 </resources>

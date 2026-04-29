@@ -45,10 +45,13 @@ class SavedViewModel @Inject constructor(
 
     fun loadFavoriteProducts() {
         viewModelScope.launch(Dispatchers.IO) {
+            android.util.Log.d("SavedViewModel", "🔄 Loading favorite products...")
             _loading.postValue(true)
             try {
                 val favorites = getFavoriteProductsUseCase(emptyList())
                 val mappedFavorites = favorites.getOrNull()?.mapToPresentation().orEmpty()
+                android.util.Log.d("SavedViewModel", "✅ Loaded ${mappedFavorites.size} favorite products")
+                android.util.Log.d("SavedViewModel", "📦 Favorite IDs: ${mappedFavorites.map { it.id }}")
                 _favoriteProducts.postValue(mappedFavorites)
                 _favoriteIds.postValue(mappedFavorites.map { it.id }.toSet())
                 _emptyState.postValue(mappedFavorites.isEmpty())
@@ -61,10 +64,13 @@ class SavedViewModel @Inject constructor(
     fun toggleFavorite(productId: Int) {
         val currentIds = _favoriteIds.value.orEmpty()
         val wasFav = productId in currentIds
+        android.util.Log.d("SavedViewModel", "❤️ Toggle favorite: productId=$productId, wasFav=$wasFav")
+        android.util.Log.d("SavedViewModel", "📊 Current favorite IDs: $currentIds")
 
         // Flip the ID set synchronously on the main thread so the very next
         // `isFavoriteSync` call (invoked right after onFavoriteClick) sees the new state.
         _favoriteIds.value = if (wasFav) currentIds - productId else currentIds + productId
+        android.util.Log.d("SavedViewModel", "✅ Updated favorite IDs: ${_favoriteIds.value}")
 
         if (wasFav) {
             val pruned = _favoriteProducts.value.orEmpty().filterNot { it.id == productId }
@@ -73,10 +79,19 @@ class SavedViewModel @Inject constructor(
         }
 
         viewModelScope.launch(Dispatchers.IO) {
-            toggleFavoriteUseCase(productId)
-            if (!wasFav) {
-                // Adding — refetch so Saved tab picks up the full product (title/image/price).
-                loadFavoriteProducts()
+            try {
+                toggleFavoriteUseCase(productId)
+                android.util.Log.d("SavedViewModel", "✅ Backend toggle succeeded")
+                if (!wasFav) {
+                    // Adding — refetch so Saved tab picks up the full product (title/image/price).
+                    android.util.Log.d("SavedViewModel", "🔄 Refetching favorites after add")
+                    loadFavoriteProducts()
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("SavedViewModel", "❌ Backend toggle failed: ${e.message}")
+                // Roll back the optimistic update
+                _favoriteIds.value = currentIds
+                android.util.Log.d("SavedViewModel", "🔄 Rolled back to: $currentIds")
             }
         }
     }

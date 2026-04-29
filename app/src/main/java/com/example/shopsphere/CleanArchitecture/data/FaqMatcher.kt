@@ -20,13 +20,17 @@ class FaqMatcher @Inject constructor() {
      * @param isFirstMessage true when this is the very first user message in the
      *        session. Greetings only fire then so saying "hi" mid-conversation
      *        falls through to Gemini for a real reply.
+     * @param hasOrderContext true when the user has at least one recent order
+     *        loaded. Order/return/payment topics then defer to Gemini so it can
+     *        cite the actual order number and status instead of a canned reply.
      * @return a canned answer when a rule matches, otherwise null (caller falls
      *         back to Gemini).
      */
     fun match(
         message: String,
         userName: String? = null,
-        isFirstMessage: Boolean = false
+        isFirstMessage: Boolean = false,
+        hasOrderContext: Boolean = false
     ): Match? {
         val normalized = message.trim().lowercase()
         if (normalized.isEmpty()) return null
@@ -38,6 +42,17 @@ class FaqMatcher @Inject constructor() {
 
         rules.forEach { rule ->
             if (rule.topic == "greeting" && !isFirstMessage) return@forEach
+            // Tracking and cancellation always defer to Gemini: the right
+            // answer hinges on whether the user actually has an order (and
+            // which one), and Gemini has those signals via the system prompt
+            // (specific order data, or the "None yet" block).
+            if (rule.topic == "track" || rule.topic == "cancel") return@forEach
+            // Recommendation requests need cart-aware reasoning — also defer.
+            if (rule.topic == "recommend") return@forEach
+            // Other order-shaped topics defer only when we have real order
+            // data so Gemini can cite the actual order #. Without orders the
+            // canned policy answer is still useful.
+            if (hasOrderContext && rule.topic in CONTEXT_AWARE_TOPICS) return@forEach
 
             val matched = rule.keywords.any { kw ->
                 if (kw.contains(' ')) normalized.contains(kw)        // multi-word phrases
@@ -171,6 +186,27 @@ class FaqMatcher @Inject constructor() {
             }
         ),
         Rule(
+            topic = "cancel",
+            keywords = listOf(
+                "cancel", "cancellation", "stop the order", "stop my order",
+                "الغاء", "إلغاء", "ألغي", "الغي", "اوقف الاوردر"
+            ),
+            buildAnswer = {
+                "Cancellations aren't built into the app yet — tap Account → Contact Support and they can stop an order before it ships. After that it has to go through Returns instead."
+            }
+        ),
+        Rule(
+            topic = "recommend",
+            keywords = listOf(
+                "recommend", "recommendation", "recommendations", "suggest", "suggestion", "suggestions",
+                "what should i buy", "what to buy", "ideas",
+                "اقترح", "اقتراح", "اقتراحات", "نصحني", "ايه اللي اشتريه"
+            ),
+            buildAnswer = {
+                "Tell me what you're into — fashion, electronics, home — or what's already in your cart, and I'll pull a few options that pair well."
+            }
+        ),
+        Rule(
             topic = "language",
             keywords = listOf("change language", "arabic", "english", "غير اللغة", "اللغة"),
             buildAnswer = {
@@ -182,5 +218,10 @@ class FaqMatcher @Inject constructor() {
     private companion object {
         // Split on whitespace + common punctuation. Keeps Arabic letters intact.
         private val WORD_SPLIT = Regex("[\\s.,!?;:'\"()\\[\\]{}\\-—/]+")
+
+        // Topics where the user almost always wants their own data referenced.
+        // Routed to Gemini whenever recent orders are available so it can cite
+        // specific order numbers / statuses.
+        private val CONTEXT_AWARE_TOPICS = setOf("track", "returns", "payment")
     }
 }

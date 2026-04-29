@@ -1,5 +1,6 @@
 package com.example.shopsphere.CleanArchitecture.ui.viewmodels
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -90,7 +91,26 @@ class CheckoutSharedViewModel @Inject constructor(
         // has no saved address (fresh signup), seed a default "N/A" placeholder
         // so they can still place an order without being forced through address
         // entry first. The user can replace it from the Address Book later.
+        loadAddressFromPreferences()
+        fetchOrders()
+    }
+
+    /**
+     * Reload address/phone from SharedPreferences. Called when returning from
+     * MyDetails screen to pick up any edits the user made.
+     */
+    fun refreshAddressFromPreferences() {
+        android.util.Log.d("CheckoutSharedVM", "🔄 Refreshing address from SharedPreferences")
+        loadAddressFromPreferences()
+    }
+
+    private fun loadAddressFromPreferences() {
         val savedAddress = sharedPreference.getDeliveryAddress()
+        val savedPhone = sharedPreference.getProfilePhone()
+        
+        android.util.Log.d("CheckoutSharedVM", "📍 Saved address: $savedAddress")
+        android.util.Log.d("CheckoutSharedVM", "📞 Saved phone: $savedPhone")
+        
         val seededItem = if (savedAddress.isNotBlank()) {
             AddressBookItem(
                 id = "address_saved",
@@ -100,7 +120,7 @@ class CheckoutSharedViewModel @Inject constructor(
                 longitude = null,
                 isDefault = true,
                 isSelected = true,
-                phone = sharedPreference.getProfilePhone().ifBlank { DEFAULT_NA }
+                phone = savedPhone.ifBlank { DEFAULT_NA }
             )
         } else {
             AddressBookItem(
@@ -115,43 +135,106 @@ class CheckoutSharedViewModel @Inject constructor(
             )
         }
         _addressBook.value = listOf(seededItem)
-        fetchOrders()
+        android.util.Log.d("CheckoutSharedVM", "✅ Address loaded: ${seededItem.address}, Phone: ${seededItem.phone}")
     }
 
     // ─── Orders (backend API) ────────────────────────────────────────────────
 
     fun fetchOrders() {
+        android.util.Log.d("CheckoutSharedVM", "fetchOrders() called")
+        
         viewModelScope.launch {
-            // Only flip `isLoadingOrders` true on the very first load. Silent
-            // background re-fetches (poll, onResume) should not trigger the
-            // shimmer placeholder — that would look like the list was wiped.
-            val isFirstLoad = _orderHistory.value.isNullOrEmpty()
-            if (isFirstLoad) _isLoadingOrders.value = true
-            repository.getMyOrders()
-                .onSuccess { domainOrders ->
-                    val fromApi = domainOrders.map { domain ->
-                        val statusStep = resolveOrderStatusStep(domain.orderStatus, null)
-                        OrderHistoryItem(
-                            orderId = domain.orderId.toString(),
-                            date = formatApiDate(domain.date),
-                            status = normalizeOrderStatusLabel(domain.orderStatus, statusStep),
-                            total = formatApiTotal(domain.totalAmount),
-                            statusStep = statusStep,
-                            // Real courier location from the backend (null until dispatched)
-                            currentLat = domain.currentLat,
-                            currentLng = domain.currentLng,
-                            // Real driver name from the backend
-                            driverName = domain.driverName,
-                            paymentStatus = domain.paymentStatus
-                                .takeIf { it.isNotBlank() }
-                        )
-                    }
-                    _orderHistory.postValue(fromApi)
+            android.util.Log.d("CheckoutSharedVM", "Coroutine started")
+            
+            try {
+                // Only flip `isLoadingOrders` true on the very first load. Silent
+                // background re-fetches (poll, onResume) should not trigger the
+                // shimmer placeholder — that would look like the list was wiped.
+                val isFirstLoad = _orderHistory.value.isNullOrEmpty()
+                android.util.Log.d("CheckoutSharedVM", "Is first load: $isFirstLoad")
+                
+                if (isFirstLoad) _isLoadingOrders.value = true
+                
+                android.util.Log.d("CheckoutSharedVM", "========================================")
+                android.util.Log.d("CheckoutSharedVM", "📦 Fetching orders...")
+                
+                // Fetch products catalog to get product images
+                android.util.Log.d("CheckoutSharedVM", "📤 Fetching product catalog...")
+                val productCatalogResult = repository.getProducts()
+                
+                if (productCatalogResult.isSuccess) {
+                    val productCatalog = productCatalogResult.getOrNull().orEmpty()
+                    android.util.Log.d("CheckoutSharedVM", "📥 Product catalog size: ${productCatalog.size}")
+                    
+                    val imageMap = productCatalog.associateBy(
+                        { it.title.lowercase() },
+                        { it.image }
+                    )
+                    
+                    android.util.Log.d("CheckoutSharedVM", "📤 Fetching MyOrders from API...")
+                    val ordersResult = repository.getMyOrders()
+                    
+                    ordersResult
+                        .onSuccess { domainOrders ->
+                            android.util.Log.d("CheckoutSharedVM", "✅ MyOrders API success")
+                            android.util.Log.d("CheckoutSharedVM", "📦 Orders count: ${domainOrders.size}")
+                            
+                            val fromApi = domainOrders.map { domain ->
+                                val statusStep = resolveOrderStatusStep(domain.orderStatus, null)
+                                val firstProduct = domain.products.firstOrNull()
+                                
+                                OrderHistoryItem(
+                                    orderId = domain.orderId.toString(),
+                                    date = formatApiDate(domain.date),
+                                    status = normalizeOrderStatusLabel(domain.orderStatus, statusStep),
+                                    total = formatApiTotal(domain.totalAmount),
+                                    itemTitle = firstProduct?.productName ?: "",
+                                    itemPrice = firstProduct?.let { String.format(Locale.US, "%.2f", it.price) } ?: "",
+                                    statusStep = statusStep,
+                                    currentLat = domain.currentLat,
+                                    currentLng = domain.currentLng,
+                                    driverName = domain.driverName,
+                                    paymentStatus = domain.paymentStatus
+                                        .takeIf { it.orEmpty().isNotBlank() },
+                                    shippingAddress = domain.shippingAddress
+                                        .orEmpty()
+                                        .takeIf { it.isNotBlank() }
+                                        ?.let { sanitizeAddress(it) }
+                                        .orEmpty(),
+                                    products = domain.products.map { p ->
+                                        val productImage = imageMap[p.productName.lowercase()]
+                                        com.example.shopsphere.CleanArchitecture.ui.models.OrderProduct(
+                                            productName = p.productName,
+                                            quantity = p.quantity,
+                                            price = p.price,
+                                            imageUrl = p.productImage ?: productImage
+                                        )
+                                    }
+                                )
+                            }
+                            
+                            android.util.Log.d("CheckoutSharedVM", "✅ Mapped ${fromApi.size} orders to UI model")
+                            android.util.Log.d("CheckoutSharedVM", "========================================")
+                            _orderHistory.postValue(fromApi)
+                        }
+                        .onFailure { error ->
+                            android.util.Log.e("CheckoutSharedVM", "❌ MyOrders API failed: ${error.message}")
+                            android.util.Log.e("CheckoutSharedVM", "❌ Error type: ${error::class.simpleName}")
+                            error.printStackTrace()
+                            android.util.Log.d("CheckoutSharedVM", "========================================")
+                        }
+                } else {
+                    val error = productCatalogResult.exceptionOrNull()
+                    android.util.Log.e("CheckoutSharedVM", "❌ Product catalog fetch failed: ${error?.message}")
                 }
-                .onFailure {
-                    // Keep the current list on failure so the screen doesn't go blank
-                }
-            if (isFirstLoad) _isLoadingOrders.value = false
+            } catch (e: Exception) {
+                android.util.Log.e("CheckoutSharedVM", "❌ Exception during fetchOrders: ${e.message}")
+                e.printStackTrace()
+                android.util.Log.d("CheckoutSharedVM", "========================================")
+            } finally {
+                val isFirstLoad = _orderHistory.value.isNullOrEmpty()
+                if (isFirstLoad) _isLoadingOrders.value = false
+            }
         }
     }
 
@@ -240,11 +323,15 @@ class CheckoutSharedViewModel @Inject constructor(
                     ?: IllegalStateException("Checkout failed")
             )
         }
+        
+        // Extract the real orderId from checkout response
+        val realOrderId = checkoutResult.getOrNull()?.orderId
+        Log.d("CheckoutSharedVM", "Checkout successful - orderId: $realOrderId")
 
         // Refresh orders + notify in parallel — these are non-blocking.
         viewModelScope.launch {
             fetchOrders()
-            val latestId = _orderHistory.value
+            val latestId = realOrderId?.toString() ?: _orderHistory.value
                 ?.firstOrNull()?.orderId ?: placeholderOrder.orderId
             runCatching {
                 notificationsRepository.notify(
@@ -255,8 +342,15 @@ class CheckoutSharedViewModel @Inject constructor(
                 )
             }
         }
+        
+        // Update placeholder with real orderId if available
+        val finalOrder = if (realOrderId != null) {
+            placeholderOrder.copy(orderId = realOrderId.toString())
+        } else {
+            placeholderOrder
+        }
 
-        return Result.success(placeholderOrder)
+        return Result.success(finalOrder)
     }
 
     // ─── Review (local only — backend has no review endpoint yet) ────────────
@@ -486,11 +580,23 @@ class CheckoutSharedViewModel @Inject constructor(
      * Returns a human-readable status label for a resolved step index.
      */
     fun normalizeOrderStatusLabel(status: String, resolvedStep: Int): String {
-        return when (resolvedStep.coerceIn(STEP_PACKING, STEP_DELIVERED)) {
-            STEP_DELIVERED -> "Delivered"
-            STEP_IN_TRANSIT -> "In Transit"
-            STEP_PICKED -> "Picked"
-            else -> "Packing"
+        // First check if backend provided a meaningful status
+        val normalizedStatus = status.trim().lowercase()
+        return when {
+            // Respect backend status if it's meaningful
+            normalizedStatus.contains("confirm") -> "Confirmed"
+            normalizedStatus.contains("deliver") || normalizedStatus.contains("complete") -> "Delivered"
+            normalizedStatus.contains("transit") || normalizedStatus.contains("shipping") || 
+            normalizedStatus.contains("shipped") -> "In Transit"
+            normalizedStatus.contains("pick") || normalizedStatus.contains("dispatch") -> "Picked"
+            normalizedStatus.contains("process") -> "Processing"
+            // Fallback to step-based status
+            else -> when (resolvedStep.coerceIn(STEP_PACKING, STEP_DELIVERED)) {
+                STEP_DELIVERED -> "Delivered"
+                STEP_IN_TRANSIT -> "In Transit"
+                STEP_PICKED -> "Picked"
+                else -> "Packing"
+            }
         }
     }
 
@@ -521,6 +627,17 @@ class CheckoutSharedViewModel @Inject constructor(
         val defaultId = valid.firstOrNull { it.isDefault }?.id ?: valid.first().id
         val selectedId = valid.firstOrNull { it.isSelected }?.id ?: defaultId
         return valid.map { it.copy(isDefault = it.id == defaultId, isSelected = it.id == selectedId) }
+    }
+    
+    /**
+     * Sanitizes address string by removing leading/trailing commas and whitespace
+     */
+    private fun sanitizeAddress(address: String): String {
+        return address.trim()
+            .removePrefix(",")
+            .removeSuffix(",")
+            .trim()
+            .ifBlank { "Address not provided" }
     }
 
     private fun isValidCoordinates(latitude: Double?, longitude: Double?): Boolean {

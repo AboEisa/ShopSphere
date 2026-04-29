@@ -62,9 +62,14 @@ class RegisterFragment : Fragment() {
     }
 
     private fun setupValidation() {
-        binding.etFullName.doAfterTextChanged { text ->
-            binding.ivFullNameCheck.visibility =
-                if (!text.isNullOrEmpty() && text.length >= 3) View.VISIBLE else View.GONE
+        binding.etFirstName.doAfterTextChanged { text ->
+            binding.ivFirstNameCheck.visibility =
+                if (!text.isNullOrEmpty() && text.length >= 2) View.VISIBLE else View.GONE
+        }
+
+        binding.etLastName.doAfterTextChanged { text ->
+            binding.ivLastNameCheck.visibility =
+                if (!text.isNullOrEmpty() && text.length >= 2) View.VISIBLE else View.GONE
         }
 
         binding.etEmail.doAfterTextChanged { text ->
@@ -87,14 +92,15 @@ class RegisterFragment : Fragment() {
 
     private fun setupClickListeners() {
         binding.btnCreateAccount.setOnClickListener {
-            val name = binding.etFullName.text.toString().trim()
+            val firstName = binding.etFirstName.text.toString().trim()
+            val lastName = binding.etLastName.text.toString().trim()
             val email = binding.etEmail.text.toString().trim()
             val password = binding.etPassword.text.toString()
             val confirmPassword = binding.etConfirmPassword.text.toString()
 
-            if (!validateInputs(name, email, password, confirmPassword)) return@setOnClickListener
+            if (!validateInputs(firstName, lastName, email, password, confirmPassword)) return@setOnClickListener
 
-            viewModel.register(name, email, password)
+            viewModel.register(firstName, lastName, email, password)
         }
 
         binding.btnRegisterGoogle.setOnClickListener {
@@ -107,17 +113,24 @@ class RegisterFragment : Fragment() {
     }
 
     private fun validateInputs(
-        name: String,
+        firstName: String,
+        lastName: String,
         email: String,
         password: String,
         confirmPassword: String
     ): Boolean {
         return when {
-            name.isEmpty() -> {
-                toast("Please enter your full name"); false
+            firstName.isEmpty() -> {
+                toast("Please enter your first name"); false
             }
-            name.length < 3 -> {
-                toast("Name must be at least 3 characters"); false
+            firstName.length < 2 -> {
+                toast("First name must be at least 2 characters"); false
+            }
+            lastName.isEmpty() -> {
+                toast("Please enter your last name"); false
+            }
+            lastName.length < 2 -> {
+                toast("Last name must be at least 2 characters"); false
             }
             email.isEmpty() -> {
                 toast("Please enter your email"); false

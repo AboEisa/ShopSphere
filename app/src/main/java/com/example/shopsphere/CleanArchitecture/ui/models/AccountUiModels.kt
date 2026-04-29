@@ -43,5 +43,17 @@ data class OrderHistoryItem(
     // Driver/courier name from the backend; null means not yet assigned
     val driverName: String? = null,
     // Payment status from /MyOrders (e.g. "Paid", "Pending"). Null = not provided.
-    val paymentStatus: String? = null
+    val paymentStatus: String? = null,
+    // Shipping address from backend
+    val shippingAddress: String = "",
+    // Products in this order
+    val products: List<OrderProduct> = emptyList()
+)
+
+// Product in an order
+data class OrderProduct(
+    val productName: String,
+    val quantity: Int,
+    val price: Double,
+    val imageUrl: String? = null
 )

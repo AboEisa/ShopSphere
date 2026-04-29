@@ -83,9 +83,19 @@ class SavedFragment : Fragment() {
                 hideEmptyState()
             }
         }
-        viewModel.loading.observe(viewLifecycleOwner) {
+        viewModel.loading.observe(viewLifecycleOwner) { isLoading ->
             if (!isAdded || _binding == null) return@observe
-            binding.progressBar.visibility = View.GONE
+            
+            if (isLoading) {
+                // Show modern loading overlay
+                binding.loadingOverlay.loadingOverlay.visibility = View.VISIBLE
+                binding.loadingOverlay.loadingText.text = "Loading Favorites"
+                binding.loadingOverlay.loadingSubtitle.text = "Fetching your saved items"
+            } else {
+                // Hide loading overlay
+                binding.loadingOverlay.loadingOverlay.visibility = View.GONE
+                binding.progressBar.visibility = View.GONE
+            }
         }
     }
 

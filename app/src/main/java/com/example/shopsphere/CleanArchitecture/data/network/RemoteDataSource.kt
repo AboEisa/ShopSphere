@@ -12,7 +12,8 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class RemoteDataSource @Inject constructor(
-    private val apiService: ApiServices
+    private val apiService: ApiServices,
+    private val prefs: com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
 ) : IRemoteDataSource {
 
     private val cacheMutex = Mutex()
@@ -47,17 +48,17 @@ class RemoteDataSource @Inject constructor(
     }
 
     override suspend fun register(
-        name: String,
+        firstName: String,
+        lastName: String,
         email: String,
         password: String
     ): Result<AuthResponseDto> = runCatching {
         apiService.signUp(
             AuthRequestDto(
-                fullName = name,
+                fristName = firstName,
+                lastName = lastName,
                 email = email,
-                password = password,
-                phone = "N/A",
-                address = "N/A"
+                password = password
             )
         )
     }
@@ -87,7 +88,8 @@ class RemoteDataSource @Inject constructor(
             } catch (_: Exception) {
                 apiService.signUp(
                     AuthRequestDto(
-                        fullName = "$provider User",
+                            fristName = provider,
+                        lastName = "User",
                         email = email,
                         password = password
                     )
@@ -131,11 +133,59 @@ class RemoteDataSource @Inject constructor(
     }
 
     override suspend fun addToFavorite(productId: Int): Result<FavoriteMutationResponseDto> = runCatching {
-        apiService.addToFavorite(FavoriteRequestDto(productId = productId))
+        android.util.Log.d("RemoteDataSource", "📤 POST /AddToFavorite: productId=$productId")
+        val request = FavoriteRequestDto(productId = productId)
+        android.util.Log.d("RemoteDataSource", "📦 Request body: productId=${request.productId}")
+        
+        // Log the token being used (first 20 chars for security)
+        val token = prefs.getToken()
+        val tokenPreview = if (token.length > 20) "${token.take(20)}..." else token
+        android.util.Log.d("RemoteDataSource", "🔑 Token: $tokenPreview")
+        android.util.Log.d("RemoteDataSource", "🔑 Token length: ${token.length}")
+        
+        try {
+            val response = apiService.addToFavorite(request)
+            android.util.Log.d("RemoteDataSource", "📥 Response: status=${response.status}, message=${response.message}")
+            response
+        } catch (e: retrofit2.HttpException) {
+            val errorBody = e.response()?.errorBody()?.string()
+            android.util.Log.e("RemoteDataSource", "❌ HTTP ${e.code()} error: $errorBody")
+            
+            // Backend has a bug: returns 400 even when product is already in favorites
+            // Check if it's actually already in favorites by fetching the favorites list
+            if (e.code() == 400 && errorBody?.contains("already in the favorites") == true) {
+                android.util.Log.d("RemoteDataSource", "⚠️ Backend bug detected - checking if product is actually in favorites")
+                val favoritesResult = getAllFavorites()
+                if (favoritesResult.isSuccess) {
+                    val isActuallyInFavorites = favoritesResult.getOrNull()?.any { it.productId == productId } == true
+                    if (isActuallyInFavorites) {
+                        android.util.Log.d("RemoteDataSource", "✅ Product $productId IS in favorites - treating as success")
+                        return@runCatching FavoriteMutationResponseDto(
+                            status = true,
+                            message = "Product already in favorites"
+                        )
+                    }
+                }
+            }
+            
+            throw e
+        }
     }
 
     override suspend fun removeFromFavorite(productId: Int): Result<FavoriteMutationResponseDto> = runCatching {
-        apiService.removeFromFavorite(FavoriteRequestDto(productId = productId))
+        android.util.Log.d("RemoteDataSource", "📤 DELETE /RemoveFromFavorite: productId=$productId")
+        val request = FavoriteRequestDto(productId = productId)
+        android.util.Log.d("RemoteDataSource", "📦 Request body: productId=${request.productId}")
+        
+        try {
+            val response = apiService.removeFromFavorite(request)
+            android.util.Log.d("RemoteDataSource", "📥 Response: status=${response.status}, message=${response.message}")
+            response
+        } catch (e: retrofit2.HttpException) {
+            val errorBody = e.response()?.errorBody()?.string()
+            android.util.Log.e("RemoteDataSource", "❌ HTTP ${e.code()} error: $errorBody")
+            throw e
+        }
     }
 
     override suspend fun getAllFavorites(): Result<List<FavoriteItemDto>> = runCatching {
@@ -170,21 +220,20 @@ class RemoteDataSource @Inject constructor(
     }
 
     override suspend fun updateMyDetails(
-        fullName: String,
-        email: String
+        firstName: String,
+        lastName: String,
+        email: String,
+        phone: String,
+        address: String
     ): Result<GenericResponseDto> = runCatching {
-        apiService.updateMyDetails(UpdateMyDetailsRequest(fullName = fullName, email = email))
-    }
-
-    override suspend fun updateMyAddressAndPhone(
-        address: String,
-        phone: String
-    ): Result<GenericResponseDto> = runCatching {
-        // Path is intentionally `UpdateMyAddress&Phone` — see ApiServices for why
-        // we route through @Url instead of @PUT("...").
-        apiService.updateMyAddressAndPhone(
-            url = "UpdateMyAddress&Phone",
-            request = UpdateAddressPhoneRequest(address = address, phone = phone)
+        apiService.updateMyDetails(
+            UpdateMyDetailsRequest(
+                firstName = firstName,
+                lastName  = lastName,
+                email     = email,
+                phone     = phone,
+                address   = address
+            )
         )
     }
 
@@ -206,16 +255,40 @@ class RemoteDataSource @Inject constructor(
         apiService.getMyOrders()
     }
 
-    override suspend fun createInvoice(): Result<InvoiceResponseDto> = runCatching {
-        apiService.createInvoice()
+    override suspend fun createInvoice(request: CreateInvoiceRequest): Result<InvoiceResponseDto> = runCatching {
+        apiService.createInvoice("application/json", request)
     }
 
-    override suspend fun payNow(): Result<PayNowResponseDto> = runCatching {
-        apiService.payNow()
+    override suspend fun payNow(request: PayNowRequest): Result<PayNowResponseDto> = runCatching {
+        apiService.payNow("application/json", request)
     }
 
-    override suspend fun paymentCallback(): Result<PaymentCallbackDto> = runCatching {
-        apiService.paymentCallback()
+    override suspend fun paymentCallback(orderId: Int): Result<PaymentCallbackDto> = runCatching {
+        val request = PaymentCallbackRequest(orderId = orderId.toString())
+        android.util.Log.d("RemoteDataSource", "📤 POST /Callbackt")
+        android.util.Log.d("RemoteDataSource", "📦 Request: orderId=$orderId, invoice_status=paid")
+        
+        val response = apiService.paymentCallback("application/json", request)
+        
+        android.util.Log.d("RemoteDataSource", "📥 Response received: ${response.message}")
+        response
+    }
+
+    /**
+     * Mark payment as failed when payment gateway is unavailable
+     */
+    override suspend fun markPaymentAsFailed(orderId: Int): Result<PaymentCallbackDto> = runCatching {
+        val request = PaymentCallbackRequest(
+            orderId = orderId.toString(),
+            invoiceStatus = "failed"
+        )
+        android.util.Log.d("RemoteDataSource", "📤 POST /Callbackt (FAILED)")
+        android.util.Log.d("RemoteDataSource", "📦 Request: orderId=$orderId, invoice_status=failed")
+        
+        val response = apiService.paymentCallback("application/json", request)
+        
+        android.util.Log.d("RemoteDataSource", "📥 Response received: ${response.message}")
+        response
     }
 
     private suspend fun fetchProductsFromBackend(): List<ProductResult> = coroutineScope {

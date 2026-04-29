@@ -8,6 +8,7 @@ import com.example.shopsphere.CleanArchitecture.utils.Constant
 import com.example.shopsphere.CleanArchitecture.domain.DomainCartItem
 import com.example.shopsphere.CleanArchitecture.domain.DomainCheckoutResult
 import com.example.shopsphere.CleanArchitecture.domain.DomainOrder
+import com.example.shopsphere.CleanArchitecture.domain.DomainOrderProduct
 import com.example.shopsphere.CleanArchitecture.domain.DomainProductResult
 import com.example.shopsphere.CleanArchitecture.domain.IRepository
 import javax.inject.Inject
@@ -85,14 +86,24 @@ class Repository @Inject constructor(
     override suspend fun toggleFavorite(productId: Int) {
         val currentIds = favoriteIds()
         val isFav = productId in currentIds
+        android.util.Log.d("Repository", "Toggle favorite: productId=$productId, isFav=$isFav")
+        
         // Optimistic cache update — UI reads reflect the change immediately.
         cachedFavoriteIds = if (isFav) currentIds - productId else currentIds + productId
+        
         val result = if (isFav) {
+            android.util.Log.d("Repository", "Removing from favorites")
             remoteDataSource.removeFromFavorite(productId)
         } else {
+            android.util.Log.d("Repository", "Adding to favorites")
             remoteDataSource.addToFavorite(productId)
         }
-        if (result.isFailure) {
+        
+        if (result.isSuccess) {
+            android.util.Log.d("Repository", "✅ Favorite toggle succeeded")
+        } else {
+            val error = result.exceptionOrNull()?.message ?: "Unknown error"
+            android.util.Log.e("Repository", "❌ Favorite toggle failed: $error")
             // Roll back on failure.
             cachedFavoriteIds = currentIds
         }
@@ -252,11 +263,12 @@ class Repository @Inject constructor(
 
 
     override suspend fun registerEmail(
-        name: String,
+        firstName: String,
+        lastName: String,
         email: String,
         password: String
     ): Result<Boolean> {
-        return remoteDataSource.register(name, email, password).fold(
+        return remoteDataSource.register(firstName, lastName, email, password).fold(
             onSuccess = { response ->
                 val userId = response.resolvedUserId()
                 if (userId.isNullOrBlank()) {
@@ -300,6 +312,15 @@ class Repository @Inject constructor(
                     date = dto.date.orEmpty(),
                     paymentStatus = dto.paymentStatus.orEmpty(),
                     orderStatus = dto.orderStatus.orEmpty(),
+                    shippingAddress = dto.shippingAddress.orEmpty(),
+                    products = dto.products.map { p ->
+                        DomainOrderProduct(
+                            productName = p.productName,
+                            quantity = p.quantity,
+                            price = p.price,
+                            productImage = p.productImage
+                        )
+                    },
                     currentLat = dto.currentLat,
                     currentLng = dto.currentLng,
                     driverName = dto.driverName?.trim()?.takeIf { it.isNotBlank() }

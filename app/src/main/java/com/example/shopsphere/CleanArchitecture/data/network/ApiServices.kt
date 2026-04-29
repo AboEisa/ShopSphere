@@ -5,6 +5,7 @@ import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.HTTP
+import retrofit2.http.Header
 import retrofit2.http.Multipart
 import retrofit2.http.PUT
 import retrofit2.http.POST
@@ -99,18 +100,6 @@ interface ApiServices {
         @Body request: UpdateMyDetailsRequest
     ): GenericResponseDto
 
-    /**
-     * The backend route literally contains an ampersand: `/UpdateMyAddress&Phone`.
-     * Retrofit would percent-encode `&` if placed in `@PUT("...")`, breaking the
-     * call, so we route through `@Url` and pass the path verbatim from the
-     * data source. Do NOT change this without coordinating a backend rename.
-     */
-    @PUT
-    suspend fun updateMyAddressAndPhone(
-        @Url url: String,
-        @Body request: UpdateAddressPhoneRequest
-    ): GenericResponseDto
-
     // ── Images ────────────────────────────────────────────────────────────
 
     // POST /Upload  multipart/form-data, part name "file"
@@ -130,13 +119,22 @@ interface ApiServices {
     suspend fun getMyOrders(): List<MyOrderDto>
 
     @POST("CreateInvoice")
-    suspend fun createInvoice(): InvoiceResponseDto
+    suspend fun createInvoice(
+        @Header("Content-Type") contentType: String = "application/json",
+        @Body request: CreateInvoiceRequest
+    ): InvoiceResponseDto
 
     @POST("PayNow")
-    suspend fun payNow(): PayNowResponseDto
+    suspend fun payNow(
+        @Header("Content-Type") contentType: String = "application/json",
+        @Body request: PayNowRequest
+    ): PayNowResponseDto
 
     // /Callbackt is intentionally spelled with the trailing `t` — that is how
     // the backend route is registered. Don't "fix" the typo client-side.
     @POST("Callbackt")
-    suspend fun paymentCallback(): PaymentCallbackDto
+    suspend fun paymentCallback(
+        @Header("Content-Type") contentType: String = "application/json",
+        @Body request: PaymentCallbackRequest
+    ): PaymentCallbackDto
 }

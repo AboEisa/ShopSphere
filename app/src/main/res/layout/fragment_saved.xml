@@ -112,4 +112,10 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!-- Modern loading overlay -->
+    <include
+        android:id="@+id/loading_overlay"
+        layout="@layout/view_loading_overlay"
+        android:visibility="gone" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

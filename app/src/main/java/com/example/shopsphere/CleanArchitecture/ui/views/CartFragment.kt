@@ -67,6 +67,20 @@ class CartFragment : Fragment() {
             if (!isAdded || _binding == null) return@setOnClickListener
             requireActivity().onBackPressedDispatcher.onBackPressed()
         }
+
+        binding.btnClearCart.setOnClickListener {
+            if (!isAdded || _binding == null) return@setOnClickListener
+            android.app.AlertDialog.Builder(requireContext())
+                .setTitle(getString(com.example.shopsphere.R.string.cart_clear_confirm_title))
+                .setMessage(getString(com.example.shopsphere.R.string.cart_clear_confirm_message))
+                .setPositiveButton(getString(android.R.string.ok)) { _, _ ->
+                    cartViewModel.clearRemoteCart()
+                    Toast.makeText(requireContext(), getString(com.example.shopsphere.R.string.cart_clear_success), Toast.LENGTH_SHORT).show()
+                }
+                .setNegativeButton(getString(android.R.string.cancel), null)
+                .show()
+        }
+
         binding.btnCheckout.setOnClickListener {
             if (!isAdded || _binding == null) return@setOnClickListener
 
@@ -160,6 +174,7 @@ class CartFragment : Fragment() {
                 updateTotalPrice()
                 binding.recyclerView.visibility = if (normalizedProducts.isEmpty()) View.GONE else View.VISIBLE
                 updateEmptyStateVisibility(normalizedProducts.isEmpty())
+                binding.btnClearCart.visibility = if (normalizedProducts.isEmpty()) View.GONE else View.VISIBLE
             }
         }
     }
@@ -179,9 +194,19 @@ class CartFragment : Fragment() {
     }
 
     private fun observeLoading() {
-        cartViewModel.loading.observe(viewLifecycleOwner) {
+        cartViewModel.loading.observe(viewLifecycleOwner) { isLoading ->
             if (!isAdded || _binding == null) return@observe
-            binding.progressBar.visibility = View.GONE
+            
+            if (isLoading) {
+                // Show modern loading overlay
+                binding.loadingOverlay.loadingOverlay.visibility = View.VISIBLE
+                binding.loadingOverlay.loadingText.text = "Loading Cart"
+                binding.loadingOverlay.loadingSubtitle.text = "Fetching your items"
+            } else {
+                // Hide loading overlay
+                binding.loadingOverlay.loadingOverlay.visibility = View.GONE
+                binding.progressBar.visibility = View.GONE
+            }
         }
     }
 

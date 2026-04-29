@@ -12,7 +12,7 @@ interface IRemoteDataSource {
     suspend fun searchProducts(query: String): Result<List<ProductResult>>
 
     // Auth
-    suspend fun register(name: String, email: String, password: String): Result<AuthResponseDto>
+    suspend fun register(firstName: String, lastName: String, email: String, password: String): Result<AuthResponseDto>
     suspend fun login(email: String, password: String): Result<AuthResponseDto>
     suspend fun loginWithGoogle(idToken: String): Result<AuthResponseDto>
     suspend fun loginWithFacebook(accessToken: String): Result<AuthResponseDto>
@@ -32,8 +32,13 @@ interface IRemoteDataSource {
 
     // Profile
     suspend fun getMyDetails(): Result<MyDetailsDto>
-    suspend fun updateMyDetails(fullName: String, email: String): Result<GenericResponseDto>
-    suspend fun updateMyAddressAndPhone(address: String, phone: String): Result<GenericResponseDto>
+    suspend fun updateMyDetails(
+        firstName: String,
+        lastName: String,
+        email: String,
+        phone: String,
+        address: String
+    ): Result<GenericResponseDto>
 
     // Images
     suspend fun uploadImage(part: MultipartBody.Part): Result<UploadResponseDto>
@@ -41,7 +46,8 @@ interface IRemoteDataSource {
     // Orders / Payment
     suspend fun checkout(): Result<CheckoutResponseDto>
     suspend fun getMyOrders(): Result<List<MyOrderDto>>
-    suspend fun createInvoice(): Result<InvoiceResponseDto>
-    suspend fun payNow(): Result<PayNowResponseDto>
-    suspend fun paymentCallback(): Result<PaymentCallbackDto>
+    suspend fun createInvoice(request: CreateInvoiceRequest): Result<InvoiceResponseDto>
+    suspend fun payNow(request: PayNowRequest): Result<PayNowResponseDto>
+    suspend fun paymentCallback(orderId: Int): Result<PaymentCallbackDto>
+    suspend fun markPaymentAsFailed(orderId: Int): Result<PaymentCallbackDto>
 }

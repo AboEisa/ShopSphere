@@ -71,10 +71,10 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
-            android:layout_marginEnd="16dp"
+            android:layout_marginEnd="8dp"
             android:orientation="vertical"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/btnClear"
             app:layout_constraintStart_toEndOf="@id/avatarContainer"
             app:layout_constraintTop_toTopOf="parent">
 
@@ -93,6 +93,20 @@
                 android:textColor="@color/bright_green"
                 android:textSize="12sp" />
         </LinearLayout>
+
+        <ImageView
+            android:id="@+id/btnClear"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="12dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/chatbot_clear"
+            android:padding="9dp"
+            android:src="@drawable/ic_delete"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="#8A8F98" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- Messages list -->
@@ -189,6 +203,32 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/chipStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_chat_chip"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="8dp"
+                android:text="@string/chatbot_chip_status"
+                android:textColor="@color/bright_green"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/chipAvailability"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_chat_chip"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="8dp"
+                android:text="@string/chatbot_chip_availability"
+                android:textColor="@color/bright_green"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
                 android:id="@+id/chipReturns"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -210,6 +250,32 @@
                 android:paddingHorizontal="14dp"
                 android:paddingVertical="8dp"
                 android:text="@string/chatbot_chip_deals"
+                android:textColor="@color/bright_green"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/chipRecommend"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_chat_chip"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="8dp"
+                android:text="@string/chatbot_chip_recommend"
+                android:textColor="@color/bright_green"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/chipCancel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_chat_chip"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="8dp"
+                android:text="@string/chatbot_chip_cancel"
                 android:textColor="@color/bright_green"
                 android:textSize="13sp"
                 android:textStyle="bold" />

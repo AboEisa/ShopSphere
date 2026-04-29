@@ -57,12 +57,12 @@
             android:textSize="14sp"
             android:textColor="#808080" />
 
-        <!-- Full Name -->
+        <!-- First Name -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
-            android:text="Full Name"
+            android:text="First Name"
             android:textColor="#1A1A1A"
             android:textSize="14sp"
             android:textStyle="bold" />
@@ -73,7 +73,7 @@
             android:layout_marginTop="8dp">
 
             <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/tilFullName"
+                android:id="@+id/tilFirstName"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -89,10 +89,10 @@
                 app:layout_constraintTop_toTopOf="parent">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etFullName"
+                    android:id="@+id/etFirstName"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Enter your full name"
+                    android:hint="Enter your first name"
                     android:imeOptions="actionNext"
                     android:inputType="textPersonName"
                     android:textSize="15sp"
@@ -102,14 +102,71 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <ImageView
-                android:id="@+id/ivFullNameCheck"
+                android:id="@+id/ivFirstNameCheck"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:src="@drawable/ic_check_circle"
                 android:visibility="gone"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
-                app:layout_constraintBottom_toBottomOf="@id/tilFullName"
+                app:layout_constraintBottom_toBottomOf="@id/tilFirstName"
+                android:layout_marginEnd="12dp"
+                android:layout_marginBottom="14dp" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <!-- Last Name -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Last Name"
+            android:textColor="#1A1A1A"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilLastName"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp"
+                app:boxStrokeColor="@color/black"
+                app:boxStrokeWidth="1dp"
+                app:hintEnabled="false"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etLastName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Enter your last name"
+                    android:imeOptions="actionNext"
+                    android:inputType="textPersonName"
+                    android:textSize="15sp"
+                    android:textColor="#1A1A1A"
+                    android:textColorHint="#AAAAAA"
+                    android:paddingHorizontal="16dp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <ImageView
+                android:id="@+id/ivLastNameCheck"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_check_circle"
+                android:visibility="gone"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintBottom_toBottomOf="@id/tilLastName"
                 android:layout_marginEnd="12dp"
                 android:layout_marginBottom="14dp" />
         </androidx.constraintlayout.widget.ConstraintLayout>

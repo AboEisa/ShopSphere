@@ -135,17 +135,19 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
+        // First, try to pop the back stack (handles Account -> Orders navigation)
+        if (navController.popBackStack()) {
+            return
+        }
+
+        // If back stack is empty and we're on a root tab, go to Home
         if (currentId in rootDestinations) {
-            // On a tab other than Home: go to Home via the nav controller directly
-            // so it works even if BottomNavigationView.setSelectedItemId is a no-op
-            // (e.g. when the item is already marked selected).
             navigateToHomeTab()
             return
         }
 
-        if (!navController.popBackStack()) {
-            navigateToHomeTab()
-        }
+        // Fallback: navigate to Home
+        navigateToHomeTab()
     }
 
     private fun applyPersistedLanguage() {

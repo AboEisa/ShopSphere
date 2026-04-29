@@ -7,8 +7,11 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.shopsphere.R
+import com.example.shopsphere.CleanArchitecture.data.network.PayNowRequest
+import com.example.shopsphere.CleanArchitecture.domain.PayNowUseCase
 import com.example.shopsphere.CleanArchitecture.ui.adapters.OrdersAdapter
 import com.example.shopsphere.CleanArchitecture.ui.models.OrderHistoryItem
 import com.example.shopsphere.CleanArchitecture.utils.showSuccessDialog
@@ -17,7 +20,9 @@ import com.example.shopsphere.databinding.DialogOrderReviewBinding
 import com.example.shopsphere.databinding.FragmentOrdersBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import java.util.Locale
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class OrdersFragment : Fragment() {
@@ -26,6 +31,9 @@ class OrdersFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val sharedViewModel: CheckoutSharedViewModel by activityViewModels()
+
+    @Inject
+    lateinit var payNowUseCase: PayNowUseCase
     private val ordersAdapter by lazy {
         OrdersAdapter(
             onTrackClicked = { order ->
@@ -34,6 +42,16 @@ class OrdersFragment : Fragment() {
             },
             onReviewClicked = { order ->
                 showReviewSheet(order)
+            },
+            onOrderClicked = { order ->
+                // Navigate to order details with just orderId
+                val action = OrdersFragmentDirections.actionOrdersFragmentToOrderDetailsFragment(
+                    orderId = order.orderId
+                )
+                findNavController().navigate(action)
+            },
+            onPayAgainClicked = { order ->
+                handlePayAgain(order)
             }
         )
     }
@@ -54,12 +72,22 @@ class OrdersFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        android.util.Log.d("OrdersFragment", "onViewCreated - initializing orders screen")
+
         binding.recyclerOrders.adapter = ordersAdapter
+
+        // Fetch orders immediately on first visit
+        android.util.Log.d("OrdersFragment", "Calling fetchOrders() for the first time")
+        sharedViewModel.fetchOrders()
+
         binding.btnBack.setOnClickListener {
-            // Orders is now a root bottom-nav tab; when reached from the nav there
-            // is nothing to pop. Delegate to the activity back handler so we route
-            // to Home cleanly instead of a no-op.
-            requireActivity().onBackPressedDispatcher.onBackPressed()
+            // Navigate back using NavController to respect the back stack
+            // This will properly return to AccountFragment when navigated from there
+            val navController = findNavController()
+            if (!navController.navigateUp()) {
+                // If navigateUp fails, fall back to activity back handler
+                requireActivity().onBackPressedDispatcher.onBackPressed()
+            }
         }
         binding.btnNotifications.setOnClickListener {
             // Top-right icon now reads as a shopping bag in the redesign — open
@@ -96,6 +124,7 @@ class OrdersFragment : Fragment() {
         )
 
         sharedViewModel.orderHistory.observe(viewLifecycleOwner) { orders ->
+            android.util.Log.d("OrdersFragment", "📦 Orders observed: ${orders.size} orders")
             allOrders = orders
             renderOrders()
         }
@@ -130,9 +159,9 @@ class OrdersFragment : Fragment() {
             val q = searchQuery.lowercase(Locale.ENGLISH)
             byTab.filter { order ->
                 order.orderId.lowercase(Locale.ENGLISH).contains(q) ||
-                    order.status.lowercase(Locale.ENGLISH).contains(q) ||
-                    order.itemTitle.lowercase(Locale.ENGLISH).contains(q) ||
-                    order.driverName?.lowercase(Locale.ENGLISH)?.contains(q) == true
+                        order.status.lowercase(Locale.ENGLISH).contains(q) ||
+                        order.itemTitle.lowercase(Locale.ENGLISH).contains(q) ||
+                        order.driverName?.lowercase(Locale.ENGLISH)?.contains(q) == true
             }
         }
 
@@ -267,6 +296,50 @@ class OrdersFragment : Fragment() {
 
         updateStars()
         dialog.show()
+    }
+
+    /**
+     * Called when the user taps "Pay Again" on an order with pending/failed payment.
+     * Calls PayNow with the orderId, then navigates to the WebView for payment.
+     */
+    private fun handlePayAgain(order: OrderHistoryItem) {
+        val orderId = order.orderId.toIntOrNull() ?: run {
+            Toast.makeText(requireContext(), "Invalid order ID", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Show loading feedback
+        Toast.makeText(requireContext(), "Loading payment...", Toast.LENGTH_SHORT).show()
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            val result = payNowUseCase(PayNowRequest(orderId = orderId))
+            if (result.isFailure) {
+                Toast.makeText(
+                    requireContext(),
+                    "Payment service unavailable: ${result.exceptionOrNull()?.message}",
+                    Toast.LENGTH_LONG
+                ).show()
+                return@launch
+            }
+
+            val payNow = result.getOrNull()
+            val url = payNow?.url?.takeIf { it.isNotBlank() }
+                ?: payNow?.paymentUrl?.takeIf { it.isNotBlank() }
+
+            if (url == null) {
+                Toast.makeText(
+                    requireContext(),
+                    "No payment URL received: ${payNow?.message ?: "Unknown error"}",
+                    Toast.LENGTH_LONG
+                ).show()
+                return@launch
+            }
+
+            // Navigate to WebView payment screen
+            val action = OrdersFragmentDirections
+                .actionOrdersFragmentToPaymentWebViewFragment(url, orderId)
+            findNavController().navigate(action)
+        }
     }
 
     override fun onDestroyView() {

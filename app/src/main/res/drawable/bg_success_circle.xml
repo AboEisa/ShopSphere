@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Success circle background with gradient -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <gradient
+        android:angle="135"
+        android:startColor="@color/bright_green"
+        android:endColor="#00CC66"
+        android:type="linear" />
+</shape>

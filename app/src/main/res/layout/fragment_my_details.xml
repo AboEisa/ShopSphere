@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+  fragment_my_details.xml
+  Shows all 5 fields from GET /MyDetails.
+  One Edit button (pencil) makes all fields editable.
+  One Save button submits to PUT /UpdateMyDetails.
+-->
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -7,6 +14,7 @@
     android:background="@android:color/white"
     tools:context=".CleanArchitecture.ui.views.MyDetailsFragment">
 
+    <!-- Top accent bar -->
     <View
         android:id="@+id/topAccent"
         android:layout_width="0dp"
@@ -16,6 +24,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!-- Back button -->
     <ImageView
         android:id="@+id/btnBack"
         android:layout_width="40dp"
@@ -32,6 +41,7 @@
         app:layout_constraintTop_toBottomOf="@id/topAccent"
         app:tint="#1A1A1A" />
 
+    <!-- Title -->
     <TextView
         android:id="@+id/textTitle"
         android:layout_width="wrap_content"
@@ -45,6 +55,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@id/btnBack" />
 
+    <!-- Notifications bell -->
     <ImageView
         android:id="@+id/btnNotifications"
         android:layout_width="40dp"
@@ -61,6 +72,7 @@
         app:layout_constraintTop_toBottomOf="@id/topAccent"
         app:tint="@color/_1a1a1a" />
 
+    <!-- Divider -->
     <View
         android:id="@+id/headerDivider"
         android:layout_width="0dp"
@@ -71,13 +83,14 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/btnBack" />
 
+    <!-- Scrollable form area -->
     <ScrollView
         android:id="@+id/detailsScroll"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:clipToPadding="false"
         android:paddingStart="20dp"
-        android:paddingTop="18dp"
+        android:paddingTop="24dp"
         android:paddingEnd="20dp"
         android:paddingBottom="20dp"
         app:layout_constraintBottom_toTopOf="@id/buttonSubmit"
@@ -90,185 +103,169 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
+            <!-- ─── Section header ──────────────────────────────────────── -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="20dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/my_details_section_personal"
+                    android:textColor="#2F2F2F"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <!-- Single Edit / Cancel toggle -->
+                <ImageView
+                    android:id="@+id/btnEdit"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackgroundBorderless"
+                    android:padding="6dp"
+                    android:src="@drawable/ic_edit"
+                    android:contentDescription="@string/my_details_edit_button"
+                    app:tint="@color/bright_green" />
+            </LinearLayout>
+
+            <!-- First Name -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/my_details_full_name"
-                android:textColor="#2F2F2F"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:text="@string/my_details_first_name"
+                android:textColor="#7A7A7A"
+                android:textSize="12sp" />
 
             <EditText
-                android:id="@+id/editFullName"
+                android:id="@+id/editFirstName"
                 android:layout_width="match_parent"
                 android:layout_height="54dp"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="16dp"
                 android:background="@drawable/bg_form_field"
+                android:enabled="false"
+                android:focusable="false"
+                android:focusableInTouchMode="false"
                 android:paddingHorizontal="16dp"
                 android:textColor="#1A1A1A"
                 android:textColorHint="#B3B3B3"
                 android:textSize="16sp"
-                tools:text="Cody Fisher" />
+                android:inputType="textPersonName"
+                tools:text="Omar" />
 
+            <!-- Last Name -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="@string/my_details_email"
-                android:textColor="#2F2F2F"
+                android:text="@string/my_details_last_name"
+                android:textColor="#7A7A7A"
+                android:textSize="12sp" />
+
+            <EditText
+                android:id="@+id/editLastName"
+                android:layout_width="match_parent"
+                android:layout_height="54dp"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/bg_form_field"
+                android:enabled="false"
+                android:focusable="false"
+                android:focusableInTouchMode="false"
+                android:paddingHorizontal="16dp"
+                android:textColor="#1A1A1A"
+                android:textColorHint="#B3B3B3"
                 android:textSize="16sp"
-                android:textStyle="bold" />
+                android:inputType="textPersonName"
+                tools:text="Abo3sh" />
+
+            <!-- Email -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/my_details_email"
+                android:textColor="#7A7A7A"
+                android:textSize="12sp" />
 
             <EditText
                 android:id="@+id/editEmail"
                 android:layout_width="match_parent"
                 android:layout_height="54dp"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="16dp"
                 android:background="@drawable/bg_form_field"
+                android:enabled="false"
+                android:focusable="false"
+                android:focusableInTouchMode="false"
                 android:inputType="textEmailAddress"
                 android:paddingHorizontal="16dp"
                 android:textColor="#1A1A1A"
                 android:textColorHint="#B3B3B3"
                 android:textSize="16sp"
-                tools:text="cody.fisher45@example.com" />
+                tools:text="ooooghhshahh@o.com" />
 
+            <!-- Phone -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="@string/my_details_birth_date"
-                android:textColor="#2F2F2F"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="54dp"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/bg_form_field"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="16dp">
-
-                <EditText
-                    android:id="@+id/editBirthDate"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:background="@android:color/transparent"
-                    android:clickable="false"
-                    android:focusable="false"
-                    android:textColor="#1A1A1A"
-                    android:textColorHint="#B3B3B3"
-                    android:textSize="16sp"
-                    tools:text="12/07/1990" />
-
-                <ImageView
-                    android:id="@+id/buttonOpenDatePicker"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_calendar"
-                    tools:ignore="ContentDescription" />
-            </LinearLayout>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="@string/my_details_gender"
-                android:textColor="#2F2F2F"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="54dp"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/bg_form_field"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="16dp">
-
-                <AutoCompleteTextView
-                    android:id="@+id/editGender"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:background="@android:color/transparent"
-                    android:inputType="none"
-                    android:textColor="#1A1A1A"
-                    android:textSize="16sp"
-                    tools:text="Male" />
-
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_chevron_down"
-                    tools:ignore="ContentDescription" />
-            </LinearLayout>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
                 android:text="@string/my_details_phone_number"
-                android:textColor="#2F2F2F"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:textColor="#7A7A7A"
+                android:textSize="12sp" />
 
-            <LinearLayout
+            <EditText
+                android:id="@+id/editPhone"
                 android:layout_width="match_parent"
                 android:layout_height="54dp"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="16dp"
                 android:background="@drawable/bg_form_field"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="14dp">
+                android:enabled="false"
+                android:focusable="false"
+                android:focusableInTouchMode="false"
+                android:inputType="phone"
+                android:paddingHorizontal="16dp"
+                android:textColor="#1A1A1A"
+                android:textColorHint="#B3B3B3"
+                android:textSize="16sp"
+                tools:text="+20 123 456 7890" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="US"
-                    android:textColor="#1A1A1A"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
+            <!-- Address -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/my_details_address"
+                android:textColor="#7A7A7A"
+                android:textSize="12sp" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="6dp"
-                    android:text="\uD83C\uDDFA\uD83C\uDDF8"
-                    android:textSize="20sp" />
+            <EditText
+                android:id="@+id/editAddress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/bg_form_field"
+                android:enabled="false"
+                android:focusable="false"
+                android:focusableInTouchMode="false"
+                android:gravity="top|start"
+                android:inputType="textMultiLine|textPostalAddress"
+                android:minHeight="54dp"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="14dp"
+                android:textColor="#1A1A1A"
+                android:textColorHint="#B3B3B3"
+                android:textSize="16sp"
+                tools:text="Cairo, Egypt" />
 
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_marginStart="4dp"
-                    android:src="@drawable/ic_chevron_down"
-                    app:tint="#1A1A1A"
-                    tools:ignore="ContentDescription" />
-
-                <View
-                    android:layout_width="1dp"
-                    android:layout_height="24dp"
-                    android:layout_marginHorizontal="12dp"
-                    android:background="#E5E5E5" />
-
-                <EditText
-                    android:id="@+id/editPhone"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:background="@android:color/transparent"
-                    android:inputType="phone"
-                    android:textColor="#1A1A1A"
-                    android:textColorHint="#B3B3B3"
-                    android:textSize="16sp"
-                    tools:text="+1 234 453 231 506" />
-            </LinearLayout>
         </LinearLayout>
     </ScrollView>
 
+    <!-- Save button — only visible in edit mode -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/buttonSubmit"
         android:layout_width="0dp"
@@ -276,16 +273,15 @@
         android:layout_marginStart="20dp"
         android:layout_marginEnd="20dp"
         android:layout_marginBottom="20dp"
-        android:background="@drawable/bg_black_action"
-        android:backgroundTint="@android:color/transparent"
         android:insetTop="0dp"
         android:insetBottom="0dp"
         android:text="@string/my_details_submit"
         android:textAllCaps="false"
-        app:backgroundTint="@color/bright_green"
         android:textColor="@android:color/white"
         android:textSize="16sp"
         android:textStyle="bold"
+        android:visibility="gone"
+        app:backgroundTint="@color/bright_green"
         app:cornerRadius="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

@@ -121,6 +121,13 @@
             app:exitAnim="@anim/animation2"
             app:popEnterAnim="@anim/animation3"
             app:popExitAnim="@anim/animation4" />
+        <action
+            android:id="@+id/action_accountFragment_to_ordersFragment"
+            app:destination="@id/ordersFragment"
+            app:enterAnim="@anim/animation"
+            app:exitAnim="@anim/animation2"
+            app:popEnterAnim="@anim/animation3"
+            app:popExitAnim="@anim/animation4" />
     </fragment>
     <fragment
         android:id="@+id/faqsFragment"
@@ -149,6 +156,29 @@
             app:exitAnim="@anim/animation2"
             app:popEnterAnim="@anim/animation3"
             app:popExitAnim="@anim/animation4" />
+        <action
+            android:id="@+id/action_ordersFragment_to_orderDetailsFragment"
+            app:destination="@id/orderDetailsFragment"
+            app:enterAnim="@anim/animation"
+            app:exitAnim="@anim/animation2"
+            app:popEnterAnim="@anim/animation3"
+            app:popExitAnim="@anim/animation4" />
+        <action
+            android:id="@+id/action_ordersFragment_to_paymentWebViewFragment"
+            app:destination="@id/paymentWebViewFragment"
+            app:enterAnim="@anim/animation"
+            app:exitAnim="@anim/animation2"
+            app:popEnterAnim="@anim/animation3"
+            app:popExitAnim="@anim/animation4" />
+    </fragment>
+    <fragment
+        android:id="@+id/orderDetailsFragment"
+        android:name="com.example.shopsphere.CleanArchitecture.ui.views.OrderDetailsFragment"
+        android:label="fragment_order_details"
+        tools:layout="@layout/fragment_order_details" >
+        <argument
+            android:name="orderId"
+            app:argType="string" />
     </fragment>
     <fragment
         android:id="@+id/chatBotFragment"
@@ -160,6 +190,11 @@
         android:name="com.example.shopsphere.CleanArchitecture.ui.views.MyDetailsFragment"
         android:label="fragment_my_details"
         tools:layout="@layout/fragment_my_details" />
+    <fragment
+        android:id="@+id/addressPhoneFragment"
+        android:name="com.example.shopsphere.CleanArchitecture.ui.views.AddressPhoneFragment"
+        android:label="fragment_address_phone"
+        tools:layout="@layout/fragment_address_phone" />
     <fragment
         android:id="@+id/addressBookFragment"
         android:name="com.example.shopsphere.CleanArchitecture.ui.views.AddressBookFragment"
@@ -245,6 +280,30 @@
             app:exitAnim="@anim/animation2"
             app:popEnterAnim="@anim/animation3"
             app:popExitAnim="@anim/animation4" />
+        <action
+            android:id="@+id/action_checkoutFragment_to_paymentWebViewFragment"
+            app:destination="@id/paymentWebViewFragment"
+            app:enterAnim="@anim/animation"
+            app:exitAnim="@anim/animation2"
+            app:popEnterAnim="@anim/animation3"
+            app:popExitAnim="@anim/animation4" />
+    </fragment>
+    <fragment
+        android:id="@+id/paymentWebViewFragment"
+        android:name="com.example.shopsphere.CleanArchitecture.ui.views.PaymentWebViewFragment"
+        android:label="fragment_payment_webview"
+        tools:layout="@layout/fragment_payment_webview">
+        <argument
+            android:name="payment_url"
+            app:argType="string" />
+        <argument
+            android:name="order_id"
+            app:argType="integer" />
+        <action
+            android:id="@+id/action_paymentWebViewFragment_to_checkoutSuccess"
+            app:destination="@id/checkoutFragment"
+            app:popUpTo="@id/checkoutFragment"
+            app:popUpToInclusive="true" />
     </fragment>
     <fragment
         android:id="@+id/mapsFragment"

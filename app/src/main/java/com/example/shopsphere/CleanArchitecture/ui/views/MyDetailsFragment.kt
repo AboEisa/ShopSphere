@@ -1,50 +1,38 @@
 package com.example.shopsphere.CleanArchitecture.ui.views
 
-import android.app.DatePickerDialog
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
+import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
-import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
-import com.example.shopsphere.CleanArchitecture.domain.GetMyDetailsUseCase
-import com.example.shopsphere.CleanArchitecture.domain.UpdateMyAddressPhoneUseCase
-import com.example.shopsphere.CleanArchitecture.domain.UpdateMyDetailsUseCase
+import com.example.shopsphere.CleanArchitecture.ui.viewmodels.AccountUiEvent
+import com.example.shopsphere.CleanArchitecture.ui.viewmodels.AccountViewModel
 import com.example.shopsphere.CleanArchitecture.utils.showSuccessDialog
 import com.example.shopsphere.R
 import com.example.shopsphere.databinding.FragmentMyDetailsBinding
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
-import javax.inject.Inject
 
+/**
+ * My Details screen.
+ *
+ * Displays all 5 fields from GET /MyDetails: firstName, lastName, email, phone, address.
+ * One Edit button → makes all fields editable.
+ * One Save button → submits all 5 fields to PUT /UpdateMyDetails.
+ */
 @AndroidEntryPoint
 class MyDetailsFragment : Fragment() {
 
     private var _binding: FragmentMyDetailsBinding? = null
     private val binding get() = _binding!!
 
-    @Inject
-    lateinit var sharedPreference: SharedPreference
+    private val viewModel: AccountViewModel by viewModels()
 
-    @Inject
-    lateinit var getMyDetailsUseCase: GetMyDetailsUseCase
-
-    @Inject
-    lateinit var updateMyDetailsUseCase: UpdateMyDetailsUseCase
-
-    @Inject
-    lateinit var updateMyAddressPhoneUseCase: UpdateMyAddressPhoneUseCase
+    private var isEditMode = false
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         _binding = FragmentMyDetailsBinding.inflate(inflater, container, false)
         return binding.root
@@ -52,162 +40,131 @@ class MyDetailsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setupGenderField()
-        bindUserData()                  // optimistic — show cached values immediately
-        refreshFromServer()             // then overwrite with the canonical /MyDetails payload
+        setEditMode(false)
+        setupClickListeners()
+        observeViewModel()
+        viewModel.refreshFromServer()
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Observers
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private fun observeViewModel() {
+        viewModel.profileState.observe(viewLifecycleOwner) { state ->
+            if (!isEditMode) {
+                binding.editFirstName.setText(state.firstName)
+                binding.editLastName.setText(state.lastName)
+                binding.editEmail.setText(state.email)
+                binding.editPhone.setText(state.phone)
+                binding.editAddress.setText(state.address)
+            }
+        }
+
+        viewModel.isLoading.observe(viewLifecycleOwner) { loading ->
+            binding.buttonSubmit.isEnabled = !loading
+            binding.buttonSubmit.alpha     = if (loading) 0.6f else 1.0f
+        }
+
+        viewModel.uiEvent.observe(viewLifecycleOwner) { event ->
+            event ?: return@observe
+            when (event) {
+                is AccountUiEvent.SaveSuccess -> {
+                    setEditMode(false)
+                    showSuccessDialog(
+                        title   = getString(R.string.account_changes_saved),
+                        message = getString(R.string.account_changes_saved)
+                    )
+                }
+                is AccountUiEvent.PartialSaveError -> {
+                    setEditMode(false)
+                    showSuccessDialog(
+                        title   = getString(R.string.account_changes_saved),
+                        message = getString(R.string.my_details_partial_save_warning, event.message)
+                    )
+                }
+                is AccountUiEvent.ValidationError -> {
+                    when (event.field) {
+                        "firstName" -> binding.editFirstName.error = event.message
+                        "email"     -> binding.editEmail.error     = event.message
+                    }
+                }
+                is AccountUiEvent.Error -> {
+                    showSuccessDialog(
+                        title   = getString(R.string.dialog_error_title),
+                        message = event.message
+                    )
+                }
+                else -> { /* handled elsewhere */ }
+            }
+            viewModel.clearEvent()
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Click listeners
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private fun setupClickListeners() {
         binding.btnBack.setOnClickListener { findNavController().navigateUp() }
+
         binding.btnNotifications.setOnClickListener {
             findNavController().navigate(R.id.notificationsFragment)
         }
-        binding.buttonOpenDatePicker.setOnClickListener { openDatePicker() }
-        binding.editBirthDate.setOnClickListener { openDatePicker() }
-        binding.buttonSubmit.setOnClickListener {
-            saveProfileChanges()
-        }
-    }
 
-    private fun setupGenderField() {
-        val options = listOf(
-            getString(R.string.my_details_gender_male),
-            getString(R.string.my_details_gender_female),
-            getString(R.string.my_details_gender_other)
-        )
-        binding.editGender.setAdapter(
-            ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, options)
-        )
-        binding.editGender.setOnClickListener { binding.editGender.showDropDown() }
-        binding.editGender.setOnFocusChangeListener { _, hasFocus ->
-            if (hasFocus) binding.editGender.showDropDown()
-        }
-    }
-
-    private fun bindUserData() {
-        val localName = sharedPreference.getProfileName()
-        val localEmail = sharedPreference.getProfileEmail()
-        val localPhone = sharedPreference.getProfilePhone()
-        val localBirthDate = sharedPreference.getProfileBirthDate()
-        val localGender = sharedPreference.getProfileGender()
-
-        val resolvedName = localName.ifBlank { deriveNameFromEmail(localEmail).orEmpty() }
-
-        binding.editFullName.setText(resolvedName)
-        binding.editEmail.setText(localEmail)
-        binding.editPhone.setText(localPhone)
-        binding.editBirthDate.setText(localBirthDate)
-        binding.editGender.setText(localGender, false)
-
-        if (resolvedName.isNotBlank() && localName.isBlank()) {
-            sharedPreference.saveProfile(
-                name = resolvedName,
-                email = localEmail,
-                phone = localPhone
-            )
-        }
-    }
-
-    private fun deriveNameFromEmail(email: String): String? {
-        val local = email.substringBefore('@', "").trim()
-        if (local.isBlank()) return null
-        return local.split('.', '_', '-', '+')
-            .map { chunk -> chunk.trimEnd { it.isDigit() } }
-            .filter { it.isNotBlank() }
-            .joinToString(" ") { chunk -> chunk.replaceFirstChar { c -> c.uppercaseChar() } }
-            .ifBlank { null }
-    }
-
-    private fun saveProfileChanges() {
-        val name = binding.editFullName.text.toString().trim()
-        val email = binding.editEmail.text.toString().trim()
-        val phone = binding.editPhone.text.toString().trim()
-        val birthDate = binding.editBirthDate.text.toString().trim()
-        val gender = binding.editGender.text.toString().trim()
-
-        if (name.isBlank()) {
-            binding.editFullName.error = getString(R.string.my_details_full_name)
-            return
-        }
-        if (email.isBlank()) {
-            binding.editEmail.error = getString(R.string.my_details_email)
-            return
-        }
-        if (birthDate.isBlank()) {
-            binding.editBirthDate.error = getString(R.string.my_details_birth_date)
-            return
-        }
-        if (gender.isBlank()) {
-            binding.editGender.error = getString(R.string.my_details_gender)
-            return
-        }
-
-        // Local-first: never lose the user's edit because of a flaky network.
-        sharedPreference.saveProfile(name = name, email = email, phone = phone)
-        sharedPreference.saveProfileExtras(birthDate = birthDate, gender = gender)
-
-        // Push to the server in the background (best-effort). Birth date and
-        // gender stay local because the API doesn't accept them today.
-        viewLifecycleOwner.lifecycleScope.launch {
-            updateMyDetailsUseCase(fullName = name, email = email)
-
-            // /UpdateMyAddress&Phone wants both fields in the same call. Pair the
-            // new phone with whatever delivery address we already have on file.
-            val address = sharedPreference.getDeliveryAddress()
-            if (phone.isNotBlank()) {
-                updateMyAddressPhoneUseCase(address = address, phone = phone)
-            }
-        }
-
-        showSuccessDialog(
-            title = getString(R.string.account_changes_saved),
-            message = getString(R.string.account_changes_saved)
-        ) {
-            findNavController().navigateUp()
-        }
-    }
-
-    private fun refreshFromServer() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            val details = getMyDetailsUseCase().getOrNull() ?: return@launch
-            // Keep local prefs in sync so other screens (Account header, Cart
-            // address auto-fill, etc.) see the freshest values too.
-            sharedPreference.saveProfile(
-                name = details.fullName.orEmpty(),
-                email = details.email.orEmpty(),
-                phone = details.phone.orEmpty()
-            )
-            details.address?.takeIf { it.isNotBlank() }?.let { sharedPreference.saveDeliveryAddress(it) }
-
-            // Only overwrite fields the user hasn't started editing — otherwise
-            // a slow /MyDetails response would clobber typing in flight.
-            if (binding.editFullName.text.isNullOrBlank())
-                binding.editFullName.setText(details.fullName.orEmpty())
-            if (binding.editEmail.text.isNullOrBlank())
-                binding.editEmail.setText(details.email.orEmpty())
-            if (binding.editPhone.text.isNullOrBlank())
-                binding.editPhone.setText(details.phone.orEmpty())
-        }
-    }
-
-    private fun openDatePicker() {
-        val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH)
-        val calendar = Calendar.getInstance()
-        runCatching {
-            formatter.parse(binding.editBirthDate.text.toString())?.let { parsedDate ->
-                calendar.time = parsedDate
-            }
-        }
-
-        DatePickerDialog(
-            requireContext(),
-            { _, year, month, dayOfMonth ->
-                val selected = Calendar.getInstance().apply {
-                    set(year, month, dayOfMonth)
+        // Edit button: toggle edit mode, or cancel and revert
+        binding.btnEdit.setOnClickListener {
+            if (isEditMode) {
+                // Cancel — restore last server values
+                setEditMode(false)
+                viewModel.profileState.value?.let { state ->
+                    binding.editFirstName.setText(state.firstName)
+                    binding.editLastName.setText(state.lastName)
+                    binding.editEmail.setText(state.email)
+                    binding.editPhone.setText(state.phone)
+                    binding.editAddress.setText(state.address)
                 }
-                binding.editBirthDate.setText(formatter.format(selected.time))
-            },
-            calendar.get(Calendar.YEAR),
-            calendar.get(Calendar.MONTH),
-            calendar.get(Calendar.DAY_OF_MONTH)
-        ).show()
+            } else {
+                setEditMode(true)
+            }
+        }
+
+        // Save button — submits all 5 fields
+        binding.buttonSubmit.setOnClickListener {
+            viewModel.saveMyDetails(
+                firstName = binding.editFirstName.text.toString(),
+                lastName  = binding.editLastName.text.toString(),
+                email     = binding.editEmail.text.toString(),
+                phone     = binding.editPhone.text.toString(),
+                address   = binding.editAddress.text.toString()
+            )
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Edit mode toggle
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private fun setEditMode(edit: Boolean) {
+        isEditMode = edit
+
+        listOf(
+            binding.editFirstName,
+            binding.editLastName,
+            binding.editEmail,
+            binding.editPhone,
+            binding.editAddress
+        ).forEach { field ->
+            field.isEnabled             = edit
+            field.isFocusable           = edit
+            field.isFocusableInTouchMode = edit
+        }
+
+        binding.buttonSubmit.visibility = if (edit) View.VISIBLE else View.GONE
+
+        binding.btnEdit.setImageResource(
+            if (edit) R.drawable.ic_remove else R.drawable.ic_edit
+        )
     }
 
     override fun onDestroyView() {

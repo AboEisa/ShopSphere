@@ -93,16 +93,6 @@
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/txt_change_address"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="end"
-                android:text="@string/change"
-                android:textColor="@color/_1a1a1a"
-                android:textSize="13sp"
-                android:textStyle="bold" />
-
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -154,7 +144,38 @@
                         android:visibility="visible"
                         tools:text="+1 555 000 0000" />
                 </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/btn_edit_address_phone"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_marginStart="8dp"
+                    android:padding="4dp"
+                    android:src="@drawable/ic_edit"
+                    app:tint="@color/bright_green"
+                    tools:ignore="ContentDescription" />
             </LinearLayout>
+
+            <!-- Cart Items Section -->
+            <TextView
+                android:id="@+id/txt_cart_items_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="@string/cart_items_title"
+                android:textColor="@color/_1a1a1a"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_cart_items"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:nestedScrollingEnabled="false"
+                android:visibility="gone"
+                tools:itemCount="3"
+                tools:listitem="@layout/item_checkout_cart_product" />
 
             <View
                 android:layout_width="match_parent"
@@ -171,101 +192,98 @@
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
-            <LinearLayout
+            <!-- Payment Method Selector -->
+            <RadioGroup
+                android:id="@+id/payment_method_group"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:orientation="horizontal">
+                android:orientation="vertical">
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/payment_tab_card"
-                    android:layout_width="0dp"
-                    android:layout_height="42dp"
-                    android:layout_weight="1"
-                    android:insetTop="0dp"
-                    android:insetBottom="0dp"
-                    android:backgroundTint="@color/bright_green"
-                    android:text="@string/payment_card"
-                    android:textAllCaps="false"
-                    android:textColor="@android:color/white"
-                    app:cornerRadius="10dp"
-                    app:icon="@drawable/ic_visa"
-                    app:iconTint="@android:color/white" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/payment_tab_cash"
-                    android:layout_width="0dp"
-                    android:layout_height="42dp"
-                    android:layout_marginStart="10dp"
-                    android:layout_weight="1"
-                    android:alpha="0.55"
-                    android:background="@drawable/bg_form_field"
-                    android:insetTop="0dp"
-                    android:insetBottom="0dp"
-                    android:text="@string/payment_cash"
-                    android:textAllCaps="false"
-                    android:textColor="@color/_1a1a1a"
-                    app:backgroundTint="@android:color/transparent"
-                    app:cornerRadius="10dp"
-                    app:icon="@drawable/ic_cash"
-                    app:iconTint="@color/_1a1a1a" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/payment_tab_apple"
-                    android:layout_width="0dp"
-                    android:layout_height="42dp"
-                    android:layout_marginStart="10dp"
-                    android:layout_weight="1"
-                    android:alpha="0.55"
-                    android:background="@drawable/bg_form_field"
-                    android:insetTop="0dp"
-                    android:insetBottom="0dp"
-                    android:text="@string/payment_apple_pay"
-                    android:textAllCaps="false"
-                    android:textColor="@color/_1a1a1a"
-                    app:backgroundTint="@android:color/transparent"
-                    app:cornerRadius="10dp"
-                    app:icon="@drawable/ic_applepay"
-                    app:iconTint="@color/_1a1a1a" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/btn_edit_card"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginTop="12dp"
-                android:background="@drawable/bg_form_field"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="14dp">
-
-                <TextView
-                    android:id="@+id/text_payment_brand"
-                    android:layout_width="wrap_content"
+                <!-- Online Payment Option -->
+                <RadioButton
+                    android:id="@+id/radio_online_payment"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="VISA"
+                    android:layout_marginBottom="8dp"
+                    android:background="@drawable/bg_form_field"
+                    android:button="@null"
+                    android:checked="true"
+                    android:padding="16dp"
+                    android:text="Online Payment (Credit/Debit Card)"
                     android:textColor="@color/_1a1a1a"
                     android:textSize="14sp"
                     android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/txt_card_number"
-                    android:layout_width="0dp"
+                <!-- Cash on Delivery Option -->
+                <RadioButton
+                    android:id="@+id/radio_cod"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:layout_weight="1"
-                    android:text="**** **** **** 2512"
+                    android:background="@drawable/bg_form_field"
+                    android:button="@null"
+                    android:padding="16dp"
+                    android:text="Cash on Delivery (COD)"
                     android:textColor="@color/_1a1a1a"
                     android:textSize="14sp"
-                    android:textStyle="bold"
-                    tools:text="**** **** **** 2512" />
+                    android:textStyle="bold" />
+            </RadioGroup>
+
+            <!-- Online Payment Info -->
+            <LinearLayout
+                android:id="@+id/layout_online_payment_info"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_form_field"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="14dp">
 
                 <ImageView
                     android:layout_width="18dp"
                     android:layout_height="18dp"
-                    android:src="@drawable/ic_edit"
-                    app:tint="@color/_1a1a1a"
+                    android:src="@drawable/ic_info"
+                    app:tint="#FFA500"
                     tools:ignore="ContentDescription" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:text="You'll be redirected to our secure payment page to complete your purchase"
+                    android:textColor="#666666"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <!-- COD Info -->
+            <LinearLayout
+                android:id="@+id/layout_cod_info"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_form_field"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="14dp"
+                android:visibility="gone">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:src="@drawable/ic_info"
+                    app:tint="@color/bright_green"
+                    tools:ignore="ContentDescription" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:text="Pay with cash when your order is delivered. Please keep exact change ready."
+                    android:textColor="#666666"
+                    android:textSize="12sp" />
             </LinearLayout>
 
             <TextView
@@ -458,5 +476,11 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <!-- Modern loading overlay -->
+    <include
+        android:id="@+id/loading_overlay"
+        layout="@layout/view_loading_overlay"
+        android:visibility="gone" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -13,7 +13,11 @@ import com.example.shopsphere.CleanArchitecture.data.network.DummyApiServices
 import com.example.shopsphere.CleanArchitecture.data.network.GeminiApiService
 import com.example.shopsphere.CleanArchitecture.data.network.IRemoteDataSource
 import com.example.shopsphere.CleanArchitecture.data.network.RemoteDataSource
+import com.example.shopsphere.CleanArchitecture.domain.GetMyDetailsUseCase
 import com.example.shopsphere.CleanArchitecture.domain.IRepository
+import com.example.shopsphere.CleanArchitecture.domain.LogoutUseCase
+import com.example.shopsphere.CleanArchitecture.domain.UpdateMyDetailsUseCase
+import com.example.shopsphere.CleanArchitecture.domain.UploadImageUseCase
 import com.example.shopsphere.CleanArchitecture.domain.auth.FacebookLoginUseCase
 import com.example.shopsphere.CleanArchitecture.domain.auth.GoogleLoginUseCase
 import com.example.shopsphere.CleanArchitecture.domain.auth.LoginUseCase
@@ -224,8 +228,11 @@ object Module {
 
     @Singleton
     @Provides
-    fun getRemoteDataSource(apiServices: ApiServices): IRemoteDataSource =
-        RemoteDataSource(apiServices)
+    fun getRemoteDataSource(
+        apiServices: ApiServices,
+        prefs: SharedPreference
+    ): IRemoteDataSource =
+        RemoteDataSource(apiServices, prefs)
 
     @Singleton
     @Provides
@@ -253,6 +260,20 @@ object Module {
 
     @Provides
     fun provideFacebookLoginUseCase(repo: IRepository) = FacebookLoginUseCase(repo)
+
+    // ─── Profile use-cases (AccountViewModel) ────────────────────────────────
+
+    @Provides
+    fun provideGetMyDetailsUseCase(remote: IRemoteDataSource) = GetMyDetailsUseCase(remote)
+
+    @Provides
+    fun provideUpdateMyDetailsUseCase(remote: IRemoteDataSource) = UpdateMyDetailsUseCase(remote)
+
+    @Provides
+    fun provideUploadImageUseCase(remote: IRemoteDataSource) = UploadImageUseCase(remote)
+
+    @Provides
+    fun provideLogoutUseCase(remote: IRemoteDataSource, repo: IRepository) = LogoutUseCase(remote, repo)
 
     // ─── Room (notifications) ────────────────────────────────────────────────
     @Provides

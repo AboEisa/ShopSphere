@@ -39,8 +39,8 @@ class RegisterViewModel @Inject constructor(
         Log.d(TAG, "RegisterViewModel initialized")
     }
 
-    fun register(name: String, email: String, password: String) {
-        Log.d(TAG, "register() called with name: $name, email: $email")
+    fun register(firstName: String, lastName: String, email: String, password: String) {
+        Log.d(TAG, "register() called with firstName: $firstName, lastName: $lastName, email: $email")
 
         viewModelScope.launch {
             try {
@@ -48,7 +48,7 @@ class RegisterViewModel @Inject constructor(
                 _state.value = AuthUiState.Loading
 
                 Log.d(TAG, "Calling registerUseCase")
-                val result = registerUseCase(name, email, password)
+                val result = registerUseCase(firstName, lastName, email, password)
 
                 if (result.isSuccess) {
                     val uid = result.getOrNull().orEmpty()
@@ -56,8 +56,9 @@ class RegisterViewModel @Inject constructor(
                     // Persist the name + email entered on the signup form so
                     // Account header / My Details / Checkout can render the real
                     // user data immediately, no Firebase round-trip required.
+                    val fullName = "$firstName $lastName".trim()
                     prefs.saveProfile(
-                        name = name.trim(),
+                        name = fullName,
                         email = email.trim(),
                         phone = prefs.getProfilePhone()
                     )

@@ -215,7 +215,7 @@
                     android:textSize="14sp"
                     android:textStyle="bold" />
 
-                <!-- Cash on Delivery Option -->
+                <!-- Cash on Delivery Option — visible but disabled until available -->
                 <RadioButton
                     android:id="@+id/radio_cod"
                     android:layout_width="match_parent"
@@ -223,10 +223,14 @@
                     android:background="@drawable/bg_form_field"
                     android:button="@null"
                     android:padding="16dp"
-                    android:text="Cash on Delivery (COD)"
-                    android:textColor="@color/_1a1a1a"
+                    android:text="Cash on Delivery (COD)  —  Coming Soon"
+                    android:textColor="#9CA3AF"
                     android:textSize="14sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    android:alpha="0.5"
+                    android:enabled="false"
+                    android:clickable="false"
+                    android:focusable="false" />
             </RadioGroup>
 
             <!-- Online Payment Info -->

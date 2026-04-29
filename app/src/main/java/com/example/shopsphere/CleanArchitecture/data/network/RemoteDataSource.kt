@@ -88,7 +88,7 @@ class RemoteDataSource @Inject constructor(
             } catch (_: Exception) {
                 apiService.signUp(
                     AuthRequestDto(
-                            fristName = provider,
+                        fristName = provider,
                         lastName = "User",
                         email = email,
                         password = password
@@ -136,13 +136,13 @@ class RemoteDataSource @Inject constructor(
         android.util.Log.d("RemoteDataSource", "📤 POST /AddToFavorite: productId=$productId")
         val request = FavoriteRequestDto(productId = productId)
         android.util.Log.d("RemoteDataSource", "📦 Request body: productId=${request.productId}")
-        
+
         // Log the token being used (first 20 chars for security)
         val token = prefs.getToken()
         val tokenPreview = if (token.length > 20) "${token.take(20)}..." else token
         android.util.Log.d("RemoteDataSource", "🔑 Token: $tokenPreview")
         android.util.Log.d("RemoteDataSource", "🔑 Token length: ${token.length}")
-        
+
         try {
             val response = apiService.addToFavorite(request)
             android.util.Log.d("RemoteDataSource", "📥 Response: status=${response.status}, message=${response.message}")
@@ -150,7 +150,7 @@ class RemoteDataSource @Inject constructor(
         } catch (e: retrofit2.HttpException) {
             val errorBody = e.response()?.errorBody()?.string()
             android.util.Log.e("RemoteDataSource", "❌ HTTP ${e.code()} error: $errorBody")
-            
+
             // Backend has a bug: returns 400 even when product is already in favorites
             // Check if it's actually already in favorites by fetching the favorites list
             if (e.code() == 400 && errorBody?.contains("already in the favorites") == true) {
@@ -167,7 +167,7 @@ class RemoteDataSource @Inject constructor(
                     }
                 }
             }
-            
+
             throw e
         }
     }
@@ -176,7 +176,7 @@ class RemoteDataSource @Inject constructor(
         android.util.Log.d("RemoteDataSource", "📤 DELETE /RemoveFromFavorite: productId=$productId")
         val request = FavoriteRequestDto(productId = productId)
         android.util.Log.d("RemoteDataSource", "📦 Request body: productId=${request.productId}")
-        
+
         try {
             val response = apiService.removeFromFavorite(request)
             android.util.Log.d("RemoteDataSource", "📥 Response: status=${response.status}, message=${response.message}")
@@ -267,9 +267,9 @@ class RemoteDataSource @Inject constructor(
         val request = PaymentCallbackRequest(orderId = orderId.toString())
         android.util.Log.d("RemoteDataSource", "📤 POST /Callbackt")
         android.util.Log.d("RemoteDataSource", "📦 Request: orderId=$orderId, invoice_status=paid")
-        
+
         val response = apiService.paymentCallback("application/json", request)
-        
+
         android.util.Log.d("RemoteDataSource", "📥 Response received: ${response.message}")
         response
     }
@@ -284,9 +284,9 @@ class RemoteDataSource @Inject constructor(
         )
         android.util.Log.d("RemoteDataSource", "📤 POST /Callbackt (FAILED)")
         android.util.Log.d("RemoteDataSource", "📦 Request: orderId=$orderId, invoice_status=failed")
-        
+
         val response = apiService.paymentCallback("application/json", request)
-        
+
         android.util.Log.d("RemoteDataSource", "📥 Response received: ${response.message}")
         response
     }
@@ -319,10 +319,14 @@ class RemoteDataSource @Inject constructor(
 
     private fun BackendProductDto.toProductResult(category: String): ProductResult {
         val cleanTitle = name.trim().ifBlank { "Product #$id" }
-        val sanitizedImage = image
-            .orEmpty()
-            .trim()
-            .trim('"')
+        val rawImage = image.orEmpty().trim().trim('"')
+        // Search endpoint returns bare filenames; All_Products returns full URLs.
+        // Normalise so both paths always produce a usable image URL.
+        val sanitizedImage = when {
+            rawImage.isBlank() -> ""
+            rawImage.startsWith("http://") || rawImage.startsWith("https://") -> rawImage
+            else -> "${com.example.shopsphere.CleanArchitecture.utils.Constant.BASE_URL}GetImage/$rawImage"
+        }
 
         return ProductResult(
             category = category,
@@ -373,27 +377,27 @@ class RemoteDataSource @Inject constructor(
         val normalizedTitle = title.trim().lowercase()
         return when {
             normalizedTitle.contains("laptop") ||
-                normalizedTitle.contains("macbook") ||
-                normalizedTitle.contains("zenbook") -> "Electronics"
+                    normalizedTitle.contains("macbook") ||
+                    normalizedTitle.contains("zenbook") -> "Electronics"
 
             normalizedTitle.contains("spatula") ||
-                normalizedTitle.contains("whisk") ||
-                normalizedTitle.contains("cup") -> "Kitchen"
+                    normalizedTitle.contains("whisk") ||
+                    normalizedTitle.contains("cup") -> "Kitchen"
 
             normalizedTitle.contains("lipstick") ||
-                normalizedTitle.contains("palette") ||
-                normalizedTitle.contains("nail") ||
-                normalizedTitle.contains("eye") -> "Beauty"
+                    normalizedTitle.contains("palette") ||
+                    normalizedTitle.contains("nail") ||
+                    normalizedTitle.contains("eye") -> "Beauty"
 
             normalizedTitle.contains("dior") ||
-                normalizedTitle.contains("chanel") ||
-                normalizedTitle.contains("ck one") ||
-                normalizedTitle.contains("eau") -> "Fragrances"
+                    normalizedTitle.contains("chanel") ||
+                    normalizedTitle.contains("ck one") ||
+                    normalizedTitle.contains("eau") -> "Fragrances"
 
             normalizedTitle.contains("shirt") ||
-                normalizedTitle.contains("tshirt") ||
-                normalizedTitle.contains("t-shirt") ||
-                normalizedTitle.contains("plaid") -> {
+                    normalizedTitle.contains("tshirt") ||
+                    normalizedTitle.contains("t-shirt") ||
+                    normalizedTitle.contains("plaid") -> {
                 if (normalizeCategory(fallback).contains("women")) "Women's Clothing" else "Men's Clothing"
             }
 

@@ -33,7 +33,7 @@ class CartViewModel @Inject constructor(
     private val _cartItemCount = MutableStateFlow(0)
     val cartItemCount: StateFlow<Int> = _cartItemCount
 
-    private val _cartProducts = MutableLiveData<List<PresentationProductResult>>()
+    private val _cartProducts = MutableLiveData<List<PresentationProductResult>>(emptyList())
     val cartProducts: LiveData<List<PresentationProductResult>> = _cartProducts
 
     private val _loading = MutableLiveData(false)

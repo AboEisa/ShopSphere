@@ -25,7 +25,8 @@
                 android:layout_width="64dp"
                 android:layout_height="64dp"
                 android:indeterminate="true"
-                app:indicatorColor="@color/bright_green"
+                app:indicatorColor="@android:color/white"
+                app:trackColor="#4D23a36e"
                 app:trackThickness="4dp" />
 
             <TextView

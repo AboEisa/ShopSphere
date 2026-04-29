@@ -26,10 +26,9 @@ interface ApiServices {
         @Path("endpoint") endpoint: String
     ): List<BackendProductDto>
 
-    // GET /Search?query=<text>
     @GET("Search")
     suspend fun searchProducts(
-        @Query("query") query: String
+        @Query("name") query: String   // sends ?name=app
     ): List<BackendProductDto>
 
     // ── Auth ──────────────────────────────────────────────────────────────

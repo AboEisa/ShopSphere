@@ -6,10 +6,12 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.TextView
+import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
@@ -29,8 +31,10 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * Fragment that displays the payment gateway in a WebView.
- * Monitors URL changes to detect payment success/failure.
+ * The WebView is NEVER shown to the user. A full-screen loading overlay stays
+ * visible the entire time while the WebView silently loads and processes the
+ * payment in the background. The overlay updates its message as the payment
+ * progresses and responds to back-press / cancel at any point.
  */
 @AndroidEntryPoint
 class PaymentWebViewFragment : Fragment() {
@@ -41,19 +45,15 @@ class PaymentWebViewFragment : Fragment() {
     private var paymentUrl: String? = null
     private var orderId: Int? = null
 
+    /** True once a success or fail redirect has been handled — prevents double-firing. */
+    private var paymentResultHandled = false
+
     private val TAG = "PaymentWebView"
 
-    @Inject
-    lateinit var paymentCallbackUseCase: PaymentCallbackUseCase
-
-    @Inject
-    lateinit var markPaymentAsFailedUseCase: com.example.shopsphere.CleanArchitecture.domain.MarkPaymentAsFailedUseCase
-
-    @Inject
-    lateinit var payNowUseCase: PayNowUseCase
-
-    @Inject
-    lateinit var sharedPreference: SharedPreference
+    @Inject lateinit var paymentCallbackUseCase: PaymentCallbackUseCase
+    @Inject lateinit var markPaymentAsFailedUseCase: com.example.shopsphere.CleanArchitecture.domain.MarkPaymentAsFailedUseCase
+    @Inject lateinit var payNowUseCase: PayNowUseCase
+    @Inject lateinit var sharedPreference: SharedPreference
 
     private val sharedCartViewModel: SharedCartViewModel by activityViewModels()
     private val cartViewModel: CartViewModel by activityViewModels()
@@ -61,7 +61,6 @@ class PaymentWebViewFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Get arguments
         arguments?.let {
             paymentUrl = it.getString(ARG_PAYMENT_URL)
             orderId = it.getInt(ARG_ORDER_ID, 0)
@@ -69,9 +68,7 @@ class PaymentWebViewFragment : Fragment() {
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         _binding = FragmentPaymentWebviewBinding.inflate(inflater, container, false)
         return binding.root
@@ -79,10 +76,17 @@ class PaymentWebViewFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        // Overlay stays visible the entire time — user never sees the WebView.
+        showOverlay("Preparing Secure Payment", "Connecting to payment gateway…", showCancel = true)
+
         setupWebView()
-        setupClickListeners()
+        setupBackPress()
+        binding.btnClose.setOnClickListener { handlePaymentCancelled() }
         loadPaymentUrl()
     }
+
+    // ─── WebView ──────────────────────────────────────────────────────────────
 
     private fun setupWebView() {
         binding.webviewPayment.settings.apply {
@@ -95,43 +99,105 @@ class PaymentWebViewFragment : Fragment() {
         }
 
         binding.webviewPayment.webViewClient = object : WebViewClient() {
+
             override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                 super.onPageStarted(view, url, favicon)
-                Log.d(TAG, "Page started loading: $url")
-                showLoading(true)
+                Log.d(TAG, "onPageStarted: $url")
+                if (url == null || paymentResultHandled) return
+
+                when {
+                    isPaymentSuccessUrl(url) -> {
+                        paymentResultHandled = true
+                        // Stop so the browser never tries to resolve the redirect domain.
+                        view?.stopLoading()
+                        showOverlay("Payment Successful", "Updating your order…", showCancel = false)
+                        handlePaymentSuccess()
+                    }
+                    isPaymentFailUrl(url) -> {
+                        paymentResultHandled = true
+                        view?.stopLoading()
+                        showOverlay("Payment Failed", "Please wait…", showCancel = false)
+                        handlePaymentFailure()
+                    }
+                    else -> {
+                        // Keep the overlay up while gateway pages are loading
+                        binding.progressHeader.visibility = View.VISIBLE
+                        updateOverlayText("Loading Payment Gateway", "Please wait…")
+                    }
+                }
             }
 
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
-                Log.d(TAG, "Page finished loading: $url")
-                showLoading(false)
-                // checkPaymentResult uses exact URL matching so it's safe to call always
-                checkPaymentResult(url)
+                Log.d(TAG, "onPageFinished: $url")
+                binding.progressHeader.visibility = View.GONE
+                if (paymentResultHandled) return
+                if (url == null || isPaymentSuccessUrl(url) || isPaymentFailUrl(url)) return
+
+                // Payment form ready — drop the overlay so the user can interact
+                hideOverlay()
             }
 
-            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-                val url = request?.url?.toString() ?: return false
-                Log.d(TAG, "URL loading: $url")
+            override fun onReceivedError(
+                view: WebView?, request: WebResourceRequest?, error: WebResourceError?
+            ) {
+                super.onReceivedError(view, request, error)
+                val url = request?.url?.toString() ?: return
+                Log.e(TAG, "onReceivedError url=$url code=${error?.errorCode}")
 
-                if (isPaymentSuccessUrl(url)) {
-                    Log.d(TAG, "Payment success redirect detected")
-                    handlePaymentSuccess()
-                    return true
-                } else if (isPaymentFailUrl(url)) {
-                    Log.d(TAG, "Payment fail redirect detected")
-                    handlePaymentFailure()
-                    return true
+                // Fallback: if the browser couldn't resolve a redirect domain,
+                // the overlay is already covering it — just handle the result.
+                if (!paymentResultHandled && request?.isForMainFrame == true) {
+                    when {
+                        isPaymentSuccessUrl(url) -> {
+                            paymentResultHandled = true
+                            showOverlay("Payment Successful", "Updating your order…", showCancel = false)
+                            handlePaymentSuccess()
+                        }
+                        isPaymentFailUrl(url) -> {
+                            paymentResultHandled = true
+                            showOverlay("Payment Failed", "Please wait…", showCancel = false)
+                            handlePaymentFailure()
+                        }
+                    }
                 }
+            }
 
-                return false
+            override fun shouldOverrideUrlLoading(
+                view: WebView?, request: WebResourceRequest?
+            ): Boolean {
+                val url = request?.url?.toString() ?: return false
+                Log.d(TAG, "shouldOverrideUrlLoading: $url")
+                if (paymentResultHandled) return true
+
+                return when {
+                    isPaymentSuccessUrl(url) -> {
+                        paymentResultHandled = true
+                        showOverlay("Payment Successful", "Updating your order…", showCancel = false)
+                        handlePaymentSuccess()
+                        true
+                    }
+                    isPaymentFailUrl(url) -> {
+                        paymentResultHandled = true
+                        showOverlay("Payment Failed", "Please wait…", showCancel = false)
+                        handlePaymentFailure()
+                        true
+                    }
+                    else -> false
+                }
             }
         }
     }
 
-    private fun setupClickListeners() {
-        binding.btnClose.setOnClickListener {
-            handlePaymentCancelled()
-        }
+    private fun setupBackPress() {
+        requireActivity().onBackPressedDispatcher.addCallback(
+            viewLifecycleOwner,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    handlePaymentCancelled()
+                }
+            }
+        )
     }
 
     private fun loadPaymentUrl() {
@@ -140,81 +206,54 @@ class PaymentWebViewFragment : Fragment() {
             showErrorAndClose("No payment URL provided")
             return
         }
-
         binding.webviewPayment.loadUrl(url)
     }
 
-    private fun checkPaymentResult(url: String?) {
-        if (url == null) return
-
-        if (isPaymentSuccessUrl(url)) {
-            handlePaymentSuccess()
-        } else if (isPaymentFailUrl(url)) {
-            handlePaymentFailure()
-        }
-    }
+    // ─── URL detection ────────────────────────────────────────────────────────
 
     private fun isPaymentSuccessUrl(url: String): Boolean {
-        // Only match the exact redirect URL configured in RedirectionUrls.
-        // Do NOT use generic keyword matching — the payment gateway passes
-        // URLs containing "fail", "cancel", "success", etc. as intermediate
-        // redirects while loading the payment form. Keyword matching causes
-        // false positives before the user even sees the payment page.
-        return url.startsWith("https://shopsphere.app/payment/success", ignoreCase = true)
+        val lower = url.lowercase()
+        return lower.startsWith("https://shopsphere.app/payment/success") ||
+               lower.contains("fawaterk.com/success") ||
+               lower.contains("fawaterak.com/success") ||
+               lower.contains("paymob.com/success")
     }
 
     private fun isPaymentFailUrl(url: String): Boolean {
-        return url.startsWith("https://shopsphere.app/payment/fail", ignoreCase = true)
+        val lower = url.lowercase()
+        return lower.startsWith("https://shopsphere.app/payment/fail") ||
+               lower.contains("fawaterk.com/fail") ||
+               lower.contains("fawaterak.com/fail") ||
+               lower.contains("paymob.com/fail")
     }
 
+    // ─── Payment result handlers ──────────────────────────────────────────────
+
     private fun handlePaymentSuccess() {
-        Log.d(TAG, "========================================")
-        Log.d(TAG, "PAYMENT SUCCESS DETECTED")
-        Log.d(TAG, "Order ID: $orderId")
-        Log.d(TAG, "========================================")
+        val currentOrderId = orderId ?: run { showSuccessDialog(); return }
 
-        val currentOrderId = orderId ?: run {
-            Log.e(TAG, "❌ No orderId available for callback")
-            showSuccessDialog()
-            return
-        }
-
-        // Call the callback API to update payment status
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                Log.d(TAG, "📡 Calling payment callback API...")
-                Log.d(TAG, "📦 Request body: { \"invoice_status\": \"paid\", \"OrderId\": \"$currentOrderId\" }")
-
-                val callbackResult = paymentCallbackUseCase(currentOrderId)
-
-                if (callbackResult.isSuccess) {
-                    val response = callbackResult.getOrNull()
-                    Log.d(TAG, "✅ Payment callback successful!")
-                    Log.d(TAG, "📝 Response message: ${response?.message}")
-                    Log.d(TAG, "💰 Payment status should now be: PAID")
+                val result = paymentCallbackUseCase(currentOrderId)
+                if (result.isSuccess) {
+                    Log.d(TAG, "✅ Payment callback successful")
                 } else {
-                    val error = callbackResult.exceptionOrNull()
-                    Log.e(TAG, "❌ Payment callback failed!")
-                    Log.e(TAG, "❗ Error: ${error?.message}")
-                    Log.e(TAG, "⚠️ Continuing anyway - payment gateway already charged")
+                    Log.e(TAG, "❌ Callback failed: ${result.exceptionOrNull()?.message}")
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "❌ Payment callback exception!")
-                Log.e(TAG, "❗ Exception: ${e.message}")
-                Log.e(TAG, "📋 Stack trace:", e)
-                Log.e(TAG, "⚠️ Continuing anyway - payment gateway already charged")
+                Log.e(TAG, "Callback exception", e)
             } finally {
-                Log.d(TAG, "🎉 Showing success dialog to user")
-                // Show success dialog after callback
                 showSuccessDialog()
             }
         }
     }
 
     private fun showSuccessDialog() {
+        if (!isAdded || _binding == null) return
+        hideOverlay()
+
         val dialogView = LayoutInflater.from(requireContext())
             .inflate(R.layout.dialog_payment_success, null)
-
         dialogView.findViewById<TextView>(R.id.text_order_id).text = "Order #$orderId"
 
         val dialog = androidx.appcompat.app.AlertDialog.Builder(requireContext())
@@ -233,22 +272,17 @@ class PaymentWebViewFragment : Fragment() {
     }
 
     private fun navigateToOrderDetails() {
-        // Clear cart — order is now placed and paid
         sharedPreference.clearCartProducts()
         sharedCartViewModel.setCartItems(emptyList())
         cartViewModel.clearRemoteCart()
-        // Refresh orders so order details reflects paid status
         sharedViewModel.fetchOrders()
 
-        val oid = orderId?.toString() ?: run {
-            findNavController().popBackStack()
-            return
-        }
+        val oid = orderId?.toString() ?: run { findNavController().popBackStack(); return }
         val bundle = Bundle().apply { putString("orderId", oid) }
-        val navOptions = NavOptions.Builder()
-            .setPopUpTo(R.id.paymentWebViewFragment, true)
-            .build()
-        findNavController().navigate(R.id.orderDetailsFragment, bundle, navOptions)
+        findNavController().navigate(
+            R.id.orderDetailsFragment, bundle,
+            NavOptions.Builder().setPopUpTo(R.id.paymentWebViewFragment, true).build()
+        )
     }
 
     private fun handlePaymentFailure() {
@@ -270,14 +304,14 @@ class PaymentWebViewFragment : Fragment() {
 
     private fun showPayAgainDialog() {
         if (!isAdded || _binding == null) return
+        hideOverlay()
         androidx.appcompat.app.AlertDialog.Builder(requireContext())
             .setTitle("Payment Failed")
             .setMessage("Your payment could not be completed. Would you like to try again?")
             .setPositiveButton("Pay Again") { _, _ -> retryPayment() }
             .setNegativeButton("Cancel") { _, _ ->
                 findNavController().navigate(
-                    R.id.ordersFragment,
-                    null,
+                    R.id.ordersFragment, null,
                     NavOptions.Builder().setPopUpTo(R.id.homeFragment, false).build()
                 )
             }
@@ -287,22 +321,19 @@ class PaymentWebViewFragment : Fragment() {
 
     private fun retryPayment() {
         val currentOrderId = orderId ?: return
+        paymentResultHandled = false
         viewLifecycleOwner.lifecycleScope.launch {
             if (!isAdded || _binding == null) return@launch
-            binding.loadingOverlay.loadingOverlay.visibility = View.VISIBLE
-            binding.loadingOverlay.loadingText.text = "Retrying Payment"
-            binding.loadingOverlay.loadingSubtitle.text = "Please wait..."
+            showOverlay("Retrying Payment", "Getting a fresh payment link…", showCancel = true)
 
             val result = payNowUseCase(PayNowRequest(currentOrderId))
-
             if (!isAdded || _binding == null) return@launch
-            binding.loadingOverlay.loadingOverlay.visibility = View.GONE
 
             if (result.isSuccess) {
-                val payNow = result.getOrNull()
-                val url = payNow?.url?.takeIf { it.isNotBlank() }
-                    ?: payNow?.paymentUrl?.takeIf { it.isNotBlank() }
+                val url = result.getOrNull()?.url?.takeIf { it.isNotBlank() }
+                    ?: result.getOrNull()?.paymentUrl?.takeIf { it.isNotBlank() }
                 if (url != null) {
+                    updateOverlayText("Loading Payment Gateway", "Please wait…")
                     binding.webviewPayment.loadUrl(url)
                 } else {
                     showPayAgainDialog()
@@ -314,14 +345,15 @@ class PaymentWebViewFragment : Fragment() {
     }
 
     private fun handlePaymentCancelled() {
+        if (paymentResultHandled) return
+        paymentResultHandled = true
         val currentOrderId = orderId
-
+        showOverlay("Cancelling", "Please wait…", showCancel = false)
         if (currentOrderId != null && currentOrderId > 0) {
             viewLifecycleOwner.lifecycleScope.launch {
                 try {
                     markPaymentAsFailedUseCase(currentOrderId)
                     sharedViewModel.fetchOrders()
-                    Log.d(TAG, "Order $currentOrderId marked as failed (user cancelled WebView)")
                 } catch (e: Exception) {
                     Log.e(TAG, "Failed to mark order as failed on cancel", e)
                 }
@@ -334,19 +366,18 @@ class PaymentWebViewFragment : Fragment() {
 
     private fun showCancelledDialog() {
         if (!isAdded || _binding == null) return
+        hideOverlay()
         androidx.appcompat.app.AlertDialog.Builder(requireContext())
             .setTitle("Payment Not Completed")
-            .setMessage("You closed the payment page without completing payment. You can retry from My Orders.")
+            .setMessage("You closed the payment page. You can retry from My Orders.")
             .setPositiveButton("Go to My Orders") { _, _ ->
                 findNavController().navigate(
-                    com.example.shopsphere.R.id.ordersFragment,
-                    null,
-                    androidx.navigation.NavOptions.Builder()
-                        .setPopUpTo(com.example.shopsphere.R.id.homeFragment, false)
-                        .build()
+                    R.id.ordersFragment, null,
+                    NavOptions.Builder().setPopUpTo(R.id.homeFragment, false).build()
                 )
             }
             .setNegativeButton("Stay Here") { dialog, _ ->
+                paymentResultHandled = false
                 dialog.dismiss()
             }
             .setCancelable(false)
@@ -354,25 +385,46 @@ class PaymentWebViewFragment : Fragment() {
     }
 
     private fun showErrorAndClose(message: String) {
+        if (!isAdded || _binding == null) return
+        hideOverlay()
         androidx.appcompat.app.AlertDialog.Builder(requireContext())
             .setTitle("Payment Error")
             .setMessage(message)
-            .setPositiveButton("OK") { _, _ ->
-                findNavController().navigateUp()
-            }
+            .setPositiveButton("OK") { _, _ -> findNavController().navigateUp() }
             .setCancelable(false)
             .show()
     }
 
-    private fun showLoading(show: Boolean) {
-        binding.loadingOverlay.loadingOverlay.visibility = if (show) View.VISIBLE else View.GONE
-        binding.progressHeader.visibility = if (show) View.VISIBLE else View.GONE
+    // ─── Overlay helpers ──────────────────────────────────────────────────────
 
-        if (show) {
-            binding.loadingOverlay.loadingText.text = "Processing Payment"
-            binding.loadingOverlay.loadingSubtitle.text = "Please complete your payment"
+    /**
+     * Shows the opaque overlay — completely hides the WebView beneath it.
+     * [showCancel] controls whether the in-overlay cancel button is visible.
+     */
+    private fun showOverlay(title: String, subtitle: String, showCancel: Boolean) {
+        if (!isAdded || _binding == null) return
+        with(binding.loadingOverlay) {
+            loadingOverlay.visibility = View.VISIBLE
+            loadingText.text = title
+            loadingSubtitle.text = subtitle
+            btnCancelLoading.visibility = if (showCancel) View.VISIBLE else View.GONE
+            btnCancelLoading.setOnClickListener { handlePaymentCancelled() }
         }
     }
+
+    private fun updateOverlayText(title: String, subtitle: String) {
+        if (!isAdded || _binding == null) return
+        binding.loadingOverlay.loadingText.text = title
+        binding.loadingOverlay.loadingSubtitle.text = subtitle
+    }
+
+    private fun hideOverlay() {
+        if (!isAdded || _binding == null) return
+        binding.loadingOverlay.loadingOverlay.visibility = View.GONE
+        binding.progressHeader.visibility = View.GONE
+    }
+
+    // ─── Lifecycle ────────────────────────────────────────────────────────────
 
     override fun onDestroyView() {
         super.onDestroyView()

@@ -7,16 +7,12 @@ import android.view.ViewGroup
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.navigation.fragment.findNavController
 import com.example.shopsphere.CleanArchitecture.ui.adapters.SearchAdapter
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.SearchViewModel
 import com.example.shopsphere.databinding.FragmentSearchBinding
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class SearchFragment : Fragment() {
@@ -24,7 +20,6 @@ class SearchFragment : Fragment() {
     private var _binding: FragmentSearchBinding? = null
     private val binding get() = _binding!!
     private val searchViewModel: SearchViewModel by viewModels()
-    private var searchJob: Job? = null
 
     private val searchAdapter by lazy {
         SearchAdapter(
@@ -46,23 +41,21 @@ class SearchFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupRecyclerView()
         observeSearchResults()
+        observeLoading()
         onClicks()
         setupSearchInput()
     }
 
     private fun setupSearchInput() {
         binding.textSearch.doAfterTextChanged { text ->
-            searchJob?.cancel()
-            searchJob = viewLifecycleOwner.lifecycleScope.launch {
-                delay(300)
-                val query = text?.toString().orEmpty()
-                if (query.isNotEmpty()) {
-                    searchViewModel.searchProducts(query)
-                    showSearchResults()
-                } else {
-                    binding.recyclerSearchResults.visibility = View.GONE
-                    showEmptyState()
-                }
+            val query = text?.toString().orEmpty()
+            if (query.isNotEmpty()) {
+                searchViewModel.searchProducts(query)
+                showSearchResults()
+            } else {
+                searchViewModel.clearResults()
+                binding.recyclerSearchResults.visibility = View.GONE
+                hideEmptyState()
             }
         }
     }
@@ -80,6 +73,15 @@ class SearchFragment : Fragment() {
             } else {
                 hideEmptyState()
             }
+        }
+    }
+
+    private fun observeLoading() {
+        searchViewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
+            if (_binding == null) return@observe
+            binding.progressBarSearch.visibility = if (isLoading) View.VISIBLE else View.GONE
+            // While loading, hide the recycler so the spinner sits centered
+            if (isLoading) binding.recyclerSearchResults.visibility = View.GONE
         }
     }
 
@@ -112,7 +114,6 @@ class SearchFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        searchJob?.cancel()
         _binding = null
     }
 }

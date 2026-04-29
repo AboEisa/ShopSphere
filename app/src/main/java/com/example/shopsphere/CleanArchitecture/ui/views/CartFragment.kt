@@ -50,15 +50,15 @@ class CartFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        // Guard against re-hydrating on every revisit when we already have a
-        // cart list in the ViewModel. This keeps the screen showing the cached
-        // data instantly while the ViewModel refreshes itself on change events.
-        if (cartViewModel.cartProducts.value.isNullOrEmpty()) {
-            cartViewModel.loadCartProducts()
-        } else {
-            // Make sure the badge count is still accurate after returning.
-            cartViewModel.refreshCartCount()
-        }
+        cartViewModel.loadCartProducts()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        // onResume() is not called when returning from a fragment that replaced
+        // this one on the back stack (e.g. coming back from order details or
+        // details screen after adding to cart). onStart() covers that gap.
+        cartViewModel.loadCartProducts()
     }
 
     fun onClicks() {
@@ -119,9 +119,9 @@ class CartFragment : Fragment() {
 
             sharedCartViewModel.setCartItems(items)
             findNavController().navigate(
-               CartFragmentDirections.actionCartFragmentToCheckoutFragment(
-                   productId
-               )
+                CartFragmentDirections.actionCartFragmentToCheckoutFragment(
+                    productId
+                )
             )
         }
     }
@@ -196,7 +196,7 @@ class CartFragment : Fragment() {
     private fun observeLoading() {
         cartViewModel.loading.observe(viewLifecycleOwner) { isLoading ->
             if (!isAdded || _binding == null) return@observe
-            
+
             if (isLoading) {
                 // Show modern loading overlay
                 binding.loadingOverlay.loadingOverlay.visibility = View.VISIBLE

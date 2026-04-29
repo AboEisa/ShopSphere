@@ -54,7 +54,7 @@ class CheckoutFragment : Fragment() {
     private val sharedCartViewModel: SharedCartViewModel by activityViewModels()
     private val cartViewModel: CartViewModel by activityViewModels()
 
-    private val shippingCost = 80.0
+    private val shippingCost = 0.0  // Free for now
     private var currentCartItems: List<PresentationProductResult> = emptyList()
     private var promoApplied = false
     private var promoDiscount = 0.0
@@ -122,13 +122,19 @@ class CheckoutFragment : Fragment() {
     }
 
     private fun setupPaymentMethodSelector() {
-        // Set initial state
+        // COD is disabled — always start with online payment selected
+        isCashOnDelivery = false
         updatePaymentMethodUI()
 
         binding.paymentMethodGroup.setOnCheckedChangeListener { _, checkedId ->
-            isCashOnDelivery = checkedId == R.id.radio_cod
+            if (checkedId == R.id.radio_cod) {
+                // COD not yet available — revert to online payment silently
+                binding.paymentMethodGroup.check(R.id.radio_online_payment)
+                return@setOnCheckedChangeListener
+            }
+            isCashOnDelivery = false
             updatePaymentMethodUI()
-            Log.d(TAG, "Payment method selected: ${if (isCashOnDelivery) "COD" else "Online"}")
+            Log.d(TAG, "Payment method selected: Online")
         }
     }
 
@@ -228,12 +234,11 @@ class CheckoutFragment : Fragment() {
                     )
                     if (_binding == null || !isAdded) return@launch
 
-                    // Hide loading overlay
-                    binding.loadingOverlay.loadingOverlay.visibility = View.GONE
-                    binding.btnCheckout.isEnabled = true
-
                     val placedOrder = placedOrderResult.getOrNull()
                     if (placedOrder == null) {
+                        // Hide overlay on failure
+                        binding.loadingOverlay.loadingOverlay.visibility = View.GONE
+                        binding.btnCheckout.isEnabled = true
                         Toast.makeText(
                             requireContext(),
                             placedOrderResult.exceptionOrNull()?.message
@@ -249,19 +254,33 @@ class CheckoutFragment : Fragment() {
 
                     // Order created successfully in background
                     if (isCashOnDelivery) {
-                        // COD: Skip payment gateway, complete order immediately
+                        binding.loadingOverlay.loadingOverlay.visibility = View.GONE
+                        binding.btnCheckout.isEnabled = true
                         Log.d(TAG, "COD selected - completing order without online payment")
                         completeOrderSuccessfully()
                     } else {
-                        // Online Payment: Proceed with payment gateway
+                        // Keep overlay visible while we call /PayNow
+                        binding.loadingOverlay.loadingText.text = "Preparing Payment"
+                        binding.loadingOverlay.loadingSubtitle.text = "Getting your secure payment link…"
+
                         Log.d(TAG, "Online payment selected - launching payment gateway")
-                        // null  = WebView launched, result handled by PaymentWebViewFragment
-                        // false = PayNow API failed before WebView could open
-                        // true  = payment completed without WebView (unused path)
                         when (launchOnlinePayment()) {
-                            true -> updatePaymentStatusAndCompleteOrder()
-                            false -> handlePaymentFailure()
-                            null -> { /* WebView is open — it owns success/failure handling */ }
+                            null -> {
+                                // WebView is opening — hide overlay now so it doesn't
+                                // show through when PaymentWebViewFragment takes over
+                                binding.loadingOverlay.loadingOverlay.visibility = View.GONE
+                                binding.btnCheckout.isEnabled = true
+                            }
+                            false -> {
+                                binding.loadingOverlay.loadingOverlay.visibility = View.GONE
+                                binding.btnCheckout.isEnabled = true
+                                handlePaymentFailure()
+                            }
+                            true -> {
+                                binding.loadingOverlay.loadingOverlay.visibility = View.GONE
+                                binding.btnCheckout.isEnabled = true
+                                updatePaymentStatusAndCompleteOrder()
+                            }
                         }
                     }
                 }
@@ -303,7 +322,7 @@ class CheckoutFragment : Fragment() {
         }
         val adjustedSubtotal = (subtotal - promoDiscount).coerceAtLeast(0.0)
         val totalWithShipping = adjustedSubtotal + shippingCost
-
+        binding.textShippingFee.text = "Free (Limited Time) 🎉"
         binding.textSubTotal.text = formatCurrency(subtotal)
         binding.textShippingFee.text = formatCurrency(shippingCost)
         binding.txtOrderTotal.text = formatCurrency(totalWithShipping)

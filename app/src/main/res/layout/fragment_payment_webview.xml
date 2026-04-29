@@ -82,17 +82,26 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <!-- WebView -->
-    <WebView
-        android:id="@+id/webview_payment"
+    <!--
+        FrameLayout guarantees z-order: last child (overlay) is drawn ON TOP
+        of the first child (WebView). Both fill the same area below the AppBar.
+    -->
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-    <!-- Modern loading overlay -->
-    <include
-        android:id="@+id/loading_overlay"
-        layout="@layout/view_loading_overlay"
-        android:visibility="gone" />
+        <WebView
+            android:id="@+id/webview_payment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <!-- Opaque overlay — sits directly on top of the WebView -->
+        <include
+            android:id="@+id/loading_overlay"
+            layout="@layout/view_loading_overlay"
+            android:visibility="gone" />
+
+    </FrameLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

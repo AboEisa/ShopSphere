@@ -7,7 +7,7 @@ class Constant {
         const val DUMMY_BASE_URL = "https://dummyjson.com/"
         const val DIRECTIONS_BASE_URL = "https://maps.googleapis.com/"
         const val GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/"
-        const val GEMINI_MODEL = "gemini-2.0-flash-lite"
+        const val GEMINI_MODEL = "gemini-1.5-flash"
 
         val TYPES_LIST = listOf(
             "All",

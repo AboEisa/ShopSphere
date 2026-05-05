@@ -7,7 +7,11 @@ class Constant {
         const val DUMMY_BASE_URL = "https://dummyjson.com/"
         const val DIRECTIONS_BASE_URL = "https://maps.googleapis.com/"
         const val GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/"
-        const val GEMINI_MODEL = "gemini-1.5-flash"
+        // gemini-2.0-flash is the current GA model on the v1beta endpoint
+        // (the -lite variant 404s on this path). 15 RPM free tier is fine
+        // for normal chat use; rapid Retry-tapping during testing will trip
+        // a 429 — wait ~60s and the per-minute window resets.
+        const val GEMINI_MODEL = "gemini-2.0-flash"
 
         val TYPES_LIST = listOf(
             "All",

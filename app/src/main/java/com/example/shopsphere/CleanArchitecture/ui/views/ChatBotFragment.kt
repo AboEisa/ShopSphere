@@ -54,8 +54,14 @@ class ChatBotFragment : Fragment() {
                         )
                     }
                     is com.example.shopsphere.CleanArchitecture.ui.models.ChatAction.ViewOrder -> {
+                        // Land directly on the live tracking screen for the
+                        // specific order — far more useful than the orders list.
+                        val bundle = android.os.Bundle().apply {
+                            putString("orderId", action.orderId)
+                        }
                         findNavController().navigate(
-                            com.example.shopsphere.R.id.action_chatBotFragment_to_ordersFragment
+                            com.example.shopsphere.R.id.action_chatBotFragment_to_trackOrderFragment,
+                            bundle
                         )
                     }
                 }

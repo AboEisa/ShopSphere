@@ -104,6 +104,12 @@ class ChatBotViewModel @Inject constructor(
                     val errorText = when {
                         e is retrofit2.HttpException && e.code() == 429 ->
                             "I'm handling a lot of requests right now — please wait a moment and tap Retry."
+                        e is retrofit2.HttpException && e.code() == 404 ->
+                            "The chat model isn't reachable (404). Make sure GEMINI_MODEL in Constant.kt points to a current model."
+                        e is retrofit2.HttpException && (e.code() == 401 || e.code() == 403) ->
+                            "Auth failed (${e.code()}). Double-check the GEMINI_API_KEY in local.properties is valid and not restricted."
+                        e is retrofit2.HttpException && e.code() == 400 ->
+                            "The chat request was rejected (400). The prompt may be malformed or the model name wrong."
                         e.message?.contains("timed out", ignoreCase = true) == true ->
                             "That took too long to respond. Check your connection and tap Retry."
                         else ->

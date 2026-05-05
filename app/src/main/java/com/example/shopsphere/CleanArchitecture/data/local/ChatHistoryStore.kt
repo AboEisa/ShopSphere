@@ -47,7 +47,8 @@ class ChatHistoryStore @Inject constructor(
                     is ChatMessage.BotMessage -> if (it.isError) null else PersistedMessage(
                         role = ROLE_BOT,
                         text = it.text,
-                        timestamp = it.timestamp
+                        timestamp = it.timestamp,
+                        actions = it.actions.map { action -> PersistedAction.from(action) }
                     )
                     is ChatMessage.TypingIndicator -> null
                 }
@@ -68,12 +69,50 @@ class ChatHistoryStore @Inject constructor(
     private data class PersistedMessage(
         val role: String,
         val text: String,
-        val timestamp: Long
+        val timestamp: Long,
+        val actions: List<PersistedAction> = emptyList()
     ) {
         fun toChatMessage(): ChatMessage? = when (role) {
             ROLE_USER -> ChatMessage.UserMessage(text = text, timestamp = timestamp)
-            ROLE_BOT -> ChatMessage.BotMessage(text = text, timestamp = timestamp)
+            ROLE_BOT -> ChatMessage.BotMessage(
+                text = text,
+                timestamp = timestamp,
+                actions = actions.mapNotNull { it.toChatAction() }
+            )
             else -> null
+        }
+    }
+
+    /**
+     * Persisted form of [ChatAction]. We keep the polymorphism simple: a
+     * type discriminator + a few optional fields. Unknown types from older
+     * builds round-trip back to null so we don't crash on a schema bump.
+     */
+    private data class PersistedAction(
+        val type: String,
+        val label: String,
+        val orderId: String? = null,
+        val productId: Int? = null
+    ) {
+        fun toChatAction(): ChatAction? = when (type) {
+            ACTION_VIEW_ORDER -> orderId?.let { ChatAction.ViewOrder(orderId = it, label = label) }
+            ACTION_OPEN_PRODUCT -> productId?.let { ChatAction.OpenProduct(productId = it, label = label) }
+            else -> null
+        }
+
+        companion object {
+            fun from(action: ChatAction): PersistedAction = when (action) {
+                is ChatAction.ViewOrder -> PersistedAction(
+                    type = ACTION_VIEW_ORDER,
+                    label = action.label,
+                    orderId = action.orderId
+                )
+                is ChatAction.OpenProduct -> PersistedAction(
+                    type = ACTION_OPEN_PRODUCT,
+                    label = action.label,
+                    productId = action.productId
+                )
+            }
         }
     }
 
@@ -85,5 +124,7 @@ class ChatHistoryStore @Inject constructor(
         const val MAX_PERSISTED_MESSAGES = 50
         const val ROLE_USER = "user"
         const val ROLE_BOT = "bot"
+        const val ACTION_VIEW_ORDER = "view_order"
+        const val ACTION_OPEN_PRODUCT = "open_product"
     }
 }

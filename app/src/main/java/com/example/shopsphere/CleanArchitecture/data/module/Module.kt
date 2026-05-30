@@ -238,8 +238,10 @@ object Module {
     @Provides
     fun getRepository(
         remoteDataSource: IRemoteDataSource,
-        sharedPreferencesHelper: SharedPreference
-    ): IRepository = Repository(remoteDataSource, sharedPreferencesHelper)
+        sharedPreferencesHelper: SharedPreference,
+        productsCache: com.example.shopsphere.CleanArchitecture.data.local.ProductsCacheStore,
+        ordersCache: com.example.shopsphere.CleanArchitecture.data.local.OrdersCacheStore
+    ): IRepository = Repository(remoteDataSource, sharedPreferencesHelper, productsCache, ordersCache)
 
     @Provides
     @Singleton

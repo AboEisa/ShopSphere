@@ -1,5 +1,7 @@
 package com.example.shopsphere.CleanArchitecture.data
 
+import com.example.shopsphere.CleanArchitecture.data.local.OrdersCacheStore
+import com.example.shopsphere.CleanArchitecture.data.local.ProductsCacheStore
 import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
 import com.example.shopsphere.CleanArchitecture.data.models.mapToDomain
 import com.example.shopsphere.CleanArchitecture.data.network.AuthResponseDto
@@ -11,11 +13,15 @@ import com.example.shopsphere.CleanArchitecture.domain.DomainOrder
 import com.example.shopsphere.CleanArchitecture.domain.DomainOrderProduct
 import com.example.shopsphere.CleanArchitecture.domain.DomainProductResult
 import com.example.shopsphere.CleanArchitecture.domain.IRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 
 class Repository @Inject constructor(
     private val remoteDataSource: IRemoteDataSource,
-    private val sharedPreferencesHelper: SharedPreference
+    private val sharedPreferencesHelper: SharedPreference,
+    private val productsCache: ProductsCacheStore,
+    private val ordersCache: OrdersCacheStore
 ) : IRepository {
 
     @Volatile
@@ -45,10 +51,36 @@ class Repository @Inject constructor(
     override suspend fun getProducts(): Result<List<DomainProductResult>> {
         return try {
             val remoteData = remoteDataSource.getProducts()
-            Result.success(remoteData.getOrNull()?.map { it.mapToDomain() } ?: emptyList())
+            val products = remoteData.getOrNull()?.map { it.mapToDomain() } ?: emptyList()
+            // Always refresh the cache on a successful network call so future
+            // observeProducts() collectors get the latest snapshot first.
+            if (products.isNotEmpty()) productsCache.save(products)
+            Result.success(products)
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    override fun observeProducts(): Flow<Result<List<DomainProductResult>>> = flow {
+        // 1) Emit cache straight away when present so the UI paints fast.
+        val cached = productsCache.load()
+        val cacheEmitted = cached.isNotEmpty()
+        if (cacheEmitted) emit(Result.success(cached))
+
+        // 2) Hit the network and emit the fresh result. On failure we only
+        //    bubble up the error if the user has nothing on screen yet —
+        //    otherwise we keep them on the stale list.
+        val fresh = runCatching {
+            remoteDataSource.getProducts().getOrNull()?.map { it.mapToDomain() } ?: emptyList()
+        }
+        fresh
+            .onSuccess { products ->
+                if (products.isNotEmpty()) productsCache.save(products)
+                emit(Result.success(products))
+            }
+            .onFailure { e ->
+                if (!cacheEmitted) emit(Result.failure(e))
+            }
     }
 
     override suspend fun getProductsByCategory(category: String): Result<List<DomainProductResult>> {
@@ -326,7 +358,23 @@ class Repository @Inject constructor(
                     driverName = dto.driverName?.trim()?.takeIf { it.isNotBlank() }
                 )
             }
+        }.also { result ->
+            // Persist a fresh snapshot for the next launch's instant render.
+            result.getOrNull()?.let { ordersCache.save(it) }
         }
+    }
+
+    override fun observeMyOrders(): Flow<Result<List<DomainOrder>>> = flow {
+        val cached = ordersCache.load()
+        val cacheEmitted = cached.isNotEmpty()
+        if (cacheEmitted) emit(Result.success(cached))
+
+        val fresh = runCatching { getMyOrders() }
+            .getOrElse { Result.failure(it) }
+
+        fresh
+            .onSuccess { emit(Result.success(it)) }
+            .onFailure { e -> if (!cacheEmitted) emit(Result.failure(e)) }
     }
 
     companion object {

@@ -1,9 +1,20 @@
 package com.example.shopsphere.CleanArchitecture.domain
 
 import com.example.shopsphere.CleanArchitecture.data.models.AddToCartRequest
+import kotlinx.coroutines.flow.Flow
 
 interface IRepository {
     suspend fun getProducts(): Result<List<DomainProductResult>>
+
+    /**
+     * Stale-while-revalidate variant of [getProducts]. Emits the on-disk
+     * cache immediately (if any) so the UI can render without waiting on
+     * the slow backend, then makes the network call and emits the fresh
+     * result. The cache is updated when the network call succeeds. On
+     * network failure with a non-empty cache, no failure is emitted —
+     * the user keeps seeing the stale list rather than a blank screen.
+     */
+    fun observeProducts(): Flow<Result<List<DomainProductResult>>>
     suspend fun getProductsByCategory(category: String): Result<List<DomainProductResult>>
     suspend fun searchProducts(query: String): Result<List<DomainProductResult>>
     suspend fun getFavoriteProducts(ids: List<Int>): Result<List<DomainProductResult>>
@@ -21,6 +32,9 @@ interface IRepository {
 
     suspend fun checkout(): Result<DomainCheckoutResult>
     suspend fun getMyOrders(): Result<List<DomainOrder>>
+
+    /** Stale-while-revalidate variant of [getMyOrders] — see [observeProducts]. */
+    fun observeMyOrders(): Flow<Result<List<DomainOrder>>>
 
     suspend fun registerEmail(firstName: String, lastName: String, email: String, password: String): Result<Boolean>
     suspend fun login(email: String, password: String): Result<Unit>

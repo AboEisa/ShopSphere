@@ -10,6 +10,10 @@ import com.example.shopsphere.CleanArchitecture.ui.models.PresentationProductRes
 import com.example.shopsphere.CleanArchitecture.ui.models.mapToPresentation
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -78,29 +82,43 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun loadAllProducts() {
-        viewModelScope.launch(Dispatchers.IO) {
-            _isLoading.postValue(true)
-            try {
-                val result = getProductsUseCase.getProducts()
+        // Stale-while-revalidate: cache emits first (instant render), then the
+        // fresh network result emits and replaces the list. The shimmer is
+        // only shown if there's no cache to fall back to — once we've ever
+        // had a successful load, the user never sees a blank list again.
+        val hasCache = allProductsCache.isNotEmpty()
+        if (!hasCache) _isLoading.postValue(true)
+
+        getProductsUseCase.observeProducts()
+            .flowOn(Dispatchers.IO)
+            .onEach { result ->
                 if (result.isSuccess) {
                     allProductsCache = result.getOrNull()?.mapToPresentation().orEmpty()
                     publishCategories()
                     publishVisibleProducts()
+                    _hasLoadedOnce.postValue(true)
+                    // Hide the shimmer as soon as anything (cache or fresh) lands.
+                    _isLoading.postValue(false)
                 } else {
                     Log.e(
                         TAG,
                         "Error fetching products: ${result.exceptionOrNull()?.message}"
                     )
-                    allProductsCache = emptyList()
-                    _categoriesLiveData.postValue(listOf(ALL_CATEGORY))
-                    _productsLiveData.postValue(emptyList())
-                    _filteredProductsLiveData.postValue(emptyList())
+                    // Only blank the UI on failure if we never had any data.
+                    if (allProductsCache.isEmpty()) {
+                        _categoriesLiveData.postValue(listOf(ALL_CATEGORY))
+                        _productsLiveData.postValue(emptyList())
+                        _filteredProductsLiveData.postValue(emptyList())
+                    }
                 }
-            } finally {
+            }
+            .onCompletion {
+                // Final safety net: if neither cache nor network produced data
+                // (rare — e.g. first launch offline), make sure we stop spinning.
                 _hasLoadedOnce.postValue(true)
                 _isLoading.postValue(false)
             }
-        }
+            .launchIn(viewModelScope)
     }
 
     private fun publishCategories() {

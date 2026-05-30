@@ -15,6 +15,9 @@ import com.example.shopsphere.CleanArchitecture.ui.models.PaymentMethodItem
 import com.example.shopsphere.CleanArchitecture.ui.models.PresentationProductResult
 import com.example.shopsphere.CleanArchitecture.utils.formatEgpPrice
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import java.text.DecimalFormat
 import java.text.SimpleDateFormat
@@ -141,101 +144,78 @@ class CheckoutSharedViewModel @Inject constructor(
     // ─── Orders (backend API) ────────────────────────────────────────────────
 
     fun fetchOrders() {
-        android.util.Log.d("CheckoutSharedVM", "fetchOrders() called")
-        
-        viewModelScope.launch {
-            android.util.Log.d("CheckoutSharedVM", "Coroutine started")
-            
-            try {
-                // Only flip `isLoadingOrders` true on the very first load. Silent
-                // background re-fetches (poll, onResume) should not trigger the
-                // shimmer placeholder — that would look like the list was wiped.
-                val isFirstLoad = _orderHistory.value.isNullOrEmpty()
-                android.util.Log.d("CheckoutSharedVM", "Is first load: $isFirstLoad")
-                
-                if (isFirstLoad) _isLoadingOrders.value = true
-                
-                android.util.Log.d("CheckoutSharedVM", "========================================")
-                android.util.Log.d("CheckoutSharedVM", "📦 Fetching orders...")
-                
-                // Fetch products catalog to get product images
-                android.util.Log.d("CheckoutSharedVM", "📤 Fetching product catalog...")
-                val productCatalogResult = repository.getProducts()
-                
-                if (productCatalogResult.isSuccess) {
-                    val productCatalog = productCatalogResult.getOrNull().orEmpty()
-                    android.util.Log.d("CheckoutSharedVM", "📥 Product catalog size: ${productCatalog.size}")
-                    
-                    val imageMap = productCatalog.associateBy(
-                        { it.title.lowercase() },
-                        { it.image }
-                    )
-                    
-                    android.util.Log.d("CheckoutSharedVM", "📤 Fetching MyOrders from API...")
-                    val ordersResult = repository.getMyOrders()
-                    
-                    ordersResult
-                        .onSuccess { domainOrders ->
-                            android.util.Log.d("CheckoutSharedVM", "✅ MyOrders API success")
-                            android.util.Log.d("CheckoutSharedVM", "📦 Orders count: ${domainOrders.size}")
-                            
-                            val fromApi = domainOrders.map { domain ->
-                                val statusStep = resolveOrderStatusStep(domain.orderStatus, null)
-                                val firstProduct = domain.products.firstOrNull()
-                                
-                                OrderHistoryItem(
-                                    orderId = domain.orderId.toString(),
-                                    date = formatApiDate(domain.date),
-                                    status = normalizeOrderStatusLabel(domain.orderStatus, statusStep),
-                                    total = formatApiTotal(domain.totalAmount),
-                                    itemTitle = firstProduct?.productName ?: "",
-                                    itemPrice = firstProduct?.let { String.format(Locale.US, "%.2f", it.price) } ?: "",
-                                    statusStep = statusStep,
-                                    currentLat = domain.currentLat,
-                                    currentLng = domain.currentLng,
-                                    driverName = domain.driverName,
-                                    paymentStatus = domain.paymentStatus
-                                        .takeIf { it.orEmpty().isNotBlank() },
-                                    shippingAddress = domain.shippingAddress
-                                        .orEmpty()
-                                        .takeIf { it.isNotBlank() }
-                                        ?.let { sanitizeAddress(it) }
-                                        .orEmpty(),
-                                    products = domain.products.map { p ->
-                                        val productImage = imageMap[p.productName.lowercase()]
-                                        com.example.shopsphere.CleanArchitecture.ui.models.OrderProduct(
-                                            productName = p.productName,
-                                            quantity = p.quantity,
-                                            price = p.price,
-                                            imageUrl = p.productImage ?: productImage
-                                        )
-                                    }
-                                )
-                            }
-                            
-                            android.util.Log.d("CheckoutSharedVM", "✅ Mapped ${fromApi.size} orders to UI model")
-                            android.util.Log.d("CheckoutSharedVM", "========================================")
-                            _orderHistory.postValue(fromApi)
-                        }
-                        .onFailure { error ->
-                            android.util.Log.e("CheckoutSharedVM", "❌ MyOrders API failed: ${error.message}")
-                            android.util.Log.e("CheckoutSharedVM", "❌ Error type: ${error::class.simpleName}")
-                            error.printStackTrace()
-                            android.util.Log.d("CheckoutSharedVM", "========================================")
-                        }
-                } else {
-                    val error = productCatalogResult.exceptionOrNull()
-                    android.util.Log.e("CheckoutSharedVM", "❌ Product catalog fetch failed: ${error?.message}")
-                }
-            } catch (e: Exception) {
-                android.util.Log.e("CheckoutSharedVM", "❌ Exception during fetchOrders: ${e.message}")
-                e.printStackTrace()
-                android.util.Log.d("CheckoutSharedVM", "========================================")
-            } finally {
-                val isFirstLoad = _orderHistory.value.isNullOrEmpty()
-                if (isFirstLoad) _isLoadingOrders.value = false
-            }
+        android.util.Log.d("CheckoutSharedVM", "fetchOrders() called (stale-while-revalidate)")
+
+        // Only flip the shimmer on the very first load. Background refreshes
+        // (cache → fresh transition, poll, onResume) should not blank the list.
+        val isFirstLoad = _orderHistory.value.isNullOrEmpty()
+        if (isFirstLoad) _isLoadingOrders.value = true
+
+        // Combine the two cache-first flows so the orders list renders the
+        // moment we have *something* on disk for both — usually within a
+        // single frame on launch — and updates twice more as fresh data
+        // arrives (products fresh, orders fresh).
+        combine(
+            repository.observeProducts(),
+            repository.observeMyOrders()
+        ) { productsResult, ordersResult ->
+            productsResult to ordersResult
         }
+            .onEach { (productsResult, ordersResult) ->
+                val productCatalog = productsResult.getOrNull().orEmpty()
+                val imageMap = productCatalog.associateBy(
+                    { it.title.lowercase() },
+                    { it.image }
+                )
+
+                ordersResult
+                    .onSuccess { domainOrders ->
+                        val mapped = domainOrders.map { domain ->
+                            val statusStep = resolveOrderStatusStep(domain.orderStatus, null)
+                            val firstProduct = domain.products.firstOrNull()
+
+                            OrderHistoryItem(
+                                orderId = domain.orderId.toString(),
+                                date = formatApiDate(domain.date),
+                                status = normalizeOrderStatusLabel(domain.orderStatus, statusStep),
+                                total = formatApiTotal(domain.totalAmount),
+                                itemTitle = firstProduct?.productName ?: "",
+                                itemPrice = firstProduct?.let { String.format(Locale.US, "%.2f", it.price) } ?: "",
+                                statusStep = statusStep,
+                                currentLat = domain.currentLat,
+                                currentLng = domain.currentLng,
+                                driverName = domain.driverName,
+                                paymentStatus = domain.paymentStatus
+                                    .takeIf { it.orEmpty().isNotBlank() },
+                                shippingAddress = domain.shippingAddress
+                                    .orEmpty()
+                                    .takeIf { it.isNotBlank() }
+                                    ?.let { sanitizeAddress(it) }
+                                    .orEmpty(),
+                                products = domain.products.map { p ->
+                                    val productImage = imageMap[p.productName.lowercase()]
+                                    com.example.shopsphere.CleanArchitecture.ui.models.OrderProduct(
+                                        productName = p.productName,
+                                        quantity = p.quantity,
+                                        price = p.price,
+                                        imageUrl = p.productImage ?: productImage
+                                    )
+                                }
+                            )
+                        }
+                        android.util.Log.d("CheckoutSharedVM", "Orders rendered (${mapped.size}) — fresh products: ${productCatalog.isNotEmpty()}")
+                        _orderHistory.postValue(mapped)
+                        _isLoadingOrders.postValue(false)
+                    }
+                    .onFailure { error ->
+                        android.util.Log.e("CheckoutSharedVM", "❌ Orders failed: ${error.message}")
+                        // Cache-first flow only emits failure when there was
+                        // no cache to fall back on, so it's safe to stop the
+                        // shimmer here too.
+                        _isLoadingOrders.postValue(false)
+                    }
+            }
+            .launchIn(viewModelScope)
     }
 
     // ─── Place order ─────────────────────────────────────────────────────────

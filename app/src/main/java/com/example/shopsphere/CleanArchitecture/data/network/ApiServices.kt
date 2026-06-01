@@ -117,20 +117,13 @@ interface ApiServices {
     @GET("MyOrders")
     suspend fun getMyOrders(): List<MyOrderDto>
 
-    @POST("CreateInvoice")
-    suspend fun createInvoice(
-        @Header("Content-Type") contentType: String = "application/json",
-        @Body request: CreateInvoiceRequest
-    ): InvoiceResponseDto
-
     @POST("PayNow")
     suspend fun payNow(
         @Header("Content-Type") contentType: String = "application/json",
         @Body request: PayNowRequest
     ): PayNowResponseDto
 
-    // /Callbackt is intentionally spelled with the trailing `t` — that is how
-    // the backend route is registered. Don't "fix" the typo client-side.
+
     @POST("Callbackt")
     suspend fun paymentCallback(
         @Header("Content-Type") contentType: String = "application/json",

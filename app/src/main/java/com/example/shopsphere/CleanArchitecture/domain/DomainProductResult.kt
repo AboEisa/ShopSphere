@@ -1,22 +1,17 @@
-package com.example.shopsphere.CleanArchitecture.data.models
+package com.example.shopsphere.CleanArchitecture.domain
 
-
-data class ProductsModel(
-    val products: List<ProductResult>
-)
-
-data class ProductResult(
+data class DomainProductResult(
     val category: String,
     val description: String,
     val id: Int,
     val image: String,
     val price: Double,
-    val rating: Rating,
+    val rating: DomainRating,
     val title: String,
     val stock: Int = 0
 )
 
-data class Rating(
+data class DomainRating(
     val count: Int,
     val rate: Double
 )

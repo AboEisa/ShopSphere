@@ -6,7 +6,6 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
-import com.example.shopsphere.CleanArchitecture.domain.GetCardProductsUseCase
 import com.example.shopsphere.CleanArchitecture.domain.IRepository
 import com.example.shopsphere.CleanArchitecture.ui.models.PresentationProductResult
 import com.example.shopsphere.CleanArchitecture.ui.models.PresentationRating
@@ -20,7 +19,6 @@ import javax.inject.Inject
 
 @HiltViewModel
 class CartViewModel @Inject constructor(
-    private val getCardProductsUseCase: GetCardProductsUseCase,
     private val repository: IRepository,
     private val sharedPreference: SharedPreference
 ) : ViewModel() {

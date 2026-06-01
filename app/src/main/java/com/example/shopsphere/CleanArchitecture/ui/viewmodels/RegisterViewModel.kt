@@ -4,8 +4,6 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
-import com.example.shopsphere.CleanArchitecture.domain.auth.FacebookLoginUseCase
-import com.example.shopsphere.CleanArchitecture.domain.auth.GoogleLoginUseCase
 import com.example.shopsphere.CleanArchitecture.domain.auth.RegisterUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,8 +21,6 @@ sealed class AuthUiState {
 @HiltViewModel
 class RegisterViewModel @Inject constructor(
     private val registerUseCase: RegisterUseCase,
-    private val googleLoginUseCase: GoogleLoginUseCase,
-    private val facebookLoginUseCase: FacebookLoginUseCase,
     private val prefs: SharedPreference
 ) : ViewModel() {
 
@@ -35,85 +31,31 @@ class RegisterViewModel @Inject constructor(
     private val _state = MutableStateFlow<AuthUiState>(AuthUiState.Idle)
     val state: StateFlow<AuthUiState> = _state
 
-    init {
-        Log.d(TAG, "RegisterViewModel initialized")
-    }
-
     fun register(firstName: String, lastName: String, email: String, password: String) {
-        Log.d(TAG, "register() called with firstName: $firstName, lastName: $lastName, email: $email")
-
         viewModelScope.launch {
             try {
-                Log.d(TAG, "Setting state to Loading")
                 _state.value = AuthUiState.Loading
 
-                Log.d(TAG, "Calling registerUseCase")
                 val result = registerUseCase(firstName, lastName, email, password)
 
                 if (result.isSuccess) {
                     val uid = result.getOrNull().orEmpty()
                     markLoggedIn(uid)
-                    // Persist the name + email entered on the signup form so
-                    // Account header / My Details / Checkout can render the real
-                    // user data immediately, no Firebase round-trip required.
                     val fullName = "$firstName $lastName".trim()
                     prefs.saveProfile(
                         name = fullName,
                         email = email.trim(),
                         phone = prefs.getProfilePhone()
                     )
-
-                    Log.d(TAG, "Setting state to Success")
                     _state.value = AuthUiState.Success("Account created successfully!")
-
                 } else {
                     val error = result.exceptionOrNull()?.message ?: "Registration failed"
                     Log.e(TAG, "Registration failed: $error")
                     _state.value = AuthUiState.Error(error)
                 }
-
             } catch (e: Exception) {
                 Log.e(TAG, "Exception during registration: ${e.message}", e)
                 _state.value = AuthUiState.Error(e.message ?: "Unknown error occurred")
-            }
-        }
-    }
-
-    fun continueWithGoogle(
-        idToken: String,
-        displayName: String? = null,
-        email: String? = null
-    ) {
-        viewModelScope.launch {
-            _state.value = AuthUiState.Loading
-            val result = googleLoginUseCase(idToken)
-            _state.value = if (result.isSuccess) {
-                markLoggedIn(prefs.getUid())
-                val resolvedName = displayName?.trim().orEmpty()
-                    .ifBlank { prefs.getProfileName() }
-                val resolvedEmail = email?.trim().orEmpty()
-                    .ifBlank { prefs.getProfileEmail() }
-                prefs.saveProfile(
-                    name = resolvedName,
-                    email = resolvedEmail,
-                    phone = prefs.getProfilePhone()
-                )
-                AuthUiState.Success("Signed in successfully!")
-            } else {
-                AuthUiState.Error(result.exceptionOrNull()?.message ?: "Google sign-in failed")
-            }
-        }
-    }
-
-    fun continueWithFacebook(accessToken: String) {
-        viewModelScope.launch {
-            _state.value = AuthUiState.Loading
-            val result = facebookLoginUseCase(accessToken)
-            _state.value = if (result.isSuccess) {
-                markLoggedIn(prefs.getUid())
-                AuthUiState.Success("Signed in successfully!")
-            } else {
-                AuthUiState.Error(result.exceptionOrNull()?.message ?: "Facebook sign-in failed")
             }
         }
     }

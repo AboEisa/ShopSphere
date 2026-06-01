@@ -90,7 +90,6 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
-    implementation("androidx.viewpager2:viewpager2:1.1.0")
 
     // Testing
     testImplementation(libs.junit)
@@ -117,7 +116,6 @@ dependencies {
     // Retrofit & Gson Converter
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
-    implementation("com.jakewharton.retrofit:retrofit2-kotlin-coroutines-adapter:0.9.2")
 
     // OkHttp Logging Interceptor
     implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.11")
@@ -126,49 +124,18 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.51.1")
     ksp("com.google.dagger:hilt-android-compiler:2.51.1")
 
-    // Navigation Component
-    val nav_version = "2.8.3"
-    implementation("androidx.navigation:navigation-fragment-ktx:$nav_version")
-    implementation("androidx.navigation:navigation-ui-ktx:$nav_version")
-
     // CircleImageView
     implementation("de.hdodenhof:circleimageview:3.1.0")
 
     // Glide
     implementation("com.github.bumptech.glide:glide:4.16.0")
 
-    // Paging
-    implementation("androidx.paging:paging-runtime:3.3.0")
-
-    // DataStore (SharedPreferences replacement)
-    implementation("androidx.datastore:datastore-preferences:1.1.0")
-
-    // Lottie Animation (removed duplicate)
-    implementation("com.airbnb.android:lottie:6.4.0")
-
-    // Splash Screen
-    implementation("androidx.core:core-splashscreen:1.0.1")
-
-    // Chrome Custom Tabs (used by CheckoutFragment to open the payment URL)
-    implementation("androidx.browser:browser:1.8.0")
-
     // Firebase BoM (Bill of Materials) - Single version
     implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
     implementation("com.google.firebase:firebase-analytics")
-    implementation("com.google.firebase:firebase-auth")
-    implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-firestore-ktx")
-    implementation("com.google.firebase:firebase-storage")
-    implementation("com.google.firebase:firebase-storage-ktx")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
-
-    // Google Sign-In & Credential Manager
-    implementation("com.google.android.gms:play-services-auth:21.2.0")
-    implementation("androidx.credentials:credentials:1.3.0")
-    implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
-    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
-    implementation("com.facebook.android:facebook-login:17.0.2")
 
     // Shimmer
     implementation("com.facebook.shimmer:shimmer:0.5.0")
@@ -177,6 +144,4 @@ dependencies {
     implementation("com.google.android.gms:play-services-maps:19.0.0")
     implementation("com.google.android.gms:play-services-location:21.3.0")
 
-    // Stripe
-    implementation("com.stripe:stripe-android:20.49.0")
 }

@@ -8,14 +8,11 @@ interface IRemoteDataSource {
 
     // Products
     suspend fun getProducts(): Result<List<ProductResult>>
-    suspend fun getProductsByCategory(category: String): Result<List<ProductResult>>
     suspend fun searchProducts(query: String): Result<List<ProductResult>>
 
     // Auth
     suspend fun register(firstName: String, lastName: String, email: String, password: String): Result<AuthResponseDto>
     suspend fun login(email: String, password: String): Result<AuthResponseDto>
-    suspend fun loginWithGoogle(idToken: String): Result<AuthResponseDto>
-    suspend fun loginWithFacebook(accessToken: String): Result<AuthResponseDto>
     suspend fun logout(): Result<GenericResponseDto>
 
     // Cart
@@ -46,7 +43,6 @@ interface IRemoteDataSource {
     // Orders / Payment
     suspend fun checkout(): Result<CheckoutResponseDto>
     suspend fun getMyOrders(): Result<List<MyOrderDto>>
-    suspend fun createInvoice(request: CreateInvoiceRequest): Result<InvoiceResponseDto>
     suspend fun payNow(request: PayNowRequest): Result<PayNowResponseDto>
     suspend fun paymentCallback(orderId: Int): Result<PaymentCallbackDto>
     suspend fun markPaymentAsFailed(orderId: Int): Result<PaymentCallbackDto>

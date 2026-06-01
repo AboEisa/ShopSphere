@@ -2,17 +2,11 @@ package com.example.shopsphere.CleanArchitecture.ui.views
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.widget.doAfterTextChanged
-import androidx.credentials.CustomCredential
-import androidx.credentials.CredentialManager
-import androidx.credentials.GetCredentialRequest
-import androidx.credentials.exceptions.GetCredentialException
-import androidx.credentials.exceptions.NoCredentialException
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -21,28 +15,17 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.AuthUiState
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.RegisterViewModel
-import com.example.shopsphere.R
 import com.example.shopsphere.databinding.FragmentRegisterBinding
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
-import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
-import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class RegisterFragment : Fragment() {
 
-    companion object {
-        private const val TAG = "RegisterFragment"
-    }
-
     private var _binding: FragmentRegisterBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var credentialManager: CredentialManager
     private val viewModel: RegisterViewModel by viewModels()
-    private var googleSignInJob: Job? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -50,7 +33,6 @@ class RegisterFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentRegisterBinding.inflate(inflater, container, false)
-        credentialManager = CredentialManager.create(requireContext())
         return binding.root
     }
 
@@ -101,10 +83,6 @@ class RegisterFragment : Fragment() {
             if (!validateInputs(firstName, lastName, email, password, confirmPassword)) return@setOnClickListener
 
             viewModel.register(firstName, lastName, email, password)
-        }
-
-        binding.btnRegisterGoogle.setOnClickListener {
-            signInWithGoogle()
         }
 
         binding.tvLogin.setOnClickListener {
@@ -179,14 +157,12 @@ class RegisterFragment : Fragment() {
     private fun showIdleState() {
         binding.btnCreateAccount.isEnabled = true
         binding.btnCreateAccount.text = "Create Account"
-        binding.btnRegisterGoogle.isEnabled = true
         binding.tvLogin.isEnabled = true
         binding.progressBar.visibility = View.GONE
     }
 
     private fun showLoadingState() {
         binding.btnCreateAccount.isEnabled = false
-        binding.btnRegisterGoogle.isEnabled = false
         binding.tvLogin.isEnabled = false
         binding.progressBar.visibility = View.VISIBLE
     }
@@ -202,123 +178,11 @@ class RegisterFragment : Fragment() {
         error.contains("invalid-email", ignoreCase = true) -> "Invalid email address"
         error.contains("weak-password", ignoreCase = true) -> "Password is too weak"
         error.contains("network", ignoreCase = true) -> "Network error. Please check your connection"
-        error.contains("facebook", ignoreCase = true) -> getString(R.string.facebook_sign_in_failed)
-        error.contains("google", ignoreCase = true) -> getString(R.string.google_sign_in_failed)
         else -> error
-    }
-
-    private fun signInWithGoogle() {
-        if (googleSignInJob?.isActive == true) return
-        googleSignInJob = viewLifecycleOwner.lifecycleScope.launch {
-            showLoadingState()
-            try {
-                val webClientId = resolveGoogleWebClientId()
-                if (webClientId.isBlank()) {
-                    toast(getString(R.string.google_sign_in_failed))
-                    return@launch
-                }
-
-                val credential = tryGetGoogleCredential(webClientId)
-                val googleIdTokenCredential = extractGoogleIdTokenCredential(credential)
-                if (googleIdTokenCredential == null) {
-                    toast(getString(R.string.invalid_google_credential))
-                    return@launch
-                }
-
-                val resolvedDisplayName = googleIdTokenCredential.displayName
-                    ?: listOfNotNull(
-                        googleIdTokenCredential.givenName,
-                        googleIdTokenCredential.familyName
-                    ).joinToString(" ").ifBlank { null }
-                viewModel.continueWithGoogle(
-                    idToken = googleIdTokenCredential.idToken,
-                    displayName = resolvedDisplayName,
-                    email = googleIdTokenCredential.id
-                )
-            } catch (e: GetCredentialException) {
-                Log.e(TAG, "Google sign-in failed", e)
-                showIdleState()
-                toast(mapGoogleSignInError(e))
-            } catch (e: Exception) {
-                Log.e(TAG, "Unexpected Google sign-in error", e)
-                showIdleState()
-                toast(getString(R.string.google_sign_in_failed))
-            }
-        }
-    }
-
-    private suspend fun tryGetGoogleCredential(webClientId: String): androidx.credentials.Credential {
-        val authorizedRequest = GetCredentialRequest.Builder()
-            .addCredentialOption(
-                GetGoogleIdOption.Builder()
-                    .setFilterByAuthorizedAccounts(true)
-                    .setServerClientId(webClientId)
-                    .build()
-            )
-            .build()
-
-        return try {
-            credentialManager.getCredential(requireActivity(), authorizedRequest).credential
-        } catch (noCredential: NoCredentialException) {
-            val allAccountsRequest = GetCredentialRequest.Builder()
-                .addCredentialOption(
-                    GetGoogleIdOption.Builder()
-                        .setFilterByAuthorizedAccounts(false)
-                        .setServerClientId(webClientId)
-                        .build()
-                )
-                .build()
-            credentialManager.getCredential(requireActivity(), allAccountsRequest).credential
-        }
-    }
-
-    private fun extractGoogleIdTokenCredential(
-        credential: androidx.credentials.Credential
-    ): GoogleIdTokenCredential? {
-        return when (credential) {
-            is CustomCredential -> {
-                if (credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
-                    try {
-                        GoogleIdTokenCredential.createFrom(credential.data)
-                    } catch (e: GoogleIdTokenParsingException) {
-                        Log.e(TAG, "Failed to parse Google ID token credential", e)
-                        null
-                    }
-                } else {
-                    null
-                }
-            }
-            else -> null
-        }
-    }
-
-    private fun mapGoogleSignInError(exception: GetCredentialException): String {
-        val message = exception.message?.lowercase().orEmpty()
-        return when {
-            message.contains("developer console") ||
-                message.contains("10:") ||
-                message.contains("12500") -> getString(R.string.google_sign_in_console_not_configured)
-            message.contains("canceled") ||
-                message.contains("cancelled") -> getString(R.string.google_sign_in_cancelled)
-            else -> exception.message ?: getString(R.string.google_sign_in_failed)
-        }
-    }
-
-    private fun resolveGoogleWebClientId(): String {
-        val resourceId = resources.getIdentifier(
-            "default_web_client_id",
-            "string",
-            requireContext().packageName
-        )
-        return if (resourceId == 0) "" else getString(resourceId).trim()
     }
 
     private fun navigateToHome() {
         if (!isAdded || _binding == null) return
-        // Match LoginFragment: restart MainActivity targeting Home. This is the
-        // safest path because it also bypasses onboarding in the graph and
-        // avoids popUpTo errors when the login destination isn't on the back
-        // stack (e.g. user landed on Register directly).
         val intent = Intent(requireContext(), MainActivity::class.java)
         intent.putExtra(MainActivity.EXTRA_OPEN_HOME, true)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -329,14 +193,7 @@ class RegisterFragment : Fragment() {
         Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
     }
 
-    @Deprecated("Deprecated in Java")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-    }
-
     override fun onDestroyView() {
-        googleSignInJob?.cancel()
-        googleSignInJob = null
         super.onDestroyView()
         _binding = null
     }

@@ -135,11 +135,6 @@
         android:label="fragment_faqs"
         tools:layout="@layout/fragment_faqs" />
     <fragment
-        android:id="@+id/helpCenterFragment"
-        android:name="com.example.shopsphere.CleanArchitecture.ui.views.HelpCenterFragment"
-        android:label="fragment_help_center"
-        tools:layout="@layout/fragment_help_center" />
-    <fragment
         android:id="@+id/notificationsFragment"
         android:name="com.example.shopsphere.CleanArchitecture.ui.views.NotificationsFragment"
         android:label="fragment_notifications"
@@ -213,21 +208,6 @@
         android:label="fragment_my_details"
         tools:layout="@layout/fragment_my_details" />
     <fragment
-        android:id="@+id/addressPhoneFragment"
-        android:name="com.example.shopsphere.CleanArchitecture.ui.views.AddressPhoneFragment"
-        android:label="fragment_address_phone"
-        tools:layout="@layout/fragment_address_phone" />
-    <fragment
-        android:id="@+id/addressBookFragment"
-        android:name="com.example.shopsphere.CleanArchitecture.ui.views.AddressBookFragment"
-        android:label="fragment_address_book"
-        tools:layout="@layout/fragment_address_book" />
-    <fragment
-        android:id="@+id/paymentMethodsFragment"
-        android:name="com.example.shopsphere.CleanArchitecture.ui.views.PaymentMethodsFragment"
-        android:label="fragment_payment_methods"
-        tools:layout="@layout/fragment_payment_methods" />
-    <fragment
         android:id="@+id/detailsFragment"
         android:name="com.example.shopsphere.CleanArchitecture.ui.views.DetailsFragment"
         android:label="fragment_details"
@@ -272,27 +252,6 @@
             app:popEnterAnim="@anim/animation3"
             app:popExitAnim="@anim/animation4"/>
         <action
-            android:id="@+id/action_checkoutFragment_to_addCardFragment"
-            app:destination="@id/addCardFragment"
-            app:enterAnim="@anim/animation"
-            app:exitAnim="@anim/animation2"
-            app:popEnterAnim="@anim/animation3"
-            app:popExitAnim="@anim/animation4"/>
-        <action
-            android:id="@+id/action_checkoutFragment_to_addressBookFragment"
-            app:destination="@id/addressBookFragment"
-            app:enterAnim="@anim/animation"
-            app:exitAnim="@anim/animation2"
-            app:popEnterAnim="@anim/animation3"
-            app:popExitAnim="@anim/animation4"/>
-        <action
-            android:id="@+id/action_checkoutFragment_to_paymentMethodsFragment"
-            app:destination="@id/paymentMethodsFragment"
-            app:enterAnim="@anim/animation"
-            app:exitAnim="@anim/animation2"
-            app:popEnterAnim="@anim/animation3"
-            app:popExitAnim="@anim/animation4"/>
-        <action
             android:id="@+id/action_checkoutFragment_to_homeFragment"
             app:destination="@id/homeFragment" />
         <action
@@ -332,11 +291,6 @@
         android:name="com.example.shopsphere.CleanArchitecture.ui.views.MapsFragment"
         android:label="fragment_maps"
         tools:layout="@layout/fragment_maps" />
-    <fragment
-        android:id="@+id/addCardFragment"
-        android:name="com.example.shopsphere.CleanArchitecture.ui.views.AddCardFragment"
-        android:label="fragment_add_card"
-        tools:layout="@layout/fragment_add_card" />
     <fragment
         android:id="@+id/trackOrderFragment"
         android:name="com.example.shopsphere.CleanArchitecture.ui.views.TrackOrderFragment"

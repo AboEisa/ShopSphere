@@ -3,7 +3,7 @@ package com.example.shopsphere.CleanArchitecture.data
 import com.example.shopsphere.CleanArchitecture.data.local.OrdersCacheStore
 import com.example.shopsphere.CleanArchitecture.data.local.ProductsCacheStore
 import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
-import com.example.shopsphere.CleanArchitecture.data.models.mapToDomain
+import com.example.shopsphere.CleanArchitecture.data.models.*
 import com.example.shopsphere.CleanArchitecture.data.network.AuthResponseDto
 import com.example.shopsphere.CleanArchitecture.data.network.IRemoteDataSource
 import com.example.shopsphere.CleanArchitecture.utils.Constant
@@ -83,16 +83,6 @@ class Repository @Inject constructor(
             }
     }
 
-    override suspend fun getProductsByCategory(category: String): Result<List<DomainProductResult>> {
-
-        return try {
-            val remoteData = remoteDataSource.getProductsByCategory(category)
-            Result.success(remoteData.getOrNull()?.map { it.mapToDomain() } ?: emptyList())
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
     override suspend fun searchProducts(query: String): Result<List<DomainProductResult>> {
         return try {
             val results = remoteDataSource.searchProducts(query)
@@ -147,26 +137,6 @@ class Repository @Inject constructor(
 
     override suspend fun getFavoriteIds(): List<Int> {
         return favoriteIds().toList()
-    }
-
-//    override suspend fun addToCart(cart: DomainAddToCartRequest): Result<List<DomainCartProduct>> {
-//        return try {
-//            val remoteData = remoteDataSource.addToCart(cart.mapToData())
-//            Result.success(remoteData.getOrNull()?.map { it.mapToDomain() } ?: emptyList())
-//        } catch (e: Exception) {
-//            Result.failure(e)
-//        }
-//    }
-
-    override suspend fun getCartProducts(ids: List<Int>): Result<List<DomainProductResult>> {
-        return try {
-            val allProducts = remoteDataSource.getProducts().getOrNull().orEmpty()
-            val idSet = ids.toSet()
-            val cartProducts = allProducts.filter { it.id in idSet }
-            Result.success(cartProducts.map { it.mapToDomain() })
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
     }
 
     override suspend fun getCartItems(): Result<List<DomainCartItem>> {
@@ -253,46 +223,6 @@ class Repository @Inject constructor(
             },
             onFailure = { Result.failure(it) }
         )
-
-    override suspend fun loginWithGoogle(idToken: String): Result<Unit> =
-        try {
-            val response = remoteDataSource.loginWithGoogle(idToken)
-            response.fold(
-                onSuccess = { authResponse ->
-                    val userId = authResponse.resolvedUserId()
-                    if (userId.isNullOrBlank()) {
-                        Result.failure(Exception(authResponse.message ?: "Google login succeeded but missing user ID"))
-                    } else {
-                        saveAuthIds(authResponse)
-                        Result.success(Unit)
-                    }
-                },
-                onFailure = { Result.failure(it) }
-            )
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-
-    override suspend fun loginWithFacebook(accessToken: String): Result<Unit> =
-        try {
-            val response = remoteDataSource.loginWithFacebook(accessToken)
-            response.fold(
-                onSuccess = { authResponse ->
-                    val userId = authResponse.resolvedUserId()
-                    if (userId.isNullOrBlank()) {
-                        Result.failure(Exception(authResponse.message ?: "Facebook login succeeded but missing user ID"))
-                    } else {
-                        saveAuthIds(authResponse)
-                        Result.success(Unit)
-                    }
-                },
-                onFailure = { Result.failure(it) }
-            )
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-
-
 
     override suspend fun registerEmail(
         firstName: String,

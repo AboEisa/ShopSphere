@@ -13,12 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
-import com.example.shopsphere.CleanArchitecture.data.network.CreateInvoiceRequest
-import com.example.shopsphere.CleanArchitecture.data.network.CustomerInfo
-import com.example.shopsphere.CleanArchitecture.data.network.InvoiceCartItem
 import com.example.shopsphere.CleanArchitecture.data.network.PayNowRequest
-import com.example.shopsphere.CleanArchitecture.data.network.RedirectionUrls
-import com.example.shopsphere.CleanArchitecture.domain.CreateInvoiceUseCase
 import com.example.shopsphere.CleanArchitecture.domain.GetMyDetailsUseCase
 import com.example.shopsphere.CleanArchitecture.domain.PayNowUseCase
 import com.example.shopsphere.CleanArchitecture.domain.PaymentCallbackUseCase
@@ -36,7 +31,6 @@ import com.example.shopsphere.R
 import com.example.shopsphere.databinding.DialogEditAddressPhoneBinding
 import com.example.shopsphere.databinding.FragmentCheckoutBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -64,12 +58,6 @@ class CheckoutFragment : Fragment() {
 
     @Inject
     lateinit var sharedPreference: SharedPreference
-
-    @Inject
-    lateinit var firebaseAuth: FirebaseAuth
-
-    @Inject
-    lateinit var createInvoiceUseCase: CreateInvoiceUseCase
 
     @Inject
     lateinit var payNowUseCase: PayNowUseCase
@@ -217,9 +205,8 @@ class CheckoutFragment : Fragment() {
                 binding.loadingOverlay.loadingText.text = "Placing Order"
                 binding.loadingOverlay.loadingSubtitle.text = "Please wait while we process your order"
 
-                val user = firebaseAuth.currentUser
                 val customerName = sharedPreference.getProfileName().ifBlank {
-                    user?.displayName?.takeIf { it.isNotBlank() } ?: getString(R.string.account_guest_user)
+                    getString(R.string.account_guest_user)
                 }
                 // Disable the button while the checkout API is in flight, so the
                 // user can't trigger it twice and we don't clear the cart until
@@ -529,7 +516,7 @@ class CheckoutFragment : Fragment() {
             val payNow = payNowResult.getOrNull()
             Log.d(TAG, "PayNow response: $payNow")
 
-            // Try both 'url' and 'paymentUrl' fields (backend might use either)
+
             val url = payNow?.url?.takeIf { it.isNotBlank() }
                 ?: payNow?.paymentUrl?.takeIf { it.isNotBlank() }
 

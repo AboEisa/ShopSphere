@@ -34,19 +34,6 @@ class RemoteDataSource @Inject constructor(
         }
     }
 
-    override suspend fun getProductsByCategory(category: String): Result<List<ProductResult>> {
-        val normalizedCategory = normalizeCategory(category)
-        if (normalizedCategory == normalizeCategory(ALL_CATEGORY)) {
-            return getProducts()
-        }
-
-        return runCatching {
-            getProducts()
-                .getOrThrow()
-                .filter { normalizeCategory(it.category) == normalizedCategory }
-        }
-    }
-
     override suspend fun register(
         firstName: String,
         lastName: String,
@@ -70,33 +57,6 @@ class RemoteDataSource @Inject constructor(
         // /Login expects lowercase {email, password} — see LoginRequestDto.
         apiService.login(LoginRequestDto(email = email, password = password))
     }
-
-    override suspend fun loginWithGoogle(idToken: String): Result<AuthResponseDto> =
-        socialLogin(idToken, "Google")
-
-    override suspend fun loginWithFacebook(accessToken: String): Result<AuthResponseDto> =
-        socialLogin(accessToken, "Facebook")
-
-    private suspend fun socialLogin(token: String, provider: String): Result<AuthResponseDto> =
-        runCatching {
-            val email = "${provider.lowercase()}_${token.takeLast(10)}@shopsphere.app"
-            val password = "${provider}_$token"
-
-            // Try login first; if it fails, register then login
-            try {
-                apiService.login(LoginRequestDto(email = email, password = password))
-            } catch (_: Exception) {
-                apiService.signUp(
-                    AuthRequestDto(
-                        fristName = provider,
-                        lastName = "User",
-                        email = email,
-                        password = password
-                    )
-                )
-                apiService.login(LoginRequestDto(email = email, password = password))
-            }
-        }
 
     override suspend fun logout(): Result<GenericResponseDto> = runCatching {
         apiService.logout()
@@ -253,10 +213,6 @@ class RemoteDataSource @Inject constructor(
 
     override suspend fun getMyOrders(): Result<List<MyOrderDto>> = runCatching {
         apiService.getMyOrders()
-    }
-
-    override suspend fun createInvoice(request: CreateInvoiceRequest): Result<InvoiceResponseDto> = runCatching {
-        apiService.createInvoice("application/json", request)
     }
 
     override suspend fun payNow(request: PayNowRequest): Result<PayNowResponseDto> = runCatching {

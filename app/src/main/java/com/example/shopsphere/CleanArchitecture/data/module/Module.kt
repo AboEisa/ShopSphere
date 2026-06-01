@@ -9,7 +9,6 @@ import com.example.shopsphere.CleanArchitecture.data.local.notifications.AppData
 import com.example.shopsphere.CleanArchitecture.data.local.notifications.NotificationDao
 import com.example.shopsphere.CleanArchitecture.data.network.ApiServices
 import com.example.shopsphere.CleanArchitecture.data.network.DirectionsApiServices
-import com.example.shopsphere.CleanArchitecture.data.network.DummyApiServices
 import com.example.shopsphere.CleanArchitecture.data.network.GeminiApiService
 import com.example.shopsphere.CleanArchitecture.data.network.IRemoteDataSource
 import com.example.shopsphere.CleanArchitecture.data.network.RemoteDataSource
@@ -18,15 +17,11 @@ import com.example.shopsphere.CleanArchitecture.domain.IRepository
 import com.example.shopsphere.CleanArchitecture.domain.LogoutUseCase
 import com.example.shopsphere.CleanArchitecture.domain.UpdateMyDetailsUseCase
 import com.example.shopsphere.CleanArchitecture.domain.UploadImageUseCase
-import com.example.shopsphere.CleanArchitecture.domain.auth.FacebookLoginUseCase
-import com.example.shopsphere.CleanArchitecture.domain.auth.GoogleLoginUseCase
 import com.example.shopsphere.CleanArchitecture.domain.auth.LoginUseCase
 import com.example.shopsphere.CleanArchitecture.domain.auth.RegisterUseCase
 import com.example.shopsphere.CleanArchitecture.utils.Constant.Companion.BASE_URL
 import com.example.shopsphere.CleanArchitecture.utils.Constant.Companion.DIRECTIONS_BASE_URL
-import com.example.shopsphere.CleanArchitecture.utils.Constant.Companion.DUMMY_BASE_URL
 import com.example.shopsphere.CleanArchitecture.utils.Constant.Companion.GEMINI_BASE_URL
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.Module
 import dagger.Provides
@@ -157,16 +152,6 @@ object Module {
 
     @Singleton
     @Provides
-    @Named("dummyRetrofit")
-    fun provideDummyRetrofit(client: OkHttpClient): Retrofit =
-        Retrofit.Builder()
-            .addConverterFactory(GsonConverterFactory.create())
-            .client(client)
-            .baseUrl(DUMMY_BASE_URL)
-            .build()
-
-    @Singleton
-    @Provides
     @Named("directionsRetrofit")
     fun provideDirectionsRetrofit(client: OkHttpClient): Retrofit =
         Retrofit.Builder()
@@ -179,11 +164,6 @@ object Module {
     @Provides
     fun getApiServices(@Named("primaryRetrofit") retrofit: Retrofit): ApiServices =
         retrofit.create(ApiServices::class.java)
-
-    @Singleton
-    @Provides
-    fun getDummyApiServices(@Named("dummyRetrofit") retrofit: Retrofit): DummyApiServices =
-        retrofit.create(DummyApiServices::class.java)
 
     @Singleton
     @Provides
@@ -245,10 +225,6 @@ object Module {
 
     @Provides
     @Singleton
-    fun provideFirebaseAuth(): FirebaseAuth = FirebaseAuth.getInstance()
-
-    @Provides
-    @Singleton
     fun provideFirebaseFirestore(): FirebaseFirestore = FirebaseFirestore.getInstance()
 
     @Provides
@@ -256,12 +232,6 @@ object Module {
 
     @Provides
     fun provideRegisterUseCase(repo: IRepository) = RegisterUseCase(repo)
-
-    @Provides
-    fun provideGoogleLoginUseCase(repo: IRepository) = GoogleLoginUseCase(repo)
-
-    @Provides
-    fun provideFacebookLoginUseCase(repo: IRepository) = FacebookLoginUseCase(repo)
 
     // ─── Profile use-cases (AccountViewModel) ────────────────────────────────
 

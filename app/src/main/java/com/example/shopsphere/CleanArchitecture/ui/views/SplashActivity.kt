@@ -12,7 +12,6 @@ import androidx.lifecycle.lifecycleScope
 import com.example.shopsphere.CleanArchitecture.data.local.SharedPreference
 import com.example.shopsphere.R
 import com.example.shopsphere.CleanArchitecture.ui.viewmodels.SplashViewModel
-import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -52,37 +51,8 @@ class SplashActivity : AppCompatActivity() {
     private fun navigate() {
         lifecycleScope.launch {
             delay(1500)
-            val auth = FirebaseAuth.getInstance()
-            val currentUser = auth.currentUser
-
-            // CASE 1 — User logged in via Firebase
-            if (currentUser != null) {
-
-                currentUser.getIdToken(true).addOnCompleteListener { task ->
-                    if (task.isSuccessful) {
-                        // ✅ FIXED: Sync Firebase auth with SharedPreferences
-                        viewModel.syncAuthState(currentUser.uid, isLoggedIn = true)
-                        openMain(home = true)
-                    } else {
-                        // If token fails — clear the session + send to login
-                        auth.signOut()
-                        // ✅ FIXED: Clear SharedPreferences too
-                        viewModel.syncAuthState("", isLoggedIn = false)
-                        openMain(home = false)
-                    }
-                }
-
-            } else {
-                // CASE 2 — No Firebase user, check SharedPreferences as fallback
-                val isLoggedIn = viewModel.isLoggedIn.first()
-                if (isLoggedIn) {
-                    // User has valid session in SharedPreferences
-                    openMain(home = true)
-                } else {
-                    // No valid session anywhere
-                    openMain(home = false)
-                }
-            }
+            val isLoggedIn = viewModel.isLoggedIn.first()
+            openMain(home = isLoggedIn)
         }
     }
 

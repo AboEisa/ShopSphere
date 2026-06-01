@@ -1,10 +1,5 @@
 package com.example.shopsphere.CleanArchitecture.ui.models
 
-
-data class PresentationProductsModel(
-    val products: List<PresentationProductResult>
-)
-
 data class PresentationProductResult(
     val category: String,
     val description: String,

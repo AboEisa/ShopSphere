@@ -20,7 +20,6 @@ import com.example.shopsphere.CleanArchitecture.ui.viewmodels.AccountViewModel
 import com.example.shopsphere.CleanArchitecture.utils.showConfirmDialog
 import com.example.shopsphere.CleanArchitecture.utils.showSuccessDialog
 import com.example.shopsphere.databinding.FragmentAccountBinding
-import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -42,9 +41,6 @@ class AccountFragment : Fragment() {
 
     // ViewModel owns all business logic; Fragment only handles navigation + UI
     private val viewModel: AccountViewModel by viewModels()
-
-    @Inject
-    lateinit var firebaseAuth: FirebaseAuth
 
     @Inject
     lateinit var sharedPreference: SharedPreference
@@ -88,8 +84,6 @@ class AccountFragment : Fragment() {
             event ?: return@observe
             when (event) {
                 is AccountUiEvent.LogoutSuccess -> {
-                    // Firebase sign-out (Google/Facebook OAuth cleanup)
-                    firebaseAuth.signOut()
                     // Navigate to login, clearing the back stack
                     val intent = Intent(requireContext(), MainActivity::class.java).apply {
                         putExtra(MainActivity.EXTRA_OPEN_HOME, false)

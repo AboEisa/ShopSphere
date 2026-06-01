@@ -232,8 +232,7 @@ class CheckoutSharedViewModel @Inject constructor(
 
         if (cartItems.isEmpty())
             return Result.failure(IllegalStateException("Cart is empty"))
-        if (!isAddressValid(address))
-            return Result.failure(IllegalStateException("Please select a valid delivery address"))
+
         if (!isPaymentMethodValid(paymentMethod))
             return Result.failure(IllegalStateException("Please select a valid payment method"))
         if (sanitizedName.isBlank())

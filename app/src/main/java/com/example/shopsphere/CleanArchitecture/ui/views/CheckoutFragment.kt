@@ -340,9 +340,7 @@ class CheckoutFragment : Fragment() {
             }
         }
 
-        if (!sharedViewModel.isAddressValid(sharedViewModel.selectedAddress.value)) {
-            return getString(R.string.validation_address_invalid)
-        }
+
 
         // Phone is validated as part of the delivery address (see isAddressValid).
         // Online card payment is always used - no separate validation needed.
